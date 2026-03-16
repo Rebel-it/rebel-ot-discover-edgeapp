@@ -1,0 +1,15 @@
+[[section-architecture-constraints]]
+== Architecture Constraints
+The following table lists the top architectural constraints for the system, ordered by priority.
+These constraints have a significant influence on architectural decisions and trade-offs.
+
+[options="header", cols="1,4"]
+|===
+| Priority | Constraint
+| 1
+| *Run as a self-contained edge application* that can be deployed close to the OT network. The application must run on the SecureEdge gateway, which has limited resources (CPU, memory) and runs a Linux-based OS. IXrouter3 does not support running custom code within the network.
+| 2
+| *Target .NET 10* and be designed as a console-based edge process.
+| 3
+| *Page sizes for IXON API queries are capped at 4,000 entries per request.*
+|===

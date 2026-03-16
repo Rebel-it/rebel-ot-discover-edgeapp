@@ -1,0 +1,84 @@
+[[section-introduction-and-goals]]
+== Introduction and Goals
+
+Industrial environments generate large amounts of process data from OT (Operational Technology) devices such as PLCs and sensors.
+Connecting this data to IT systems for monitoring, analytics, and automation typically requires manual and error-prone configuration. Besides, indexing a machine with thousands of nodes can be a daunting task for OT engineers, especially when the device configurations change frequently.
+
+The *Rebelit OT Discover Edge App* automates the discovery and registration of OT data points into your IXON cloud account. By running at the edge, it can directly connect to industrial devices using protocols like OPC-UA, read their variable and tag configurations, and synchronise them with the IXON cloud platform. This enables a zero-touch onboarding experience for OT data, allowing engineers to focus on value-added tasks rather than manual configuration.
+It reads the existing variable and tag configurations from connected industrial devices, and reconciles them with the cloud platform — eliminating repetitive manual data entry and reducing configuration errors.
+
+=== Requirements Overview
+
+==== Essential Features
+
+* Connect to the *IXON cloud platform* using bearer token authentication to retrieve agent configurations.
+* Discover *data variables* (OPC-UA node addresses, types, and metadata) from IXON agents.
+* Discover *data tags* (logging configuration, retention policies, aggregation settings) from IXON agents.
+* Create new variables and tags in IXON to register newly discovered data points.
+* Support the *OPC-UA* protocol as a source for discovering process variables from industrial controllers.
+* Run as a self-contained *edge application* that can be deployed close to the OT network.
+
+==== Constraints
+
+* The application must run on the SecureEdge gateway, which has limited resources (CPU, memory) and runs a Linux-based OS. IXrouter3 does not support running custom code within the network.
+* The application targets *.NET 10* and is designed as a console-based edge process.
+* Page sizes for IXON API queries are capped at 4,000 entries per request.
+
+=== Quality Goals
+
+The following table lists the top quality goals for the architecture, ordered by priority.
+These goals have the most significant influence on architectural decisions.
+
+[options="header", cols="1,2,4"]
+|===
+| Priority | Quality Goal | Motivation
+
+| 1
+| *Reliability*
+| The application runs unattended near production equipment. Failures during discovery must be detected, logged, and reported without silently corrupting tag or variable configurations in the cloud platform.
+
+| 2
+| *Maintainability*
+| The connection layer is explicitly separated from the core application logic. Adding support for a new industrial protocol (e.g., Modbus, MQTT) must not require changes to the discovery or synchronisation logic.
+
+| 3
+| *Security*
+| Authentication credentials (bearer tokens, application IDs) are never hard-coded or logged. All communication with external APIs uses HTTPS. Input from external APIs is treated as untrusted and deserialised defensively.
+
+| 4
+| *Portability*
+| The application must run on Linux-based edge devices (e.g., SecureEdge gateway) as well as developer workstations running macOS, Windows or Linux, without platform-specific build steps.
+
+| 5
+| *Performance Efficiency*
+| Discovery of large device configurations (up to 4,000 variables per agent) must complete within a reasonable time without exhausting memory or network resources on constrained edge hardware.
+|===
+
+=== Stakeholders
+
+The following table identifies all parties with a relevant interest in the architecture or its documentation.
+
+[options="header", cols="2,2,4"]
+|===
+| Role | Name / Organisation | Expectations
+
+| Product Owner / Developer
+| Rebelit
+| Understands architectural decisions, can extend the application with new protocol connectors, and can onboard new team members using this documentation.
+
+| OT Engineers
+| End customers (industrial operators)
+| A reliable, zero-touch tool that discovers and registers all relevant process variables without manual entry or risk to production systems.
+
+| IT / Cloud Operations
+| End customers (IT departments)
+| The application integrates cleanly with existing IXON cloud accounts, respects API rate limits, and does not create unintended side effects such as duplicate tags.
+
+| IXON Platform
+| IXON Cloud (external system)
+| A well-behaved API consumer: correct authentication, bounded page sizes, and proper error handling on non-2xx responses.
+
+| Security Reviewers
+| Rebelit / customers
+| Credentials are handled securely; no sensitive data is logged; HTTPS is enforced for all outbound calls.
+|===
