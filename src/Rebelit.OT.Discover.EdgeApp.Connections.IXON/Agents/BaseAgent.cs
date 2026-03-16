@@ -59,12 +59,20 @@ internal abstract class BaseAgent(IOptions<Configuration> configuration, ILogger
     }
 
     /// <summary>
+    ///     Returns an optional <see cref="HttpMessageHandler" /> used when constructing the <see cref="HttpClient" />.
+    ///     Override in tests to inject a mock handler.
+    /// </summary>
+    protected virtual HttpMessageHandler? GetHttpMessageHandler() => null;
+
+    /// <summary>
     ///     Creates and configures an HttpClient instance with the necessary headers for IXON API requests.
     /// </summary>
     /// <returns></returns>
     private HttpClient CreateHttpClient()
     {
-        var httpClient = new HttpClient();
+        var httpClient = GetHttpMessageHandler() is { } handler
+            ? new HttpClient(handler)
+            : new HttpClient();
         httpClient.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue(
                 "Bearer",
