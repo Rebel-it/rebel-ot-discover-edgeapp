@@ -13,9 +13,12 @@ namespace Rebelit.OT.Discover.EdgeApp.Connections.OPCUA;
 /// <summary>
 /// Sample Session calls based on the reference server node model.
 /// </summary>
+/// <remarks>
+///     Code is copied and adapted from the <see href="https://github.com/OPCFoundation/UA-.NETStandard/blob/master/Applications/ConsoleReferenceClient/ClientSamples.cs"> OPC Foundation .NET Standard Library samples </see>.
+/// </remarks>
 public class ClientSamples
 {
-    private const int kMaxSearchDepth = 128;
+    private const int MaxSearchDepth = 128;
 
     public ClientSamples(
         ITelemetryContext telemetry,
@@ -24,33 +27,30 @@ public class ClientSamples
         bool verbose = false
     )
     {
-        m_telemetry = telemetry;
-        m_logger = telemetry.CreateLogger<ClientSamples>();
-        m_validate = validateResponse;
+        _telemetry = telemetry;
+        _logger = telemetry.CreateLogger<ClientSamples>();
+        _validateResponse = validateResponse;
 
-        m_quitEvent = quitEvent;
-        m_verbose = verbose;
-        m_desiredEventFields = [];
-        int eventIndexCounter = 0;
+        _quitEvent = quitEvent;
+        _verbose = verbose;
+        _desiredEventFields = [];
+        int fieldIndex = 0;
 
-        m_desiredEventFields.Add(
-            eventIndexCounter++,
-            [.. new QualifiedName[] { new(BrowseNames.Time) }]
-        );
-        m_desiredEventFields.Add(
-            eventIndexCounter++,
+        _desiredEventFields.Add(fieldIndex++, [.. new QualifiedName[] { new(BrowseNames.Time) }]);
+        _desiredEventFields.Add(
+            fieldIndex++,
             [.. new QualifiedName[] { new(BrowseNames.ActiveState) }]
         );
-        m_desiredEventFields.Add(
-            eventIndexCounter++,
+        _desiredEventFields.Add(
+            fieldIndex++,
             [.. new QualifiedName[] { new(BrowseNames.Message) }]
         );
-        m_desiredEventFields.Add(
-            eventIndexCounter++,
+        _desiredEventFields.Add(
+            fieldIndex++,
             [.. new QualifiedName[] { new(BrowseNames.LimitState), new(BrowseNames.CurrentState) }]
         );
-        m_desiredEventFields.Add(
-            eventIndexCounter++,
+        _desiredEventFields.Add(
+            fieldIndex++,
             [
                 .. new QualifiedName[]
                 {
@@ -68,7 +68,7 @@ public class ClientSamples
     {
         if (session == null || !session.Connected)
         {
-            Console.WriteLine("Session not connected!");
+            _logger.LogWarning("Session not connected.");
             return;
         }
 
@@ -98,7 +98,7 @@ public class ClientSamples
             };
 
             // Read the node attributes
-            Console.WriteLine("Reading nodes...");
+            _logger.LogInformation("Reading nodes...");
 
             // Call Read Service
             ReadResponse response = await session
@@ -106,7 +106,6 @@ public class ClientSamples
                 .ConfigureAwait(false);
 
             DataValueCollection resultsValues = response.Results;
-            DiagnosticInfoCollection diagnosticInfos = response.DiagnosticInfos;
 
             // Validate the results
             ValidateResponse(resultsValues, nodesToRead);
@@ -114,23 +113,23 @@ public class ClientSamples
             // Display the results.
             foreach (DataValue result in resultsValues)
             {
-                Console.WriteLine(
-                    $"Read Value = {result.Value} , StatusCode = {result.StatusCode}"
+                _logger.LogInformation(
+                    "Read Value = {Value}, StatusCode = {StatusCode}",
+                    result.Value,
+                    result.StatusCode
                 );
             }
 
             // Read Server NamespaceArray
-            Console.WriteLine("Reading Value of NamespaceArray node...");
+            _logger.LogInformation("Reading NamespaceArray node value...");
             DataValue namespaceArray = await session
                 .ReadValueAsync(Variables.Server_NamespaceArray, ct)
                 .ConfigureAwait(false);
-            // Display the result
-            Console.WriteLine($"NamespaceArray Value = {namespaceArray}");
+            _logger.LogInformation("NamespaceArray Value = {NamespaceArray}", namespaceArray);
         }
         catch (Exception ex)
         {
-            // Log Error
-            m_logger.LogError(ex, "Read Nodes Error.");
+            _logger.LogError(ex, "Read Nodes Error.");
         }
     }
 
@@ -141,7 +140,7 @@ public class ClientSamples
     {
         if (session == null || !session.Connected)
         {
-            Console.WriteLine("Session not connected!");
+            _logger.LogWarning("Session not connected.");
             return;
         }
 
@@ -178,7 +177,7 @@ public class ClientSamples
             nodesToWrite.Add(stringWriteVal);
 
             // Write the node attributes
-            Console.WriteLine("Writing nodes...");
+            _logger.LogInformation("Writing nodes...");
 
             // Call Write Service
             WriteResponse response = await session
@@ -186,23 +185,21 @@ public class ClientSamples
                 .ConfigureAwait(false);
 
             StatusCodeCollection results = response.Results;
-            DiagnosticInfoCollection diagnosticInfos = response.DiagnosticInfos;
 
             // Validate the response
             ValidateResponse(results, nodesToWrite);
 
             // Display the results.
-            Console.WriteLine("Write Results :");
+            _logger.LogInformation("Write results:");
 
             foreach (StatusCode writeResult in results)
             {
-                Console.WriteLine($"     {writeResult}");
+                _logger.LogInformation("  {WriteResult}", writeResult);
             }
         }
         catch (Exception ex)
         {
-            // Log Error
-            m_logger.LogInformation(ex, "Write Nodes Error.");
+            _logger.LogError(ex, "Write Nodes Error.");
         }
     }
 
@@ -213,7 +210,7 @@ public class ClientSamples
     {
         if (session == null || !session.Connected)
         {
-            Console.WriteLine("Session not connected!");
+            _logger.LogWarning("Session not connected.");
             return;
         }
 
@@ -232,25 +229,25 @@ public class ClientSamples
             NodeId nodeToBrowse = ObjectIds.Server;
 
             // Call Browse service
-            Console.WriteLine($"Browsing {nodeToBrowse} node...");
+            _logger.LogInformation("Browsing {NodeId} node...", nodeToBrowse);
             ReferenceDescriptionCollection browseResults = await browser
                 .BrowseAsync(nodeToBrowse, ct)
                 .ConfigureAwait(false);
 
-            // Display the results
-            Console.WriteLine($"Browse returned {browseResults.Count} results:");
+            _logger.LogInformation("Browse returned {Count} results:", browseResults.Count);
 
             foreach (ReferenceDescription result in browseResults)
             {
-                Console.WriteLine(
-                    $"     DisplayName = {result.DisplayName.Text}, NodeClass = {result.NodeClass}"
+                _logger.LogInformation(
+                    "  DisplayName = {DisplayName}, NodeClass = {NodeClass}",
+                    result.DisplayName.Text,
+                    result.NodeClass
                 );
             }
         }
         catch (Exception ex)
         {
-            // Log Error
-            m_logger.LogError(ex, "Browse Error.");
+            _logger.LogError(ex, "Browse Error.");
         }
     }
 
@@ -261,7 +258,7 @@ public class ClientSamples
     {
         if (session == null || !session.Connected)
         {
-            Console.WriteLine("Session not connected!");
+            _logger.LogWarning("Session not connected.");
             return;
         }
 
@@ -276,22 +273,24 @@ public class ClientSamples
             // Define the method parameters
             // Input argument requires a Float and an UInt32 value
             // Invoke Call service
-            Console.WriteLine($"Calling UAMethod for node {methodId} ...");
+            _logger.LogInformation("Calling UA method for node {NodeId}...", methodId);
             var outputArguments = await session
                 .CallAsync(objectId, methodId, ct, (float)10.5, (uint)10)
                 .ConfigureAwait(false);
 
-            // Display results
-            Console.WriteLine($"Method call returned {outputArguments.Count} output argument(s):");
+            _logger.LogInformation(
+                "Method call returned {Count} output argument(s):",
+                outputArguments.Count
+            );
 
             foreach (Variant outputArgument in outputArguments.Select(v => (Variant)v))
             {
-                Console.WriteLine($"     OutputValue = {outputArgument.Value}");
+                _logger.LogInformation("  OutputValue = {OutputValue}", outputArgument.Value);
             }
         }
         catch (Exception ex)
         {
-            m_logger.LogError(ex, "Method call error");
+            _logger.LogError(ex, "Method call error");
         }
     }
 
@@ -306,7 +305,7 @@ public class ClientSamples
     {
         if (session == null || !session.Connected)
         {
-            Console.WriteLine("Session not connected!");
+            _logger.LogWarning("Session not connected.");
             return;
         }
 
@@ -321,20 +320,22 @@ public class ClientSamples
             // Define the method parameters
             // Input argument requires a Float and an UInt32 value
             // Invoke Call service
-            Console.WriteLine($"Calling UAMethod for node {methodId} ...");
+            _logger.LogInformation("Calling UA method for node {NodeId}...", methodId);
             var outputArguments = await session.CallAsync(objectId, methodId, ct, timeToRun);
 
-            // Display results
-            Console.WriteLine($"Method call returned {outputArguments.Count} output argument(s):");
+            _logger.LogInformation(
+                "Method call returned {Count} output argument(s):",
+                outputArguments.Count
+            );
 
             foreach (Variant outputArgument in outputArguments.Select(v => (Variant)v))
             {
-                Console.WriteLine($"     OutputValue = {outputArgument.Value}");
+                _logger.LogInformation("  OutputValue = {OutputValue}", outputArgument.Value);
             }
         }
         catch (Exception ex)
         {
-            m_logger.LogError(ex, "Method call error");
+            _logger.LogError(ex, "Method call error");
         }
     }
 
@@ -352,7 +353,7 @@ public class ClientSamples
 
         if (session == null || !session.Connected)
         {
-            Console.WriteLine("Session not connected!");
+            _logger.LogWarning("Session not connected.");
             return isDurable;
         }
 
@@ -385,7 +386,7 @@ public class ClientSamples
 
             // Create the subscription on Server side
             await subscription.CreateAsync(ct).ConfigureAwait(false);
-            m_logger.LogInformation(
+            _logger.LogInformation(
                 "New Subscription created with SubscriptionId = {Id}, Sampling Interval {SamplingInterval}, Publishing Interval {PublishingInterval}.",
                 subscription.Id,
                 itemSamplingInterval,
@@ -401,7 +402,7 @@ public class ClientSamples
                 {
                     isDurable = true;
 
-                    m_logger.LogInformation(
+                    _logger.LogInformation(
                         "Subscription {SubscriptionId} is now durable, Revised Lifetime {Lifetime} in hours.",
                         subscription.Id,
                         revisedLifetimeInHours
@@ -409,7 +410,7 @@ public class ClientSamples
                 }
                 else
                 {
-                    m_logger.LogInformation(
+                    _logger.LogInformation(
                         "Subscription {SubscriptionId} failed durable call",
                         subscription.Id
                     );
@@ -472,7 +473,7 @@ public class ClientSamples
 
             var simpleAttributeOperands = new SimpleAttributeOperandCollection();
 
-            foreach (QualifiedNameCollection desiredEventField in m_desiredEventFields.Values)
+            foreach (QualifiedNameCollection desiredEventField in _desiredEventFields.Values)
             {
                 simpleAttributeOperands.Add(
                     new SimpleAttributeOperand
@@ -508,14 +509,14 @@ public class ClientSamples
 
             // Create the monitored items on Server side
             await subscription.ApplyChangesAsync(ct).ConfigureAwait(false);
-            m_logger.LogInformation(
+            _logger.LogInformation(
                 "MonitoredItems created for SubscriptionId = {SubscriptionId}.",
                 subscription.Id
             );
         }
         catch (Exception ex)
         {
-            m_logger.LogError(ex, "Subscribe error");
+            _logger.LogError(ex, "Subscribe error");
         }
 
         return isDurable;
@@ -565,16 +566,16 @@ public class ClientSamples
         }
 
         int searchDepth = 0;
-        while (nodesToBrowse.Count > 0 && searchDepth < kMaxSearchDepth)
+        while (nodesToBrowse.Count > 0 && searchDepth < MaxSearchDepth)
         {
-            if (m_quitEvent?.WaitOne(0) == true)
+            if (_quitEvent?.WaitOne(0) == true)
             {
-                m_logger.LogInformation("Browse aborted.");
+                _logger.LogInformation("Browse aborted.");
                 break;
             }
 
             searchDepth++;
-            m_logger.LogInformation(
+            _logger.LogInformation(
                 "{Depth}: Find {Count} references after {Duration}ms",
                 searchDepth,
                 nodesToBrowse.Count,
@@ -639,14 +640,14 @@ public class ClientSamples
             }
             if (duplicates > 0)
             {
-                m_logger.LogInformation(
+                _logger.LogInformation(
                     "Find References {Count} duplicate nodes were ignored",
                     duplicates
                 );
             }
             if (leafNodes > 0)
             {
-                m_logger.LogInformation(
+                _logger.LogInformation(
                     "Find References {Count} leaf nodes were ignored",
                     leafNodes
                 );
@@ -656,7 +657,7 @@ public class ClientSamples
 
         stopwatch.Stop();
 
-        m_logger.LogInformation(
+        _logger.LogInformation(
             "FetchAllNodesNodeCache found {Count} nodes in {Duration}ms",
             nodeDictionary.Count,
             stopwatch.ElapsedMilliseconds
@@ -665,11 +666,11 @@ public class ClientSamples
         var result = nodeDictionary.Values.ToList();
         result.Sort((x, y) => x.NodeId.CompareTo(y.NodeId));
 
-        if (m_verbose)
+        if (_verbose)
         {
             foreach (INode node in result)
             {
-                m_logger.LogInformation(
+                _logger.LogInformation(
                     "NodeId {NodeId} {NodeClass} {BrowseName}",
                     node.NodeId,
                     node.NodeClass,
@@ -717,7 +718,7 @@ public class ClientSamples
 
             if (browseDescription.ResultMask != (uint)BrowseResultMask.All)
             {
-                m_logger.LogWarning(
+                _logger.LogWarning(
                     "Setting the BrowseResultMask is not supported by the "
                         + "ManagedBrowse method. Using '{BrowseResultMask}' instead of "
                         + "the mask {BrowseDescriptionResultMask} for the result mask",
@@ -732,7 +733,7 @@ public class ClientSamples
             NodeId.IsNull(startingNode) ? ObjectIds.RootFolder : startingNode,
         };
 
-        const int kMaxReferencesPerNode = 1000;
+        const int MaxReferencesPerNode = 1000;
 
         // Browse
         var referenceDescriptions = new Dictionary<ExpandedNodeId, ReferenceDescription>();
@@ -744,41 +745,31 @@ public class ClientSamples
         var newReferenceDescriptions = new List<ReferenceDescriptionCollection>();
         var allServiceResults = new List<ServiceResult>();
 
-        while (nodesToBrowse.Count != 0 && searchDepth < kMaxSearchDepth)
+        while (nodesToBrowse.Count != 0 && searchDepth < MaxSearchDepth)
         {
             searchDepth++;
-            m_logger.LogInformation(
+            _logger.LogInformation(
                 "{Depth}: Browse {Count} nodes after {Duration}ms",
                 searchDepth,
                 nodesToBrowse.Count,
                 stopWatch.ElapsedMilliseconds
             );
 
-            const bool repeatBrowse = false;
-
-            do
+            if (_quitEvent?.WaitOne(0) == true)
             {
-                if (m_quitEvent?.WaitOne(0) == true)
-                {
-                    m_logger.LogInformation("Browse aborted.");
-                    break;
-                }
+                _logger.LogInformation("Browse aborted.");
+                break;
+            }
 
-                try
-                {
-                    // the resultMask defaults to "all"
-                    // maybe the API should be extended to
-                    // support it. But that will then also be
-                    // necessary for BrowseAsync
-                    (
-                        IList<ReferenceDescriptionCollection> descriptions,
-                        IList<ServiceResult> errors
-                    ) = await uaClient
+            try
+            {
+                (IList<ReferenceDescriptionCollection> descriptions, IList<ServiceResult> errors) =
+                    await uaClient
                         .Session.ManagedBrowseAsync(
                             null,
                             null,
                             nodesToBrowse,
-                            kMaxReferencesPerNode,
+                            MaxReferencesPerNode,
                             browseDirection,
                             referenceTypeId,
                             true,
@@ -787,21 +778,15 @@ public class ClientSamples
                         )
                         .ConfigureAwait(false);
 
-                    allReferenceDescriptions.AddRange(descriptions);
-                    newReferenceDescriptions.AddRange(descriptions);
-                    allServiceResults.AddRange(errors);
-                }
-                catch (ServiceResultException sre)
-                {
-                    // the maximum number of nodes per browse is
-                    // set in the ManagedBrowse from the configuration
-                    // and cannot be influenced from the outside.
-                    // if that's desired it would be necessary to provide
-                    // an additional parameter to the method.
-                    m_logger.LogError(sre, "Browse error");
-                    throw;
-                }
-            } while (repeatBrowse);
+                allReferenceDescriptions.AddRange(descriptions);
+                newReferenceDescriptions.AddRange(descriptions);
+                allServiceResults.AddRange(errors);
+            }
+            catch (ServiceResultException sre)
+            {
+                _logger.LogError(sre, "Browse error");
+                throw;
+            }
 
             // Build browse request for next level
             var nodesForNextManagedBrowse = new List<NodeId>();
@@ -837,7 +822,7 @@ public class ClientSamples
 
             if (duplicates > 0)
             {
-                m_logger.LogInformation(
+                _logger.LogInformation(
                     "Managed Browse Result {Count} duplicate nodes were ignored.",
                     duplicates
                 );
@@ -850,17 +835,17 @@ public class ClientSamples
 
         result.Sort((x, y) => x.NodeId.CompareTo(y.NodeId));
 
-        m_logger.LogInformation(
+        _logger.LogInformation(
             "ManagedBrowseFullAddressSpace found {Count} references on server in {Duration}ms.",
             result.Count,
             stopWatch.ElapsedMilliseconds
         );
 
-        if (m_verbose)
+        if (_verbose)
         {
             foreach (ReferenceDescription reference in result)
             {
-                m_logger.LogInformation(
+                _logger.LogInformation(
                     "NodeId {NodeId} {NodeClass} {BrowseName}",
                     reference.NodeId,
                     reference.NodeClass,
@@ -891,7 +876,7 @@ public class ClientSamples
         stopWatch.Start();
 
         // Browse template
-        const int kMaxReferencesPerNode = 1000;
+        const int MaxReferencesPerNode = 1000;
         BrowseDescription browseTemplate =
             browseDescription
             ?? new BrowseDescription
@@ -914,10 +899,10 @@ public class ClientSamples
 
         int searchDepth = 0;
         uint maxNodesPerBrowse = uaClient.Session.OperationLimits.MaxNodesPerBrowse;
-        while (browseDescriptionCollection.Count > 0 && searchDepth < kMaxSearchDepth)
+        while (browseDescriptionCollection.Count > 0 && searchDepth < MaxSearchDepth)
         {
             searchDepth++;
-            m_logger.LogInformation(
+            _logger.LogInformation(
                 "{Depth}: Browse {Count} nodes after {Duration}ms",
                 searchDepth,
                 browseDescriptionCollection.Count,
@@ -931,9 +916,9 @@ public class ClientSamples
             DiagnosticInfoCollection diagnosticsInfoCollection;
             do
             {
-                if (m_quitEvent?.WaitOne(0) == true)
+                if (_quitEvent?.WaitOne(0) == true)
                 {
-                    m_logger.LogInformation("Browse aborted.");
+                    _logger.LogInformation("Browse aborted.");
                     break;
                 }
 
@@ -945,13 +930,7 @@ public class ClientSamples
                 try
                 {
                     BrowseResponse browseResponse = await uaClient
-                        .Session.BrowseAsync(
-                            null,
-                            null,
-                            kMaxReferencesPerNode,
-                            browseCollection,
-                            ct
-                        )
+                        .Session.BrowseAsync(null, null, MaxReferencesPerNode, browseCollection, ct)
                         .ConfigureAwait(false);
                     browseResultCollection = browseResponse.Results;
                     diagnosticsInfoCollection = browseResponse.DiagnosticInfos;
@@ -959,7 +938,7 @@ public class ClientSamples
                     ClientBase.ValidateDiagnosticInfos(diagnosticsInfoCollection, browseCollection);
 
                     // separate unprocessed nodes for later
-                    int ii = 0;
+                    int i = 0;
                     foreach (BrowseResult browseResult in browseResultCollection)
                     {
                         // check for error.
@@ -971,14 +950,14 @@ public class ClientSamples
                             // have been completed and their continuation points released.
                             if (statusCode == StatusCodes.BadNoContinuationPoints)
                             {
-                                unprocessedOperations.Add(browseCollection[ii++]);
+                                unprocessedOperations.Add(browseCollection[i++]);
                                 continue;
                             }
                         }
 
                         // save results.
                         allBrowseResults.Add(browseResult);
-                        ii++;
+                        i++;
                     }
                 }
                 catch (ServiceResultException sre)
@@ -997,7 +976,7 @@ public class ClientSamples
                     }
                     else
                     {
-                        m_logger.LogError(sre, "Browse error.");
+                        _logger.LogError(sre, "Browse error.");
                         throw;
                     }
                 }
@@ -1018,12 +997,12 @@ public class ClientSamples
             ByteStringCollection continuationPoints = PrepareBrowseNext(browseResultCollection);
             while (continuationPoints.Count > 0)
             {
-                if (m_quitEvent?.WaitOne(0) == true)
+                if (_quitEvent?.WaitOne(0) == true)
                 {
-                    m_logger.LogInformation("Browse aborted.");
+                    _logger.LogInformation("Browse aborted.");
                 }
 
-                m_logger.LogInformation(
+                _logger.LogInformation(
                     "BrowseNext {Count} continuation points.",
                     continuationPoints.Count
                 );
@@ -1066,7 +1045,7 @@ public class ClientSamples
             }
             if (duplicates > 0)
             {
-                m_logger.LogInformation(
+                _logger.LogInformation(
                     "Browse Result {Count} duplicate nodes were ignored.",
                     duplicates
                 );
@@ -1084,17 +1063,17 @@ public class ClientSamples
         var result = new ReferenceDescriptionCollection(referenceDescriptions.Values);
         result.Sort((x, y) => x.NodeId.CompareTo(y.NodeId));
 
-        m_logger.LogInformation(
+        _logger.LogInformation(
             "BrowseFullAddressSpace found {Count} references on server in {Duration}ms.",
             referenceDescriptions.Count,
             stopWatch.ElapsedMilliseconds
         );
 
-        if (m_verbose)
+        if (_verbose)
         {
             foreach (ReferenceDescription reference in result)
             {
-                m_logger.LogInformation(
+                _logger.LogInformation(
                     "NodeId Id:{NodeId}; Class:{NodeClass}; BrowseName:{BrowseName}; TypeDefinition:{TypeDefinition}, DisplayName:{DisplayName}",
                     reference.NodeId,
                     reference.NodeClass,
@@ -1120,31 +1099,31 @@ public class ClientSamples
         CancellationToken ct = default
     )
     {
-        m_logger.LogInformation("Load the server type system.");
+        _logger.LogInformation("Load the server type system.");
 
         var stopWatch = new Stopwatch();
         stopWatch.Start();
 
-        var complexTypeSystem = new ComplexTypeSystem(session, m_telemetry);
+        var complexTypeSystem = new ComplexTypeSystem(session, _telemetry);
         await complexTypeSystem.LoadAsync(throwOnError: true, ct: ct).ConfigureAwait(false);
 
         stopWatch.Stop();
 
-        m_logger.LogInformation(
+        _logger.LogInformation(
             "Loaded {Count} types took {Duration}ms.",
             complexTypeSystem.GetDefinedTypes().Length,
             stopWatch.ElapsedMilliseconds
         );
 
-        if (m_verbose)
+        if (_verbose)
         {
-            m_logger.LogInformation("Custom types defined for this session:");
+            _logger.LogInformation("Custom types defined for this session:");
             foreach (Type type in complexTypeSystem.GetDefinedTypes())
             {
-                m_logger.LogInformation("{Namespace}.{TypeName}", type.Namespace, type.Name);
+                _logger.LogInformation("{Namespace}.{TypeName}", type.Namespace, type.Name);
             }
 
-            m_logger.LogInformation(
+            _logger.LogInformation(
                 "Loaded {Count} dictionaries:",
                 complexTypeSystem.DataTypeSystem.Count
             );
@@ -1152,10 +1131,10 @@ public class ClientSamples
                 KeyValuePair<NodeId, DataDictionary> dictionary in complexTypeSystem.DataTypeSystem
             )
             {
-                m_logger.LogInformation(" + {DictionaryName}", dictionary.Value.Name);
+                _logger.LogInformation(" + {DictionaryName}", dictionary.Value.Name);
                 foreach (KeyValuePair<NodeId, QualifiedName> type in dictionary.Value.DataTypes)
                 {
-                    m_logger.LogInformation(" -- {NodeId}:{BrowseName}", type.Key, type.Value);
+                    _logger.LogInformation(" -- {NodeId}:{BrowseName}", type.Key, type.Value);
                 }
             }
         }
@@ -1212,7 +1191,7 @@ public class ClientSamples
                     {
                         try
                         {
-                            m_logger.LogInformation("Read {NodeId}", variableId);
+                            _logger.LogInformation("Read {NodeId}", variableId);
                             DataValue value = await uaClient
                                 .Session.ReadValueAsync(variableId, ct)
                                 .ConfigureAwait(false);
@@ -1227,16 +1206,16 @@ public class ClientSamples
                                     value,
                                     JsonEncodingType.Compact
                                 );
-                                m_logger.LogInformation("{Value}", valueString);
+                                _logger.LogInformation("{Value}", valueString);
                             }
                             else
                             {
-                                m_logger.LogInformation("Error: {StatusCode}", value.StatusCode);
+                                _logger.LogInformation("Error: {StatusCode}", value.StatusCode);
                             }
                         }
                         catch (ServiceResultException sre)
                         {
-                            m_logger.LogError(sre, "Error");
+                            _logger.LogError(sre, "Error");
                             values.Add(new DataValue(sre.StatusCode));
                             errors.Add(sre.Result);
                         }
@@ -1248,24 +1227,24 @@ public class ClientSamples
                         .Session.ReadValuesAsync(variableIds, ct)
                         .ConfigureAwait(false);
 
-                    int ii = 0;
+                    int i = 0;
                     foreach (DataValue value in values)
                     {
-                        if (ServiceResult.IsNotBad(errors[ii]))
+                        if (ServiceResult.IsNotBad(errors[i]))
                         {
                             string valueString = FormatValueAsJson(
                                 uaClient.Session.MessageContext,
-                                variableIds[ii].ToString(),
+                                variableIds[i].ToString(),
                                 value,
                                 JsonEncodingType.Compact
                             );
-                            m_logger.LogInformation("{Value}", valueString);
+                            _logger.LogInformation("{Value}", valueString);
                         }
                         else
                         {
-                            m_logger.LogInformation("Error: {StatusCode}", value.StatusCode);
+                            _logger.LogInformation("Error: {StatusCode}", value.StatusCode);
                         }
-                        ii++;
+                        i++;
                     }
                 }
 
@@ -1274,7 +1253,7 @@ public class ClientSamples
             catch (ServiceResultException sre)
                 when (sre.StatusCode == StatusCodes.BadEncodingLimitsExceeded)
             {
-                m_logger.LogInformation(
+                _logger.LogInformation(
                     "Retry to read the values due to error: {Error}",
                     sre.Message
                 );
@@ -1303,7 +1282,7 @@ public class ClientSamples
     {
         if (uaClient.Session == null || !uaClient.Session.Connected)
         {
-            m_logger.LogInformation("Session not connected!");
+            _logger.LogWarning("Session not connected.");
             return;
         }
 
@@ -1338,7 +1317,7 @@ public class ClientSamples
 
             // Create the subscription on Server side
             await subscription.CreateAsync(ct).ConfigureAwait(false);
-            m_logger.LogInformation(
+            _logger.LogInformation(
                 "New Subscription created with SubscriptionId = {SubscriptionId}.",
                 subscription.Id
             );
@@ -1365,7 +1344,7 @@ public class ClientSamples
 
             // Create the monitored items on Server side
             await subscription.ApplyChangesAsync(ct).ConfigureAwait(false);
-            m_logger.LogInformation(
+            _logger.LogInformation(
                 "MonitoredItems {Count} created for SubscriptionId = {SubscriptionId}.",
                 subscription.MonitoredItemCount,
                 subscription.Id
@@ -1373,7 +1352,7 @@ public class ClientSamples
         }
         catch (Exception ex)
         {
-            m_logger.LogError(ex, "Subscribe error");
+            _logger.LogError(ex, "Subscribe error");
         }
     }
 
@@ -1426,7 +1405,7 @@ public class ClientSamples
     {
         try
         {
-            m_logger.LogInformation(
+            _logger.LogInformation(
                 "Keep Alive  : Id={SubscriptionId} PublishTime={PublishTime} SequenceNumber={SequenceNumber}.",
                 subscription.Id,
                 notification.PublishTime,
@@ -1435,7 +1414,7 @@ public class ClientSamples
         }
         catch (Exception ex)
         {
-            m_logger.LogError(ex, "FastKeepAliveNotification error");
+            _logger.LogError(ex, "FastKeepAliveNotification error");
         }
     }
 
@@ -1450,7 +1429,7 @@ public class ClientSamples
     {
         try
         {
-            m_logger.LogInformation(
+            _logger.LogInformation(
                 "Notification: Id={SubscriptionId} PublishTime={PublishTime} SequenceNumber={SequenceNumber} Items={Count}.",
                 subscription.Id,
                 notification.PublishTime,
@@ -1460,7 +1439,7 @@ public class ClientSamples
         }
         catch (Exception ex)
         {
-            m_logger.LogError(ex, "FastDataChangeNotification error");
+            _logger.LogError(ex, "FastDataChangeNotification error");
         }
     }
 
@@ -1477,7 +1456,7 @@ public class ClientSamples
             // Log MonitoredItem Notification event
             var notification = e.NotificationValue as MonitoredItemNotification;
             DateTime localTime = notification.Value.SourceTimestamp.ToLocalTime();
-            m_logger.LogInformation(
+            _logger.LogInformation(
                 "Notification: {SequenceNumber} \"{NodeId}\" and Value = {Value} at [{CurrentTime}].",
                 notification.Message.SequenceNumber,
                 monitoredItem.ResolvedNodeId,
@@ -1487,7 +1466,7 @@ public class ClientSamples
         }
         catch (Exception ex)
         {
-            m_logger.LogError(ex, "OnMonitoredItemNotification error");
+            _logger.LogError(ex, "OnMonitoredItemNotification error");
         }
     }
 
@@ -1504,7 +1483,7 @@ public class ClientSamples
             // Log MonitoredItem Notification event
             var notification = e.NotificationValue as EventFieldList;
 
-            foreach (KeyValuePair<int, QualifiedNameCollection> entry in m_desiredEventFields)
+            foreach (KeyValuePair<int, QualifiedNameCollection> entry in _desiredEventFields)
             {
                 Variant field = notification.EventFields[entry.Key];
                 if (field.TypeInfo.BuiltInType != BuiltInType.Null)
@@ -1526,35 +1505,35 @@ public class ClientSamples
                     {
                         try
                         {
-                            // DateTime currentTime = field.GetValue<DateTime>();
-                            m_lastEventTime = DateTime.Now; //TODO: Fix
-                            m_processedEvents++;
-                            if (m_processedEvents > 1)
+                            DateTime previousEventTime = _lastEventTime;
+                            _lastEventTime = DateTime.Now;
+                            _processedEvents++;
+                            if (_processedEvents > 1)
                             {
-                                m_logger.LogInformation(
+                                _logger.LogInformation(
                                     "Event Received - total count = {Count}, time since last event = {TimeBetweenEvents} seconds",
-                                    m_processedEvents,
-                                    (DateTime.Now - m_lastEventTime).TotalSeconds
+                                    _processedEvents,
+                                    (DateTime.Now - previousEventTime).TotalSeconds
                                 );
                             }
                             else
                             {
-                                m_logger.LogInformation(
+                                _logger.LogInformation(
                                     "Event Received - total count = {Count}",
-                                    m_processedEvents
+                                    _processedEvents
                                 );
                             }
                         }
                         catch (Exception ex)
                         {
-                            m_logger.LogError(
+                            _logger.LogError(
                                 ex,
                                 "Unexpected error retrieving Event Time Field Value"
                             );
                         }
                     }
 
-                    m_logger.LogInformation(
+                    _logger.LogInformation(
                         "\tField [{Index}] \"{Name}\" = [{Value}]",
                         entry.Key,
                         fieldName,
@@ -1565,7 +1544,7 @@ public class ClientSamples
         }
         catch (Exception ex)
         {
-            m_logger.LogError(ex, "OnMonitoredItemEventNotification error");
+            _logger.LogError(ex, "OnMonitoredItemEventNotification error");
         }
     }
 
@@ -1622,13 +1601,13 @@ public class ClientSamples
     /// <param name="filePath">The path where the NodeSet2 XML file will be saved.</param>
     public void ExportNodesToNodeSet2(ISession session, IList<INode> nodes, string filePath)
     {
-        m_logger.LogInformation("Exporting {Count} nodes to {FilePath}...", nodes.Count, filePath);
+        _logger.LogInformation("Exporting {Count} nodes to {FilePath}...", nodes.Count, filePath);
 
         var stopwatch = new Stopwatch();
         stopwatch.Start();
 
         using var outputStream = new FileStream(filePath, FileMode.Create);
-        var systemContext = new SystemContext(m_telemetry)
+        var systemContext = new SystemContext(_telemetry)
         {
             NamespaceUris = session.NamespaceUris,
             ServerUris = session.ServerUris,
@@ -1638,7 +1617,7 @@ public class ClientSamples
 
         stopwatch.Stop();
 
-        m_logger.LogInformation(
+        _logger.LogInformation(
             "Exported {Count} nodes to {FilePath} in {Duration}ms",
             nodes.Count,
             filePath,
@@ -1680,7 +1659,7 @@ public class ClientSamples
             );
         }
 
-        m_logger.LogInformation(
+        _logger.LogInformation(
             "Exporting {Count} nodes to separate NodeSet2 files per namespace in {Directory}...",
             nodes.Count,
             outputDirectory
@@ -1721,7 +1700,7 @@ public class ClientSamples
             string fileName = CreateSafeFileName(namespaceUri, kvp.Key);
             string filePath = Path.Combine(outputDirectory, fileName);
 
-            m_logger.LogInformation(
+            _logger.LogInformation(
                 "Exporting namespace {NamespaceIndex} ({NamespaceUri}): {Count} nodes to {FilePath}",
                 kvp.Key,
                 namespaceUri,
@@ -1733,7 +1712,7 @@ public class ClientSamples
                     () =>
                     {
                         using var outputStream = new FileStream(filePath, FileMode.Create);
-                        var systemContext = new SystemContext(m_telemetry)
+                        var systemContext = new SystemContext(_telemetry)
                         {
                             NamespaceUris = session.NamespaceUris,
                             ServerUris = session.ServerUris,
@@ -1755,7 +1734,7 @@ public class ClientSamples
 
         stopwatch.Stop();
 
-        m_logger.LogInformation(
+        _logger.LogInformation(
             "Exported {NamespaceCount} namespaces ({NodeCount} total nodes) in {Duration}ms",
             exportedFiles.Count,
             nodes.Count,
@@ -1818,14 +1797,14 @@ public class ClientSamples
         return continuationPoints;
     }
 
-    private void ValidateResponse<TRequest, TResponse>(
-        IList<TRequest> requests,
-        IList<TResponse> responses
+    private void ValidateResponse<TResponse, TRequest>(
+        IList<TResponse> responses,
+        IList<TRequest> requests
     )
     {
-        if (m_validate != null)
+        if (_validateResponse != null)
         {
-            m_validate(requests?.ToList(), responses?.ToList());
+            _validateResponse(responses?.ToList(), requests?.ToList());
         }
         else
         {
@@ -1833,12 +1812,12 @@ public class ClientSamples
         }
     }
 
-    private readonly Action<IList, IList> m_validate;
-    private readonly ITelemetryContext m_telemetry;
-    private readonly ILogger m_logger;
-    private readonly ManualResetEvent m_quitEvent;
-    private readonly bool m_verbose;
-    private readonly Dictionary<int, QualifiedNameCollection> m_desiredEventFields;
-    private int m_processedEvents;
-    private DateTime m_lastEventTime = DateTime.Now;
+    private readonly Action<IList, IList> _validateResponse;
+    private readonly ITelemetryContext _telemetry;
+    private readonly ILogger _logger;
+    private readonly ManualResetEvent _quitEvent;
+    private readonly bool _verbose;
+    private readonly Dictionary<int, QualifiedNameCollection> _desiredEventFields;
+    private int _processedEvents;
+    private DateTime _lastEventTime = DateTime.Now;
 }
