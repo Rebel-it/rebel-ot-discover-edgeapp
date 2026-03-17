@@ -13,29 +13,29 @@ public class Scraper(
     ILogger<Scraper> logger
 ) : IScraper
 {
-    /// <summary>
-    ///     The address of the OPC UA server to scrape. This should be the endpoint where your OPC UA server is accessible.
-    ///     Make sure to replace this with the actual address of your OPC UA server.
-    /// </summary>
-    public string Address { get; } = "opc.tcp://172.27.21.3:4840";
+    public string Address { get; } =
+        Environment.GetEnvironmentVariable("OPCUA_ServerAddress")
+        ?? throw new InvalidOperationException(
+            "OPCUA_ServerAddress environment variable is not set."
+        );
 
-    /// <summary>
-    ///     The agent ID to which the scraped data will be sent. This should correspond to an existing agent (device) in the IXON platform.
-    ///     Make sure to replace this with the actual agent ID you intend to use for storing the scraped data.
-    /// </summary>
-    public string AgentId { get; } = "ajParmNkfASN";
+    public string AgentId { get; } =
+        Environment.GetEnvironmentVariable("IXON_AgentId")
+        ?? throw new InvalidOperationException("IXON_AgentId environment variable is not set.");
 
-    /// <summary>
-    ///     The username for authenticating with the OPC UA server. This should be a valid username that has access to the server.
-    ///     Make sure to replace this with the actual username you use to connect to your OPC UA server.
-    /// </summary>
-    public string Username { get; } = "pip";
+    public string Username { get; } =
+        Environment.GetEnvironmentVariable("OPCUA_Username")
+        ?? throw new InvalidOperationException("OPCUA_Username environment variable is not set.");
 
-    /// <summary>
-    ///     The password for authenticating with the OPC UA server. This should be a valid password that corresponds to the username.
-    ///     Make sure to replace this with the actual password you use to connect to your OPC UA server.
-    /// </summary>
-    public string Password { get; } = "innovations";
+    public string Password { get; } =
+        Environment.GetEnvironmentVariable("OPCUA_Password")
+        ?? throw new InvalidOperationException("OPCUA_Password environment variable is not set.");
+
+    public string SourcePublicId { get; } =
+        Environment.GetEnvironmentVariable("IXON_SourcePublicId")
+        ?? throw new InvalidOperationException(
+            "IXON_SourcePublicId environment variable is not set."
+        );
 
     /// <summary>
     ///     A set of existing variable addresses that have already been created in the IXON platform. This is used to avoid creating duplicate variables when scraping the OPC UA server. The set is populated at the beginning of the execution by fetching the existing variables from the IXON platform for the specified agent.
@@ -68,12 +68,12 @@ public class Scraper(
 
         ExistingAddresses =
         [
-            .. (await apiClient.GetDataVariablesAsync("ajParmNkfASN")).Data.Select(v => v.Address),
+            .. (await apiClient.GetDataVariablesAsync(AgentId)).Data.Select(v => v.Address),
         ];
 
         ExistingTags =
         [
-            .. (await apiClient.GetTagsAsync("ajParmNkfASN")).Data.Select(t => t.Variable.PublicId),
+            .. (await apiClient.GetTagsAsync(AgentId)).Data.Select(t => t.Variable.PublicId),
         ];
 
         foreach (var referenceDescription in referenceDescriptions)
@@ -128,7 +128,7 @@ public class Scraper(
             variable.Type
         );
 
-        var result = await apiClient.PostVariableAsync("ajParmNkfASN", variable);
+        var result = await apiClient.PostVariableAsync(AgentId, variable);
         variable.PublicId = result?.Data.PublicId ?? variable.PublicId;
         return variable;
     }
@@ -162,7 +162,7 @@ public class Scraper(
             variable.PublicId
         );
 
-        var result = await apiClient.PostTagAsync("ajParmNkfASN", tag);
+        var result = await apiClient.PostTagAsync(AgentId, tag);
         return result?.Data;
     }
 
@@ -229,7 +229,7 @@ public class Scraper(
             Slug = new string([
                 .. referenceDescription.DisplayName.ToString().Where(char.IsLetterOrDigit),
             ]).ToLower(),
-            Source = new Source { PublicId = "LJrOZaLiaJjB" },
+            Source = new Source { PublicId = SourcePublicId },
             Signed = true,
         };
     }

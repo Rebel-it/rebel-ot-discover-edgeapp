@@ -5,12 +5,20 @@ set -e
 
 # Prompt for SecureEdge IP and IXON credentials
 read -rp "SecureEdge IP address (e.g. 172.27.21.1): " SECURE_EDGE_IP
-read -rp "IXON Application ID: " IXON_ApplicationId
-read -rp "IXON Company ID:     " IXON_CompanyId
-read -rsp "IXON Bearer Token:   " IXON_BearerToken
+read -rp "IXON Application ID:   " IXON_ApplicationId
+read -rp "IXON Company ID:       " IXON_CompanyId
+read -rsp "IXON Bearer Token:    " IXON_BearerToken
+echo
+read -rp "IXON Agent ID:         " IXON_AgentId
+read -rp "IXON Source Public ID: " IXON_SourcePublicId
+read -rp "OPC UA Server Address (e.g. opc.tcp://172.27.21.3:4840): " OPCUA_ServerAddress
+read -rp "OPC UA Username:       " OPCUA_Username
+read -rsp "OPC UA Password:      " OPCUA_Password
 echo
 
-if [[ -z "$SECURE_EDGE_IP" || -z "$IXON_ApplicationId" || -z "$IXON_CompanyId" || -z "$IXON_BearerToken" ]]; then
+if [[ -z "$SECURE_EDGE_IP" || -z "$IXON_ApplicationId" || -z "$IXON_CompanyId" || -z "$IXON_BearerToken" \
+   || -z "$IXON_AgentId" || -z "$IXON_SourcePublicId" \
+   || -z "$OPCUA_ServerAddress" || -z "$OPCUA_Username" || -z "$OPCUA_Password" ]]; then
     echo "Error: all values are required." >&2
     exit 1
 fi
@@ -44,5 +52,10 @@ docker buildx build \
     --build-arg IXON_ApplicationId="$IXON_ApplicationId" \
     --build-arg IXON_CompanyId="$IXON_CompanyId" \
     --build-arg IXON_BearerToken="$IXON_BearerToken" \
+    --build-arg IXON_AgentId="$IXON_AgentId" \
+    --build-arg IXON_SourcePublicId="$IXON_SourcePublicId" \
+    --build-arg OPCUA_ServerAddress="$OPCUA_ServerAddress" \
+    --build-arg OPCUA_Username="$OPCUA_Username" \
+    --build-arg OPCUA_Password="$OPCUA_Password" \
     -f ./Dockerfile \
     ../src

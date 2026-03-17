@@ -33,9 +33,22 @@ COPY --from=build /app/publish .
 ARG IXON_ApplicationId
 ARG IXON_CompanyId
 ARG IXON_BearerToken
+ARG IXON_AgentId
+ARG IXON_SourcePublicId
 
 ENV IXON_ApplicationId="$IXON_ApplicationId"
 ENV IXON_CompanyId="$IXON_CompanyId"
 ENV IXON_BearerToken="$IXON_BearerToken"
+ENV IXON_AgentId="$IXON_AgentId"
+ENV IXON_SourcePublicId="$IXON_SourcePublicId"
+
+# ── OPC UA connection ──────────────────────────────────────────────────────────
+ARG OPCUA_ServerAddress
+ARG OPCUA_Username
+ARG OPCUA_Password
+
+ENV OPCUA_ServerAddress="$OPCUA_ServerAddress"
+ENV OPCUA_Username="$OPCUA_Username"
+ENV OPCUA_Password="$OPCUA_Password"
 
 ENTRYPOINT ["dotnet", "Rebelit.OT.Discover.EdgeApp.dll"]
