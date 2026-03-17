@@ -1,5 +1,7 @@
 # rebel-ot-discover-edgeapp
 
+[![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-light.svg)](https://sonarcloud.io/summary/new_code?id=rebel-it_rebel-ot-discover-edgeapp)
+
 A .NET edge application that automatically discovers OPC UA data nodes and provisions them as Variables and Tags in the IXON Cloud platform. It is designed to run as a Docker container on an IXON SecureEdge Pro device.
 
 ## What it does
