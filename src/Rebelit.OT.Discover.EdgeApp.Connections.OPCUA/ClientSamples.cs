@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Opc.Ua;
 using Opc.Ua.Client;
 using Opc.Ua.Client.ComplexTypes;
+using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Clients;
 
 namespace Rebelit.OT.Discover.EdgeApp.Connections.OPCUA;
 

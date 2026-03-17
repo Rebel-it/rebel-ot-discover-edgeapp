@@ -1,0 +1,11 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Rebelit.OT.Discover.EdgeApp",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/src/Rebelit.OT.Discover.EdgeApp/Rebelit.OT.Discover.EdgeApp.csproj",
+        }
+    ]
+}
