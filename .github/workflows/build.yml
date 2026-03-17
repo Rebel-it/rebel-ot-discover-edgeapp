@@ -2,9 +2,10 @@ name: Build, Test & Analyze
 
 on:
   push:
-    branches: [ feature/PoC ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
