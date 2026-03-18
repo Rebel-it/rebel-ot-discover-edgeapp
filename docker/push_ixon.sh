@@ -5,15 +5,16 @@ set -e
 
 # Prompt for SecureEdge IP and IXON credentials
 read -rp "SecureEdge IP address (e.g. 172.27.21.1): " SECURE_EDGE_IP
+echo
 read -rp "IXON Application ID:   " IXON_ApplicationId
 read -rp "IXON Company ID:       " IXON_CompanyId
-read -rsp "IXON Bearer Token:    " IXON_BearerToken
-echo
+read -rp "IXON Bearer Token:    " IXON_BearerToken
 read -rp "IXON Agent ID:         " IXON_AgentId
 read -rp "IXON Source Public ID: " IXON_SourcePublicId
+echo
 read -rp "OPC UA Server Address (e.g. opc.tcp://172.27.21.3:4840): " OPCUA_ServerAddress
 read -rp "OPC UA Username:       " OPCUA_Username
-read -rsp "OPC UA Password:      " OPCUA_Password
+read -rp "OPC UA Password:      " OPCUA_Password
 echo
 
 if [[ -z "$SECURE_EDGE_IP" || -z "$IXON_ApplicationId" || -z "$IXON_CompanyId" || -z "$IXON_BearerToken" \
@@ -46,7 +47,7 @@ docker buildx use secure-edge-pro
 # Build and push the image with credentials baked in via build args
 docker buildx build \
     --platform linux/arm64/v8 \
-    --tag "${SECURE_EDGE_IP}:5000/rebelit-ot-discover-edgeapp:latest" \
+    --tag "${SECURE_EDGE_IP}:5000/rebel-ot-discover-edgeapp:latest" \
     --no-cache \
     --push \
     --build-arg IXON_ApplicationId="$IXON_ApplicationId" \
