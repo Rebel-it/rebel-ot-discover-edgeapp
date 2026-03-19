@@ -1,0 +1,96 @@
+[[section-solution-strategy]]
+== Solution Strategy
+
+The following table summarises the fundamental decisions that shape the architecture, linked back to the quality goals defined in section 1.
+
+[options="header", cols="2,3,4"]
+|===
+| Quality Goal | Decision | Justification
+
+| *Reliability*
+| Scheduler loop with per-iteration exception isolation (`Application.cs`)
+| A top-level `try/catch` around each 15-minute cycle ensures a transient failure -- network outage, OPC UA disconnect, API rate limit -- is logged and discarded without terminating the process. The next cycle starts normally.
+
+| *Reliability*
+| Idempotent synchronisation via HashSet deduplication (`Scraper.cs`)
+| Before writing anything, the app fetches all existing variables and tags and stores their addresses in `HashSet<string>`. POSTs are only issued for genuinely new nodes. Re-running after a partial failure therefore never creates duplicates.
+
+| *Reliability*
+| OPC UA session keep-alive and exponential back-off reconnect (`UAClient.cs`)
+| The OPC UA session uses a 5-second keep-alive. On loss, reconnection retries with exponential back-off up to 15 seconds. This recovers from short PLC reboots or network glitches without operator intervention.
+
+| *Maintainability*
+| Port-and-adapter decomposition: core app depends on interfaces, not implementations
+| `IScraper`, `IApiClient`, `IUAClientFactory`, and `IClientSamplerFactory` decouple the orchestration logic from the protocol connectors. A new industrial protocol (e.g. Modbus, MQTT) is added as a new project implementing the factory interface -- no changes to `Scraper` or `Application` are needed.
+
+| *Maintainability*
+| Dependency injection via `Microsoft.Extensions.DependencyInjection`
+| All components are registered in `Program.cs` and resolved through the standard .NET DI container. Each connection project exposes an `AddXxx` extension method for clean, encapsulated registration.
+
+| *Security*
+| Credentials injected exclusively as environment variables, never stored in source
+| All secrets (IXON bearer token, OPC UA password) are supplied at Docker image build time via `--build-arg` and surfaced inside the container as environment variables. They are never written to files, configuration XML, or logs.
+
+| *Security*
+| HTTPS enforced for all IXON Cloud API communication
+| `BaseAgent` creates `HttpClient` instances targeting `https://portal.ixon.cloud`. There is no HTTP fallback. Bearer tokens are transmitted only over TLS.
+
+| *Portability*
+| .NET 10 console application packaged as a Docker container
+| A single `linux/arm64/v8` image runs on the IXON SecureEdge Pro. The same solution builds and runs on macOS and Linux developer workstations via `dotnet run`, with no platform-specific code paths.
+
+| *Performance Efficiency*
+| Single-pass, paged API reads with O(1) duplicate checking
+| Variables and tags are fetched once per cycle using a page size of 4,000 (the platform maximum). Addresses are indexed in a `HashSet` for constant-time lookup during the browse walk, keeping memory and time proportional to the number of nodes rather than quadratic.
+|===
+
+=== Key Technology Decisions
+
+[mermaid]
+....
+flowchart TD
+    A["Problem:\nManual OT data registration\nis slow and error-prone"]
+
+    A --> B["Decision 1:\n.NET 10 console app\non Linux/ARM64 Docker"]
+    A --> C["Decision 2:\nOPC UA as discovery protocol\n(OPC Foundation SDK)"]
+    A --> D["Decision 3:\nIXON Cloud REST API\nas the synchronisation target"]
+
+    B --> E["Enables: portability across\nedge + developer environments"]
+    C --> F["Enables: vendor-neutral\nbrowse of any OPC UA device"]
+    D --> G["Enables: zero-touch variable\nand tag registration"]
+
+    E --> H["Architecture:\nPort-and-adapter separation\n+ DI container"]
+    F --> H
+    G --> H
+
+    H --> I["Result:\nIdempotent, protocol-agnostic\ndiscovery loop"]
+....
+
+=== Decomposition Approach
+
+The system is divided into three independently deployable projects, each with a single responsibility:
+
+[mermaid]
+....
+flowchart LR
+    subgraph core["Rebelit.OT.Discover.EdgeApp\n(Orchestration)"]
+        app["Application\n15-min scheduler"]
+        scraper["Scraper\nDiscovery logic"]
+    end
+
+    subgraph ixon["Rebelit.OT.Discover.EdgeApp\n.Connections.IXON"]
+        apiClient["ApiClient\nHTTPS REST"]
+    end
+
+    subgraph opcua["Rebelit.OT.Discover.EdgeApp\n.Connections.OPCUA"]
+        uaClient["UAClient\nOPC UA session"]
+        samples["ClientSamples\nAddress space browse"]
+    end
+
+    app --> scraper
+    scraper -->|"IApiClient"| apiClient
+    scraper -->|"IUAClientFactory\nIClientSamplerFactory"| uaClient
+    uaClient --> samples
+....
+
+The core project depends only on the *interfaces* (`IApiClient`, `IUAClientFactory`, `IClientSamplerFactory`). The two connection projects implement those interfaces in isolation. This means either connector can be replaced or tested independently without recompiling the orchestration layer.

@@ -1,0 +1,136 @@
+[[section-design-decisions]]
+== Architecture Decisions
+
+This section documents the architecturally significant decisions in Architecture Decision Record (ADR) format. Decisions that are already summarised in section 4 are cross-referenced rather than repeated in full.
+
+---
+
+=== ADR-01: .NET 10 Console Application as the Application Model
+
+*Status:* Accepted +
+*Date:* 2025
+
+*Context:*
+The application must run unattended on the IXON SecureEdge Pro, which is a Linux ARM64 edge gateway. The deployment target runs a standard Docker daemon. The team has existing C# expertise and requires a minimal operational footprint.
+
+*Decision:*
+Use .NET 10 as the target framework and model the application as a plain console process (`dotnet Rebelit.OT.Discover.EdgeApp.dll`).
+
+*Consequences:*
+
+* (+) Cross-platform: builds and runs identically on Linux ARM64 (production) and macOS/Linux/Windows (development) without conditional code.
+* (+) Small and simple: no HTTP server, no service host overhead, no daemon framework required.
+* (+) Containerises cleanly: the multi-stage Dockerfile produces a minimal runtime image.
+* (-) No built-in service lifecycle management (restart policies are delegated to the Docker daemon or SecureEdge container orchestration).
+
+---
+
+=== ADR-02: Port-and-Adapter Decomposition for Protocol Connectors
+
+*Status:* Accepted +
+*Date:* 2025
+
+*Context:*
+The application needs to support OPC UA as the first industrial protocol, but future protocols (Modbus, MQTT, PROFINET, etc.) are likely. Embedding protocol-specific code directly in the discovery logic would make adding a new protocol a risky modification.
+
+*Decision:*
+Decompose the solution into three projects. The core project (`EdgeApp`) defines interfaces (`IApiClient`, `IUAClientFactory`, `IClientSamplerFactory`) and contains only orchestration logic. Each protocol or cloud adapter is a separate project that implements those interfaces and registers itself via an `IServiceCollection` extension method.
+
+*Consequences:*
+
+* (+) Adding a new industrial protocol requires a new project implementing `IUAClientFactory` and `IClientSamplerFactory` -- no changes to `Application` or `Scraper`.
+* (+) Each connector can be tested in isolation with a mock or stub replacing the other.
+* (-) Increases the number of projects. For the current single-protocol scope this is more structure than strictly necessary.
+
+---
+
+=== ADR-03: Credentials Baked into the Docker Image via Build Args
+
+*Status:* Accepted (with known trade-off -- see Risk R-01) +
+*Date:* 2025
+
+*Context:*
+The SecureEdge Pro does not expose a secrets management service or a writable volume that survives container recreation. An operator-friendly deployment workflow is required.
+
+*Decision:*
+All nine secrets and addresses are supplied to `push_ixon.sh` interactively at build time and embedded into the Docker image as `ENV` variables via Docker `--build-arg`. The container reads them from the environment at startup.
+
+*Rejected alternatives:*
+
+* *Runtime env file / `docker run -e`*: the SecureEdge Pro's container management UI may not support runtime env injection without additional tooling.
+* *Secrets manager (Vault, AWS SSM)*: introduces a network dependency and operational overhead not justified for a single-tenant edge application.
+
+*Consequences:*
+
+* (+) Zero runtime dependencies; fully self-contained image.
+* (+) Simple deployment: one script, one push, container starts.
+* (-) Credentials are embedded in the image layer and visible to anyone with access to the image. Rotating a credential requires rebuilding and re-pushing the image.
+
+---
+
+=== ADR-04: OPC Foundation .NET Standard SDK for OPC UA
+
+*Status:* Accepted +
+*Date:* 2025
+
+*Context:*
+OPC UA is a complex binary protocol with a rich type system, security profiles, and session management. Implementing a client from scratch is not feasible.
+
+*Decision:*
+Use the `OPCFoundation.NetStandard.Opc.Ua` SDK (v1.5.378), the official open-source client library from the OPC Foundation.
+
+*Rejected alternatives:*
+
+* *Third-party OPC UA libraries (e.g. UA-.NET-Standard forks)*: the OPC Foundation SDK is the reference implementation and is actively maintained.
+* *Custom implementation*: unreasonable effort and risk.
+
+*Consequences:*
+
+* (+) Full OPC UA specification compliance, including session management, keep-alive, subscription transfer, and security profiles.
+* (+) Actively maintained; security patches are available via NuGet upgrade.
+* (-) The SDK is large and brings many features (subscriptions, events, method calls) not used by this application. `ClientSamples.cs` is derived from the SDK's reference sample code and carries more surface area than strictly necessary.
+* (-) `AutoAcceptUntrustedCertificates = true` is required for many industrial environments but reduces transport-layer security (see Risk R-02).
+
+---
+
+=== ADR-05: Fixed 15-Minute Polling Cycle
+
+*Status:* Accepted +
+*Date:* 2025
+
+*Context:*
+New OPC UA nodes appear only when device configuration changes (rare). The application needs a trigger to check for new nodes without requiring external orchestration.
+
+*Decision:*
+Use a simple `Task.Delay(15 minutes)` loop inside `Application.Run`. The interval is hard-coded.
+
+*Rejected alternatives:*
+
+* *Cron / scheduled task outside the container*: requires host-level scheduling support which may not be available or configurable on the SecureEdge Pro.
+* *IXON webhook / push trigger*: IXON Cloud does not currently offer a webhook for new device configuration events.
+* *Configurable interval via env var*: adds complexity not currently required; can be introduced when the need arises.
+
+*Consequences:*
+
+* (+) Simple, no external scheduler dependency.
+* (+) Self-contained -- the container is the only unit to manage.
+* (-) Interval is not adjustable without rebuilding the image.
+* (-) If a cycle takes longer than 15 minutes (extremely large address space), the next cycle is delayed rather than running on a fixed wall-clock schedule.
+
+---
+
+=== ADR-06: Auto-Accept Untrusted OPC UA Certificates
+
+*Status:* Accepted (with known trade-off -- see Risk R-02) +
+*Date:* 2025
+
+*Context:*
+Industrial OPC UA servers in the field commonly use self-signed certificates that are not in any trusted certificate store. Requiring manual certificate trust establishment before first run would block the zero-touch onboarding goal.
+
+*Decision:*
+Set `AutoAcceptUntrustedCertificates = true` and `MinimumCertificateKeySize = 1024` in `ServiceCollectionExtensions.AddOPCUAClient`. Certificate validation failures are logged but do not prevent session establishment.
+
+*Consequences:*
+
+* (+) Works out of the box against any OPC UA server without certificate pre-configuration.
+* (-) Provides no protection against a man-in-the-middle attack on the OPC UA connection. Acceptable on assumed-isolated OT networks; re-evaluate if the network boundary cannot be guaranteed.

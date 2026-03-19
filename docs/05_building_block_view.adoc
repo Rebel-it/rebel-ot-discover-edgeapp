@@ -1,0 +1,288 @@
+[[section-building-block-view]]
+== Building Block View
+
+=== Level 1 -- Whitebox Overall System
+
+The overall system is decomposed into three .NET projects.
+The core orchestration project depends only on interfaces; both connector projects implement those interfaces independently.
+
+[mermaid]
+....
+flowchart TD
+    subgraph sys["Rebelit OT Discover Edge App (Solution)"]
+        core["**EdgeApp**\nOrchestration\n─────────────────\nApplication\nScraper\nIScraper"]
+
+        subgraph connectors["Protocol Connectors"]
+            ixon["**Connections.IXON**\nIXON Cloud Adapter\n─────────────────\nApiClient\nBaseAgent\nModels"]
+            opcua["**Connections.OPCUA**\nOPC UA Adapter\n─────────────────\nUAClient\nClientSamples\nFactories"]
+        end
+    end
+
+    ext_opcua[/"OPC UA Server\n(PLC / SCADA)"/]
+    ext_ixon[/"IXON Cloud\nAPI v2"/]
+
+    core -->|"IApiClient"| ixon
+    core -->|"IUAClientFactory\nIClientSamplerFactory"| opcua
+    opcua <-->|"opc.tcp://"| ext_opcua
+    ixon <-->|"HTTPS REST"| ext_ixon
+....
+
+The motivation for this decomposition is stated in section 4: the orchestration logic in `EdgeApp` must remain protocol-agnostic so that new industrial connectors can be added without modifying the discovery or synchronisation code.
+
+[options="header", cols="2,3,3"]
+|===
+| Building Block | Responsibility | Key Interface(s)
+
+| *Rebelit.OT.Discover.EdgeApp*
+| Bootstraps the DI container, runs the 15-minute scheduler loop, and hosts the core discovery and synchronisation logic.
+| Consumes `IScraper`, `IApiClient`, `IUAClientFactory`, `IClientSamplerFactory`
+
+| *Rebelit.OT.Discover.EdgeApp.Connections.IXON*
+| Adapts the IXON Cloud REST API v2. Handles authentication headers, HTTP request/response lifecyle, JSON (de)serialisation, and error logging.
+| Exposes `IApiClient`; registers via `AddIXONClient()`
+
+| *Rebelit.OT.Discover.EdgeApp.Connections.OPCUA*
+| Wraps the OPC Foundation .NET Standard SDK. Manages OPC UA sessions, keep-alive, reconnection, and address-space traversal.
+| Exposes `IUAClientFactory`, `IClientSamplerFactory`; registers via `AddOPCUAClient()`
+|===
+
+=== Level 2 -- Internal Structure of Building Blocks
+
+==== 5.2.1 Whitebox EdgeApp (Orchestration)
+
+[mermaid]
+....
+classDiagram
+    class Program {
+        <<entry point>>
+        +Main() Task
+        Reads env vars
+        Builds DI container
+        Resolves Application
+    }
+
+    class Application {
+        -IScraper scraper
+        -ILogger logger
+        +Run(CancellationToken) Task
+        15-min scheduler loop
+        Catches and logs exceptions
+    }
+
+    class IScraper {
+        <<interface>>
+        +ExecuteAsync(CancellationToken) Task
+    }
+
+    class Scraper {
+        +Address string
+        +AgentId string
+        +Username string
+        +Password string
+        +SourcePublicId string
+        +ExistingAddresses HashSet~string~
+        +ExistingTags HashSet~string~
+        +ExecuteAsync(CancellationToken) Task
+        -CreateIxonVariableAsync() Task~Variable~
+        -CreateTag() Task
+        -MapNodeToVariable() Variable
+    }
+
+    Program --> Application : resolves
+    Application --> IScraper : calls ExecuteAsync
+    IScraper <|.. Scraper : implements
+    Scraper --> IApiClient : POST / GET variables & tags
+    Scraper --> IUAClientFactory : creates UAClient
+    Scraper --> IClientSamplerFactory : creates ClientSamples
+....
+
+[options="header", cols="2,4"]
+|===
+| Component | Responsibility
+
+| `Program`
+| Console entry point. Reads all required environment variables (throws `ArgumentNullException` on any missing value), configures Serilog, builds the DI `ServiceProvider`, and awaits `Application.Run()`.
+
+| `Application`
+| Implements the 15-minute scheduling loop. Calls `IScraper.ExecuteAsync` on every cycle. Any exception thrown by the scraper is caught, logged, and discarded so the next cycle can start normally.
+
+| `IScraper`
+| Single-method interface that decouples `Application` from the concrete discovery logic. Enables the scraper implementation to be replaced or mocked in tests.
+
+| `Scraper`
+| Core business logic. On each call: (1) connects to the OPC UA server, (2) browses the full address space, (3) fetches existing IXON variables and tags into `HashSet` caches, (4) for each new OPC UA node, maps the node to an IXON `Variable` and POSTs it, then POSTs a `Tag` linked to that variable.
+|===
+
+==== 5.2.2 Whitebox Connections.IXON
+
+[mermaid]
+....
+classDiagram
+    class IApiClient {
+        <<interface>>
+        +GetDataVariablesAsync(agentId) Task~Response~Variable[]~~
+        +GetTagsAsync(agentId) Task~Response~Tag[]~~
+        +PostVariableAsync(agentId, variable) Task~Response~Variable~~
+        +PostTagAsync(agentId, tag) Task~Response~Tag~~
+    }
+
+    class BaseAgent {
+        <<abstract, internal>>
+        -IOptions~Configuration~ configuration
+        -ILogger logger
+        #Get~T~(uri) Task~T~
+        #Post~T~(uri, body) Task~T~
+        #Post(uri, body) Task
+        #GetHttpMessageHandler() HttpMessageHandler
+        -CreateHttpClient() HttpClient
+        -HandleResponseErrors(response) Task
+    }
+
+    class ApiClient {
+        <<internal>>
+        +GetDataVariablesAsync() Task
+        +GetTagsAsync() Task
+        +PostVariableAsync() Task
+        +PostTagAsync() Task
+    }
+
+    class Configuration {
+        +BaseUrl string
+        +ApplicationId string
+        +BearerToken string
+        +CompanyId string
+        +Version int
+    }
+
+    class ServiceCollectionExtensions {
+        <<static>>
+        +AddIXONClient(appId, companyId, token) IServiceCollection
+    }
+
+    IApiClient <|.. ApiClient : implements
+    BaseAgent <|-- ApiClient : extends
+    BaseAgent --> Configuration : reads via IOptions
+    ServiceCollectionExtensions --> ApiClient : registers as IApiClient
+....
+
+[options="header", cols="2,4"]
+|===
+| Component | Responsibility
+
+| `IApiClient`
+| Public interface consumed by `Scraper`. Declares four operations: read variables, read tags, create variable, create tag.
+
+| `BaseAgent`
+| Internal abstract base class. Creates a configured `HttpClient` per request (bearer token + `Api-Application`, `Api-Company`, `Api-Version` headers), sends GET/POST calls, logs `400 Bad Request` bodies, and calls `EnsureSuccessStatusCode` on every response.
+
+| `ApiClient`
+| Concrete implementation of `IApiClient`. Constructs the four endpoint URIs and delegates to `BaseAgent.Get<T>` / `BaseAgent.Post<T>`.
+
+| `Configuration`
+| Immutable settings record bound from `IOptions<Configuration>`. Holds `BaseUrl` (default `https://portal.ixon.cloud`), `ApplicationId`, `BearerToken`, `CompanyId`, and `Version` (default `2`).
+
+| `ServiceCollectionExtensions`
+| `AddIXONClient(appId, companyId, token)` extension method. Registers `Configuration` via `IOptions<>` and `ApiClient` as a singleton `IApiClient`.
+
+| *Models* (`Variable`, `Tag`, `Source`, `Response<T>`)
+| Plain data transfer objects used as request/response bodies for the IXON API. `Response<T>` wraps a `.Data` property used to extract the payload list.
+|===
+
+==== 5.2.3 Whitebox Connections.OPCUA
+
+[mermaid]
+....
+classDiagram
+    class IUAClientFactory {
+        <<interface>>
+        +Create(uri, username, password) Task~UAClient~
+    }
+
+    class IClientSamplerFactory {
+        <<interface>>
+        +CreateAsync() Task~ClientSamples~
+    }
+
+    class UAClientFactory {
+        -ApplicationInstance applicationInstance
+        -ITelemetryContext telemetryContext
+        +Create(uri, username, password) Task~UAClient~
+    }
+
+    class ClientSamplerFactory {
+        -ITelemetryContext telemetryContext
+        +CreateAsync() Task~ClientSamples~
+    }
+
+    class UAClient {
+        +AutoAccept bool
+        +SessionLifeTime int
+        +UserIdentity UserIdentity
+        +KeepAliveInterval int
+        +ReconnectPeriod int
+        +ReconnectPeriodExponentialBackoff int
+        +Session ISession
+        +ConnectAsync(uri) Task~bool~
+        +DisconnectAsync() Task
+        +DurableSubscriptionTransferAsync() Task~bool~
+        +Dispose()
+    }
+
+    class ClientSamples {
+        +BrowseFullAddressSpaceAsync(client, node, ct) Task~ReferenceDescriptionCollection~
+        +BrowseAsync(session, ct) Task
+        +ReadNodesAsync(session, ct) Task
+        +SubscribeToDataChangesAsync(session, ct) Task~bool~
+    }
+
+    class ITelemetryContext {
+        <<interface>>
+        +LoggerFactory ILoggerFactory
+    }
+
+    class ConsoleTelemetry {
+        +LoggerFactory ILoggerFactory
+    }
+
+    IUAClientFactory <|.. UAClientFactory : implements
+    IClientSamplerFactory <|.. ClientSamplerFactory : implements
+    UAClientFactory --> UAClient : creates
+    ClientSamplerFactory --> ClientSamples : creates
+    UAClientFactory --> ITelemetryContext : uses
+    ClientSamplerFactory --> ITelemetryContext : uses
+    ITelemetryContext <|.. ConsoleTelemetry : implements
+    UAClient --> OpcUaSDK : wraps
+    ClientSamples --> OpcUaSDK : wraps
+
+    class OpcUaSDK {
+        <<external library>>
+        OPCFoundation.NetStandard.Opc.Ua
+        v1.5.378
+    }
+....
+
+[options="header", cols="2,4"]
+|===
+| Component | Responsibility
+
+| `IUAClientFactory`
+| Public interface consumed by `Scraper`. Single method `Create(uri, username, password)` returns a connected `UAClient` or `null` on failure.
+
+| `IClientSamplerFactory`
+| Public interface consumed by `Scraper`. Single method `CreateAsync()` returns a `ClientSamples` instance ready to browse.
+
+| `UAClientFactory`
+| Constructs a `UserIdentity` from credentials, instantiates `UAClient`, sets `AutoAccept = true` and `SessionLifeTime = 60 000 ms`, calls `ConnectAsync`, and returns the connected client.
+
+| `UAClient`
+| Wraps an OPC UA `ISession`. Handles session establishment (endpoint selection, certificate acceptance), keep-alive (5 s interval), and `SessionReconnectHandler` with 1 s initial period and 15 s exponential back-off cap. Implements `IDisposable`.
+
+| `ClientSamples`
+| Provides address-space traversal helpers over an `ISession`. The method used by `Scraper` is `BrowseFullAddressSpaceAsync`, which recursively walks the node tree from a root node up to depth 128 and returns all `ReferenceDescription` objects.
+
+| `ITelemetryContext` / `ConsoleTelemetry`
+| Thin abstraction over `ILoggerFactory` used to feed log output from the OPC UA SDK into the Serilog pipeline without coupling the SDK directly to any concrete logger.
+
+| `ServiceCollectionExtensions`
+| `AddOPCUAClient(applicationName)` extension method. Configures `ApplicationInstance` as an OPC UA client (security policy, `AutoAcceptUntrustedCertificates = true`, min key size 1024), registers all factories and telemetry as singletons.
+|===

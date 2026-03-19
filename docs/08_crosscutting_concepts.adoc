@@ -1,0 +1,157 @@
+[[section-concepts]]
+== Crosscutting Concepts
+
+This section describes the practices and patterns that apply consistently across multiple building blocks. Only concepts specific to this system are included.
+
+=== 8.1 Configuration and Secrets Management
+
+All configuration -- including authentication credentials -- is supplied exclusively via environment variables. There are no configuration files, `appsettings.json`, secrets managers, or hard-coded values.
+
+[mermaid]
+....
+flowchart LR
+    ba["push_ixon.sh\n(operator-supplied values)"]
+    buildarg["Docker --build-arg\n(at image build time)"]
+    env["ENV in Docker image\n(baked in, invisible in logs)"]
+    prog["Program.cs\nEnvironment.GetEnvironmentVariable()"]
+
+    ba -->|"9 values"| buildarg --> env --> prog
+....
+
+`Program.cs` reads all nine required variables at startup and calls `throw new ArgumentNullException(...)` if any are absent. This fail-fast strategy prevents the container from starting in a partially-configured state and silently skipping work.
+
+The nine environment variables are:
+
+[options="header", cols="2,3"]
+|===
+| Variable | Purpose
+
+| `IXON_ApplicationId` | IXON API application identifier
+| `IXON_CompanyId` | IXON company public ID
+| `IXON_BearerToken` | IXON API bearer token (secret)
+| `IXON_AgentId` | Target IXON agent (machine) ID
+| `IXON_SourcePublicId` | IXON data source on the agent
+| `OPCUA_ServerAddress` | OPC UA endpoint URL (`opc.tcp://...`)
+| `OPCUA_Username` | OPC UA authentication username
+| `OPCUA_Password` | OPC UA authentication password (secret)
+|===
+
+=== 8.2 Logging
+
+All components write structured log messages through the standard .NET `ILogger<T>` abstraction. Serilog is configured once in `Program.cs` as the backing implementation and added to the DI container via `AddSerilog`.
+
+[mermaid]
+....
+flowchart LR
+    comp["Any component\n(Application, Scraper, BaseAgent, ...)"]
+    ilogger["ILogger&lt;T&gt;\n(Microsoft.Extensions.Logging)"]
+    serilog["Serilog\n(console sink)"]
+    console["Container stdout\n(visible via docker logs)"]
+
+    comp --> ilogger --> serilog --> console
+....
+
+Log levels in use:
+
+* `Information` -- cycle start/end, skip decisions
+* `Error` -- exception in cycle, failed UAClient creation, HTTP 400 bodies
+
+No credentials, node values, or full response bodies are logged. The `BaseAgent` logs only the body of `400 Bad Request` responses to support debugging API rejections.
+
+=== 8.3 Idempotency
+
+Every discovery cycle is fully idempotent. Before any write operation is issued, the app fetches the complete current state from IXON and builds in-memory lookup sets.
+
+[mermaid]
+....
+flowchart TD
+    start["ExecuteAsync begins"]
+    fetch["Fetch all existing Variables\nFetch all existing Tags"]
+    index["Build HashSet&lt;string&gt; of\nexisting addresses\nBuild HashSet&lt;string&gt; of\nexisting tag variable IDs"]
+    browse["Browse OPC UA\naddress space"]
+    check{{"Address in\nExistingAddresses?"}}
+    skip["Skip node\n(log at Information)"]
+    post["POST Variable to IXON\nPOST Tag to IXON"]
+
+    start --> fetch --> index --> browse --> check
+    check -->|"yes"| skip
+    check -->|"no"| post
+    post --> check
+    skip --> check
+....
+
+This design means re-running after a partial failure (e.g. network interruption mid-cycle) never results in duplicate variables or tags in IXON. The overhead is two paginated GET requests per cycle, capped at 4,000 entries each.
+
+=== 8.4 Error Handling
+
+Two layers of error handling exist, each serving a different granularity:
+
+[options="header", cols="2,2,4"]
+|===
+| Layer | Location | Behaviour
+
+| Cycle-level isolation
+| `Application.Run()` -- `catch (Exception ex)`
+| Any unhandled exception thrown by `Scraper.ExecuteAsync` is caught, logged at `Error`, and discarded. The scheduler loop continues; the next cycle starts after the 15-minute delay. The process never crashes due to a transient error.
+
+| HTTP response logging
+| `BaseAgent.HandleResponseErrors()`
+| `400 Bad Request` responses log the response body before re-throwing via `EnsureSuccessStatusCode()`. All other non-2xx responses propagate immediately as `HttpRequestException`, which is caught by the cycle-level handler above.
+|===
+
+There is intentionally no retry logic inside a single cycle. A failed POST is simply absent from IXON; the next cycle will discover the same node again and retry the POST.
+
+=== 8.5 Dependency Injection and Modular Composition
+
+The application uses `Microsoft.Extensions.DependencyInjection` as its composition root. Each connector project exposes exactly one `IServiceCollection` extension method (`AddIXONClient`, `AddOPCUAClient`) that hides all internal registrations.
+
+[mermaid]
+....
+flowchart TD
+    prog["Program.cs\nComposition Root"]
+    prog -->|"AddOPCUAClient(appName)"| opcua["Connections.OPCUA\nRegisters: IUAClientFactory,\nIClientSamplerFactory,\nITelemetryContext,\nApplicationInstance"]
+    prog -->|"AddIXONClient(appId, companyId, token)"| ixon["Connections.IXON\nRegisters: IOptions&lt;Configuration&gt;,\nIApiClient (singleton)"]
+    prog -->|"AddSingleton&lt;Application&gt;\nAddSingleton&lt;IScraper, Scraper&gt;"| core["EdgeApp Core\nRegisters: Application, Scraper"]
+....
+
+The core project has no compile-time dependency on either connector project. It references only the interface contracts (`IApiClient`, `IUAClientFactory`, `IClientSamplerFactory`). This makes the connectors independently testable and replaceable.
+
+=== 8.6 Domain Data Model
+
+The following model shows the key domain entities and their relationships as they exist in the IXON platform.
+
+[mermaid]
+....
+classDiagram
+    class Variable {
+        +string PublicId
+        +string Name
+        +string Address
+        +string DataType
+        +int BitWidth
+        +Source Source
+    }
+
+    class Tag {
+        +string PublicId
+        +string Name
+        +string RetentionPolicy
+        +string LogEvent
+        +string LoggingInterval
+        +VariableRef Variable
+    }
+
+    class Source {
+        +string PublicId
+    }
+
+    class VariableRef {
+        +string PublicId
+    }
+
+    Variable "1" --> "1" Source : belongs to
+    Tag "1" --> "1" VariableRef : references
+    Variable "1" -- "0..1" Tag : paired with
+....
+
+Each OPC UA node is mapped to one `Variable` (holding the node address and type) and one `Tag` (holding the logging configuration). The `Source` identifies which OPC UA data source on the IXON agent the variable belongs to.

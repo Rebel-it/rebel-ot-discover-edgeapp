@@ -1,0 +1,58 @@
+[[section-technical-risks]]
+== Risks and Technical Debt
+
+The following table lists identified risks and areas of technical debt, ordered by priority. Each item includes a suggested mitigation.
+
+[options="header", cols="1,2,1,1,4,4"]
+|===
+| ID | Title | Likelihood | Impact | Description | Mitigation
+
+| R-01
+| *Credentials baked into the Docker image*
+| Medium
+| High
+| All nine secrets (bearer token, OPC UA password, etc.) are embedded as `ENV` layers in the Docker image via `--build-arg`. Anyone with pull access to the SecureEdge Pro registry at port 5000 or a copy of the image can inspect those values with `docker inspect` or layer extraction tools.
+| Short term: restrict access to the SecureEdge Pro registry to authorised operators only. Long term: investigate whether the SecureEdge Pro supports runtime environment variable injection or a secrets volume so that credentials can be rotated without rebuilding the image.
+
+| R-02
+| *OPC UA certificates auto-accepted*
+| Low
+| High
+| `AutoAcceptUntrustedCertificates = true` disables server certificate validation for OPC UA sessions. A machine-in-the-middle attacker on the OT network segment could impersonate the OPC UA server and feed fabricated node data into IXON.
+| Acceptable on fully isolated OT networks. If the OT network includes untrusted devices or wireless segments, replace auto-accept with an explicit trusted-certificate store managed by the application. Upgrade `MinimumCertificateKeySize` from 1024 to at least 2048 bits.
+
+| R-03
+| *4,000-entry page size is a hard platform limit*
+| Medium
+| Medium
+| IXON Cloud API v2 returns at most 4,000 `Variable` or `Tag` entries per request. If a device has more than 4,000 OPC UA nodes, nodes beyond the first 4,000 will be re-attempted on every cycle without being deduplicated correctly -- the existing address set will be incomplete.
+| Add pagination support to `ApiClient.GetDataVariablesAsync` and `ApiClient.GetTagsAsync` using the IXON API cursor or offset mechanism. Track a `next-page` token and accumulate all pages before building the deduplication `HashSet`.
+
+| R-04
+| *Single-agent scope per container instance*
+| Low
+| Medium
+| `IXON_AgentId` and `IXON_SourcePublicId` are single values, so one container instance manages exactly one agent. Customers with many agents must run one container per agent, each with its own image build.
+| Extend `Scraper` to accept a list of agent/source pairs and loop over them in a single cycle. Supply the list as a JSON-encoded environment variable or a mounted configuration file.
+
+| R-05
+| *`HttpClient` instances created per API request*
+| Low
+| Low
+| `BaseAgent.CreateHttpClient()` creates a new `HttpClient` for every GET or POST call. This closes and reopens TCP connections on every request, which consumes extra sockets and DNS lookups and can cause socket exhaustion under high throughput.
+| Replace per-request `HttpClient` construction with `IHttpClientFactory` (registered via `AddHttpClient()` in the DI container), which manages a connection pool and respects DNS TTL.
+
+| R-06
+| *No integration test coverage for the OPC UA adapter*
+| Medium
+| Low
+| `Connections.OPCUA` has no automated tests. `UAClient` and `ClientSamples` are wrappers around the OPC Foundation SDK and are exercised only in production against a real PLC.
+| Add integration tests using the OPC UA reference server (`OPCFoundation.NetStandard.Opc.Ua.Server`) running in-process or in a Docker container with a known address space. Cover at least: successful connection, browse depth, and graceful handling of connection failure.
+
+| R-07
+| *Cycle duration not bounded*
+| Low
+| Low
+| If a full browse and synchronisation of a large address space takes longer than 15 minutes (e.g. due to slow IXON API responses), the next cycle is simply delayed. There is no watchdog or timeout.
+| Add a `CancellationTokenSource` with a configurable timeout (e.g. 14 minutes) passed to `scraper.ExecuteAsync`. If the cycle does not complete in time, cancel it and log a warning, ensuring the scheduler can start the next cycle on schedule.
+|===
