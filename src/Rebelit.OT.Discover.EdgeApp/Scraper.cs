@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Opc.Ua;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
@@ -10,28 +11,29 @@ public class Scraper(
     IUAClientFactory clientFactory,
     IClientSamplerFactory clientSamplerFactory,
     IApiClient apiClient,
+    IConfiguration configuration,
     ILogger<Scraper> logger
 ) : IScraper
 {
     public string Address { get; } =
-        Environment.GetEnvironmentVariable("OPCUA_ServerAddress")
-        ?? throw new InvalidOperationException(
-            "OPCUA_ServerAddress environment variable is not set."
-        );
+        configuration["OPCUA_ServerAddress"]
+        ?? throw new InvalidOperationException("OPCUA_ServerAddress configuration is not set.");
 
     public string AgentId { get; } =
-        Environment.GetEnvironmentVariable("IXON_AgentId")
-        ?? throw new InvalidOperationException("IXON_AgentId environment variable is not set.");
+        configuration["IXON_AgentId"]
+        ?? throw new InvalidOperationException("IXON_AgentId configuration is not set.");
 
     public string Username { get; } =
-        Environment.GetEnvironmentVariable("OPCUA_Username")
-        ?? throw new InvalidOperationException("OPCUA_Username environment variable is not set.");
+        configuration["OPCUA_Username"]
+        ?? throw new InvalidOperationException("OPCUA_Username configuration is not set.");
 
     public string Password { get; } =
-        Environment.GetEnvironmentVariable("OPCUA_Password")
-        ?? throw new InvalidOperationException("OPCUA_Password environment variable is not set.");
+        configuration["OPCUA_Password"]
+        ?? throw new InvalidOperationException("OPCUA_Password configuration is not set.");
 
-    public string? DataSourceId { get; } = Environment.GetEnvironmentVariable("IXON_DataSourceId");
+    public string DataSourceId { get; } =
+        configuration["IXON_DataSourceId"]
+        ?? throw new InvalidOperationException("IXON_DataSourceId configuration is not set.");
 
     /// <summary>
     ///     A set of existing variable addresses that have already been created in the IXON platform. This is used to avoid creating duplicate variables when scraping the OPC UA server. The set is populated at the beginning of the execution by fetching the existing variables from the IXON platform for the specified agent.
