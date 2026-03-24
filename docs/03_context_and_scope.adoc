@@ -1,0 +1,102 @@
+[[section-context-and-scope]]
+== Context and Scope
+
+The _Rebelit OT Discover Edge App_ sits at the boundary between the industrial OT network and the IXON cloud platform.
+It has two distinct communication boundaries:
+
+* *Inbound from OT*: connects to OPC UA servers to browse the complete device address space.
+* *Outbound to cloud*: registers discovered data points (variables and tags) in the IXON Cloud API.
+
+
+[NOTE]
+====
+The context and scope is now limited to only a connection with OPC UA servers as the OT data source.
+Support for additional protocols (e.g., Modbus, MQTT) may be added in the future, but is out of scope for the initial version of the application.
+====
+
+=== Business Context
+
+The business context shows all communication partners and the domain-specific data exchanged with each.
+The application is treated as a black box.
+
+[mermaid]
+....
+flowchart LR
+    engineer["OT Engineer\n[Person]"]
+
+    subgraph app["Rebelit OT Discover Edge App"]
+        direction TB
+        core["Discovery &amp;\nSynchronisation\n[black box]"]
+    end
+
+    opcua["OPC UA Server\n[Industrial Device / PLC]"]
+    ixon["IXON Cloud\n[Cloud Platform]"]
+
+    engineer -->|"deploy + configure\nenv vars, credentials"| app
+    opcua -->|"OT address space\nnode IDs, types, browse names"| app
+    app -->|"variable &amp; tag registrations\nidempotent, on-change"| ixon
+    ixon -->|"existing variables &amp; tags\nfor deduplication"| app
+....
+
+[options="header", cols="2,3,3"]
+|===
+| Communication Partner | Input to OT Discover App | Output from OT Discover App
+
+| *OPC UA Server* (PLC / industrial device)
+| Full device address space: node IDs, data type definitions, browse names, hierarchical structure
+| — (read-only browse; no writes to the device)
+
+| *IXON Cloud API v2*
+| Currently registered variables and tags for the configured agent — used to detect and skip already-known data points
+| New variable definitions and tag configurations for all OT nodes not yet present in the cloud
+
+| *OT Engineer* (operator)
+| Deployment parameters: OPC UA endpoint address and credentials, IXON API token, company ID, application ID, agent ID, and source ID
+| — (no interactive runtime output; structured logs are available via the container console)
+|===
+
+=== Technical Context
+
+The technical context describes the communication channels, protocols, and infrastructure elements that realise the business interfaces described above.
+
+[mermaid]
+....
+flowchart LR
+    engineer["OT Engineer\n[Operator]"]
+
+    subgraph otnet["OT Network"]
+        opcua["OPC UA Server\nPLC / SCADA"]
+    end
+
+    subgraph edge["IXON SecureEdge Pro  ·  Linux ARM64"]
+        reg["Container Registry\nHTTP :5000"]
+        app["OT Discover Edge App\nDocker Container"]
+    end
+
+    subgraph internet["Internet"]
+        ixonapi["IXON Cloud API v2\nhttps://portal.ixon.cloud"]
+    end
+
+    engineer -->|"docker push\nHTTP – build args as env vars"| reg
+    reg -->|"image pull on start"| app
+    app <-->|"OPC UA binary  ·  opc.tcp://\nUsername/Password identity"| opcua
+    app -->|"HTTPS REST · JSON\nBearer + App/Company headers"| ixonapi
+    ixonapi -->|"paginated JSON responses\nmax 4 000 entries per page"| app
+....
+
+[options="header", cols="2,2,4"]
+|===
+| Channel | Protocol / Transport | Notes
+
+| OT Discover App → OPC UA Server
+| OPC UA binary (`opc.tcp://`)
+| The app initiates the session using a username/password `UserIdentity`. Untrusted certificates are auto-accepted (network is assumed to be isolated). Session keep-alive is 5 seconds; reconnection applies exponential back-off up to 15 seconds.
+
+| OT Discover App → IXON Cloud API v2
+| HTTPS / REST (JSON)
+| Every request carries three mandatory headers: `Authorization: Bearer <token>`, `Api-Application: <applicationId>`, and `Api-Company: <companyId>`. API version is pinned to `2`. Page size for list endpoints is capped at 4,000 entries by the platform.
+
+| OT Engineer → SecureEdge Container Registry
+| HTTP (Docker Registry v2, port 5000)
+| The `push_ixon.sh` script builds a `linux/arm64/v8` Docker image, bakes all credentials and addresses into the image as environment variables via `--build-arg`, and pushes to the device-local registry. The SecureEdge Pro pulls and starts the container from that registry.
+|===
