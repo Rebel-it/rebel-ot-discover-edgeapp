@@ -7,21 +7,25 @@ using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Extensions;
 using Serilog;
 
 Console.WriteLine("Hello, World!");
-var configuration = new ConfigurationBuilder().Build();
+var configuration = new ConfigurationBuilder()
+    .AddUserSecrets<Program>()
+    .AddEnvironmentVariables()
+    .Build();
 
 Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateLogger();
 Log.Logger.Debug("Starting console app...");
 
 ServiceCollection services = new();
+services.AddSingleton<IConfiguration>(configuration);
 services.AddSingleton<Application>();
 services.AddSingleton<IScraper, Scraper>();
 services.AddOPCUAClient("Rebelit.OT.Scraper");
 services.AddIXONClient(
-    Environment.GetEnvironmentVariable("IXON_ApplicationId")
+    configuration["IXON_ApplicationId"]
         ?? throw new ArgumentNullException("IXON_ApplicationId environment variable is not set."),
-    Environment.GetEnvironmentVariable("IXON_CompanyId")
+    configuration["IXON_CompanyId"]
         ?? throw new ArgumentNullException("IXON_CompanyId environment variable is not set."),
-    Environment.GetEnvironmentVariable("IXON_BearerToken")
+    configuration["IXON_BearerToken"]
         ?? throw new ArgumentNullException("IXON_BearerToken environment variable is not set.")
 );
 
