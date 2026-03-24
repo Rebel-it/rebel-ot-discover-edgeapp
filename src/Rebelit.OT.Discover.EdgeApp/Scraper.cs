@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Opc.Ua;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
@@ -10,31 +11,32 @@ public class Scraper(
     IUAClientFactory clientFactory,
     IClientSamplerFactory clientSamplerFactory,
     IApiClient apiClient,
+    IConfiguration configuration,
     ILogger<Scraper> logger
 ) : IScraper
 {
     public string Address { get; } =
-        Environment.GetEnvironmentVariable("OPCUA_ServerAddress")
+        configuration["OPCUA_ServerAddress"]
         ?? throw new InvalidOperationException(
-            "OPCUA_ServerAddress environment variable is not set."
+            "OPCUA_ServerAddress configuration is not set."
         );
 
     public string AgentId { get; } =
-        Environment.GetEnvironmentVariable("IXON_AgentId")
-        ?? throw new InvalidOperationException("IXON_AgentId environment variable is not set.");
+        configuration["IXON_AgentId"]
+        ?? throw new InvalidOperationException("IXON_AgentId configuration is not set.");
 
     public string Username { get; } =
-        Environment.GetEnvironmentVariable("OPCUA_Username")
-        ?? throw new InvalidOperationException("OPCUA_Username environment variable is not set.");
+        configuration["OPCUA_Username"]
+        ?? throw new InvalidOperationException("OPCUA_Username configuration is not set.");
 
     public string Password { get; } =
-        Environment.GetEnvironmentVariable("OPCUA_Password")
-        ?? throw new InvalidOperationException("OPCUA_Password environment variable is not set.");
+        configuration["OPCUA_Password"]
+        ?? throw new InvalidOperationException("OPCUA_Password configuration is not set.");
 
     public string SourcePublicId { get; } =
-        Environment.GetEnvironmentVariable("IXON_SourcePublicId")
+        configuration["IXON_SourcePublicId"]
         ?? throw new InvalidOperationException(
-            "IXON_SourcePublicId environment variable is not set."
+            "IXON_SourcePublicId configuration is not set."
         );
 
     /// <summary>

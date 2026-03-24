@@ -29,4 +29,30 @@ internal class Configuration
     ///     The version of the IXON API to use. This value determines which API endpoints and features are available.
     /// </summary>
     public int Version { get; set; } = 2;
+
+    /// <summary>
+    /// Gets or sets the network address of the server to which the client will connect.
+    /// </summary>
+    public string OpcUAServerAddress { get;set; } = null!;
+
+    /// <summary>
+    /// The Username for authenticating with the OPC UA server. This is required for establishing a connection to the server and accessing its resources.
+    /// </summary>
+    public string OpcUAUsername { get; set; } = null!;
+
+    /// <summary>
+    /// The Password for authenticating with the OPC UA server. This is required for establishing a connection to the server and accessing its resources.
+    /// </summary>
+    public string OpcUAPassword { get; set; } = null!;
+
+    /// <summary>
+    /// The Agent ID for the IXON api use.
+    /// </summary>
+    public string IxonAgentId { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the public identifier of the IXON source associated with this entity.
+    /// </summary>
+
+    public string IxonSourcePublicId { get; set; } = null!;
 }
