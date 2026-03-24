@@ -13,4 +13,16 @@ public class DataSourceProtocol
 {
     [JsonPropertyName("publicId")]
     public string PublicId { get; set; } = null!;
+
+    [JsonPropertyName("authenticationType")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? AuthenticationType { get; set; }
+
+    [JsonPropertyName("username")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Username { get; set; }
+
+    [JsonPropertyName("password")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Password { get; set; }
 }

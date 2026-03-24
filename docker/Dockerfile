@@ -34,13 +34,13 @@ ARG IXON_ApplicationId
 ARG IXON_CompanyId
 ARG IXON_BearerToken
 ARG IXON_AgentId
-ARG IXON_SourcePublicId
+ARG IXON_DataSourceId
 
 ENV IXON_ApplicationId="$IXON_ApplicationId"
 ENV IXON_CompanyId="$IXON_CompanyId"
 ENV IXON_BearerToken="$IXON_BearerToken"
 ENV IXON_AgentId="$IXON_AgentId"
-ENV IXON_SourcePublicId="$IXON_SourcePublicId"
+ENV IXON_DataSourceId="$IXON_DataSourceId"
 
 # ── OPC UA connection ──────────────────────────────────────────────────────────
 ARG OPCUA_ServerAddress
