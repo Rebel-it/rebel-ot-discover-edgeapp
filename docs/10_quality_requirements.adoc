@@ -1,0 +1,158 @@
+[[section-quality-scenarios]]
+== Quality Requirements
+
+The top-five quality goals and their priorities are defined in section 1.2. This section makes those goals concrete through measurable quality scenarios.
+
+=== 10.1 Quality Requirements Overview
+
+[options="header", cols="2,1,4"]
+|===
+| Quality Category | Priority | Summary
+
+| *Reliability* (#reliable)
+| 1
+| The application runs unattended for weeks. Any single failure -- network outage, API error, OPC UA disconnect -- must be isolated to its cycle. The next cycle must start normally without operator intervention.
+
+| *Maintainability* (#flexible)
+| 2
+| Adding a new industrial protocol must not require changes to the core discovery or IXON synchronisation logic. Internal structure must be understandable from the documentation and source without additional explanation.
+
+| *Security* (#secure)
+| 3
+| Credentials must never appear in logs, source code, or configuration files. All IXON communication must be over HTTPS. OPC UA credentials must not be printed or persisted outside the container environment.
+
+| *Portability* (#operable)
+| 4
+| The application must build and run on `linux/arm64/v8` (SecureEdge Pro) and on developer workstations (macOS, Linux, Windows) with a single SDK and no platform-specific build steps.
+
+| *Performance Efficiency* (#efficient)
+| 5
+| A full discovery cycle over an agent with up to 4,000 OPC UA nodes must complete within the 15-minute window and must not exhaust memory on the SecureEdge Pro's constrained hardware.
+|===
+
+=== 10.2 Quality Scenarios
+
+==== SC-01: Transient Network Outage During Cycle (Reliability)
+
+[options="header", cols="1,3"]
+|===
+| Attribute | Description
+
+| *Source*
+| IXON Cloud API or OT network becomes temporarily unavailable
+
+| *Stimulus*
+| `Scraper.ExecuteAsync` throws `HttpRequestException` or `ServiceResultException` mid-cycle
+
+| *Environment*
+| Normal production operation; container has been running for days
+
+| *Artifact*
+| `Application.Run()` scheduler loop
+
+| *Response*
+| Exception is caught by the `catch (Exception ex)` block in `Application.Run`, logged at `Error` level, and discarded. The `finally` block delays 15 minutes and the next cycle starts normally.
+
+| *Response Measure*
+| Process does not crash. Next successful cycle completes without operator intervention. Zero duplicate variables or tags are created in IXON as a result of the partial cycle.
+|===
+
+==== SC-02: OPC UA Server Restart During Discovery (Reliability)
+
+[options="header", cols="1,3"]
+|===
+| Attribute | Description
+
+| *Source*
+| The PLC/OPC UA server is rebooted by a field engineer
+
+| *Stimulus*
+| Active OPC UA session keep-alive fails; `SessionReconnectHandler` is triggered
+
+| *Environment*
+| `BrowseFullAddressSpaceAsync` is in progress (cycle is running)
+
+| *Artifact*
+| `UAClient`, `SessionReconnectHandler`
+
+| *Response*
+| `SessionReconnectHandler` retries from 1 s up to 15 s (exponential back-off). If reconnection succeeds within the cycle timeout, browsing resumes. If the server is still down at session creation time (beginning of cycle), `UAClient.Create` returns `null` and `Scraper` exits early.
+
+| *Response Measure*
+| If reconnected: full browse completes normally. If not reconnected: cycle fails cleanly, logged at `Error`, next cycle retries after 15 minutes. In neither case is the process killed.
+|===
+
+==== SC-03: Adding a Modbus Protocol Connector (Maintainability)
+
+[options="header", cols="1,3"]
+|===
+| Attribute | Description
+
+| *Source*
+| Development team receives a requirement for Modbus TCP support
+
+| *Stimulus*
+| A new project `Rebelit.OT.Discover.EdgeApp.Connections.Modbus` is to be added
+
+| *Environment*
+| Existing source at current state (OPC UA connector already exists)
+
+| *Artifact*
+| `Connections.OPCUA` project (as reference), `IScraper`, `IUAClientFactory`, `IClientSamplerFactory`
+
+| *Response*
+| Developer creates a new project implementing `IUAClientFactory` and `IClientSamplerFactory` plus a registration extension `AddModbusClient(...)`. `Program.cs` is updated to call the new extension. No other file is modified.
+
+| *Response Measure*
+| Zero lines changed in `Application.cs`, `Scraper.cs`, `IScraper.cs`, or any IXON connector file.
+|===
+
+==== SC-04: Credential Not Present at Container Start (Security / Reliability)
+
+[options="header", cols="1,3"]
+|===
+| Attribute | Description
+
+| *Source*
+| Operator forgets to supply one of the nine required build-args when running `push_ixon.sh`
+
+| *Stimulus*
+| Container starts; `Program.cs` reads environment variables
+
+| *Environment*
+| First deployment or credential rotation
+
+| *Artifact*
+| `Program.cs` startup code
+
+| *Response*
+| `ArgumentNullException` is thrown with the name of the missing variable. The process exits immediately with a non-zero exit code. The container does not enter the discovery loop.
+
+| *Response Measure*
+| No partial or silent operation. The missing variable name is visible in `docker logs`. Time to diagnose: under 30 seconds.
+|===
+
+==== SC-05: Discovery of 4,000-Node Address Space (Performance Efficiency)
+
+[options="header", cols="1,3"]
+|===
+| Attribute | Description
+
+| *Source*
+| Large industrial PLC with a fully populated OPC UA address space
+
+| *Stimulus*
+| `BrowseFullAddressSpaceAsync` returns approximately 4,000 `ReferenceDescription` nodes
+
+| *Environment*
+| Production container on SecureEdge Pro (limited RAM)
+
+| *Artifact*
+| `Scraper`, `ApiClient`
+
+| *Response*
+| All 4,000 nodes are processed. For each new node, a `Variable` POST and a `Tag` POST are issued sequentially. Existing nodes are skipped via O(1) `HashSet.Contains` lookups.
+
+| *Response Measure*
+| Total cycle duration under 15 minutes. Peak heap memory stays within the SecureEdge Pro's available container memory budget (typically 256 MB or less).
+|===
