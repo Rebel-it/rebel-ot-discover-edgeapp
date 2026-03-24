@@ -1,0 +1,133 @@
+[[section-deployment-view]]
+== Deployment View
+
+=== 7.1 Infrastructure Level 1 -- Production Environment
+
+In production the application runs as a Docker container on the *IXON SecureEdge Pro*, a Linux ARM64 edge gateway installed in or near the OT control cabinet.
+
+[mermaid]
+....
+flowchart TD
+    subgraph dev["Developer Workstation\n(macOS / Linux / Windows)"]
+        builder["docker buildx\n(push_ixon.sh)"]
+    end
+
+    subgraph edge["IXON SecureEdge Pro\nLinux ARM64"]
+        registry["Container Registry\nHTTP · port 5000"]
+        subgraph container["Docker Container\nlinux/arm64/v8"]
+            runtime[".NET 10 Runtime"]
+            app["Rebelit.OT.Discover.EdgeApp.dll\n+ Connections.IXON.dll\n+ Connections.OPCUA.dll"]
+            runtime --> app
+        end
+        registry -->|"image pull on container start"| container
+    end
+
+    subgraph otnet["OT Network\n(isolated plant network)"]
+        plc["OPC UA Server\nPLC / SCADA\nopc.tcp://<ip>:4840"]
+    end
+
+    subgraph cloud["Internet"]
+        ixoncloud["IXON Cloud\nhttps://portal.ixon.cloud"]
+    end
+
+    builder -->|"docker buildx push\nHTTP · port 5000\nlinux/arm64/v8 image"| registry
+    app <-->|"OPC UA binary\nopc.tcp://"| plc
+    app <-->|"HTTPS REST\nJSON"| ixoncloud
+....
+
+==== Motivation
+
+The SecureEdge Pro acts as a network junction between the isolated OT network (where the OPC UA server lives) and the public internet (where the IXON Cloud API is reachable). Running the container on the device makes both networks simultaneously accessible without opening inbound firewall rules.
+
+==== Infrastructure Nodes
+
+[options="header", cols="2,2,4"]
+|===
+| Node | Technology | Notes
+
+| Developer Workstation
+| macOS / Linux / Windows, Docker Desktop with buildx
+| Builds the `linux/arm64/v8` image and pushes it to the device registry. Credentials are injected at build time via `--build-arg`.
+
+| IXON SecureEdge Pro
+| Linux ARM64, limited CPU/RAM, local Docker daemon
+| Hosts the container registry on HTTP port 5000. Pulls and runs the application container. Connected to both the plant OT network (via LAN) and the internet (via WAN/LTE).
+
+| Docker Container
+| .NET 10 Runtime image (`mcr.microsoft.com/dotnet/runtime:10.0`) base
+| Multi-stage build: SDK stage compiles to a self-contained publish folder; runtime stage copies only the binaries. Image is `linux/arm64/v8`.
+
+| OPC UA Server
+| PLC / SCADA / industrial controller
+| Accessible only inside the OT network. Communicates over the native OPC UA binary protocol.
+
+| IXON Cloud API v2
+| SaaS platform at `https://portal.ixon.cloud`
+| Publicly accessible HTTPS REST API. Authentication via bearer token.
+|===
+
+==== Artifact-to-Node Mapping
+
+[options="header", cols="3,2"]
+|===
+| Software Artifact | Deployed To
+
+| `Rebelit.OT.Discover.EdgeApp.dll` (orchestration)
+| Docker Container on SecureEdge Pro
+
+| `Rebelit.OT.Discover.EdgeApp.Connections.IXON.dll`
+| Docker Container on SecureEdge Pro
+
+| `Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.dll`
+| Docker Container on SecureEdge Pro
+
+| NuGet dependencies (`OPCFoundation.NetStandard.Opc.Ua`, `Serilog`, etc.)
+| Compiled into the Docker image publish output
+|===
+
+=== 7.2 Infrastructure Level 2 -- Docker Image Build Pipeline
+
+[mermaid]
+....
+flowchart LR
+    subgraph buildstage["Build Stage\n(mcr.microsoft.com/dotnet/sdk:10.0)"]
+        restore["dotnet restore"]
+        publish["dotnet publish -c Release\n→ /app/publish"]
+        restore --> publish
+    end
+
+    subgraph runtimestage["Runtime Stage\n(mcr.microsoft.com/dotnet/runtime:10.0)"]
+        copy["COPY --from=build /app/publish ."]
+        envvars["ENV IXON_* and OPCUA_*\n(from ARG build args)"]
+        entrypoint["ENTRYPOINT dotnet\nRebelit.OT.Discover.EdgeApp.dll"]
+        copy --> envvars --> entrypoint
+    end
+
+    buildstage -->|"published binaries"| runtimestage
+....
+
+The multi-stage Dockerfile ensures that the final image contains only the .NET runtime and the compiled application binaries -- no SDK, no source code, and no NuGet cache. The resulting image is significantly smaller than a single-stage SDK-based image.
+
+All nine secrets and addresses are passed as Docker `ARG` values in `push_ixon.sh` and surfaced as `ENV` inside the container. They are never written to any file on disk or printed in logs.
+
+=== 7.3 Development Environment
+
+Developers can run the application locally without Docker by setting the required environment variables and calling `dotnet run` from the `src/` directory. The same .NET 10 SDK is used in both environments.
+
+[mermaid]
+....
+flowchart LR
+    subgraph devws["Developer Workstation (local)"]
+        dotnetrun["dotnet run\n(Rebelit.OT.Discover.EdgeApp)"]
+    end
+
+    subgraph localenv["Local / VPN environment"]
+        simopc["Simulated / real OPC UA Server\n(accessible via network)"]
+        ixoncloud["IXON Cloud API v2\n(via internet)"]
+    end
+
+    dotnetrun <-->|"opc.tcp://"| simopc
+    dotnetrun <-->|"HTTPS"| ixoncloud
+....
+
+There is no environment-specific build flag or configuration file. Switching between development and production is entirely controlled by which environment variables are set.

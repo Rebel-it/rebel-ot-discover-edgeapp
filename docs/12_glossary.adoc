@@ -1,0 +1,103 @@
+[[section-glossary]]
+== Glossary
+
+[options="header", cols="2,5"]
+|===
+| Term | Definition
+
+| *Address Space*
+| The hierarchical namespace of a OPC UA server. It contains all nodes (variables, objects, methods, views) accessible to OPC UA clients. The root of the address space is the `Objects` folder, which is the starting point for `BrowseFullAddressSpaceAsync`.
+
+| *Agent (IXON)*
+| An IXON cloud entity representing a physical or virtual industrial device (e.g. a machine or PLC). Each agent has a unique `publicId`. Variables and Tags are created under a specific agent.
+
+| *ARG (Docker)*
+| A Docker build-time variable passed via `--build-arg`. In this project, all nine credentials and addresses are supplied as ARG values in `push_ixon.sh` and then written to ENV variables inside the image.
+
+| *Bearer Token*
+| An authentication string required by the IXON Cloud API v2. It is passed in every HTTP request as `Authorization: Bearer <token>`. It acts as a long-lived secret tied to a company account and must be treated as a password.
+
+| *Browse (OPC UA)*
+| The OPC UA service operation that returns the child nodes of a given parent node. `BrowseFullAddressSpaceAsync` calls this operation recursively up to depth 128, starting from `RootFolder`, to enumerate the entire address space.
+
+| *ClientSamples*
+| An internal class in `Connections.OPCUA`, adapted from the OPC Foundation reference sample. Provides `BrowseFullAddressSpaceAsync` and other helper methods over an OPC UA `ISession`.
+
+| *CompanyId (IXON)*
+| A public identifier for a company in the IXON platform. Passed as the `Api-Company` request header on every IXON API call.
+
+| *Data Tag (IXON)*
+| An IXON cloud entity that defines the logging configuration for a variable. Each tag specifies the retention policy, log-on-change behaviour, and logging interval. In this application, every new variable gets a tag created automatically with default values (260-week retention, log-on-change, 72 s interval).
+
+| *Data Variable (IXON)*
+| An IXON cloud entity that represents a single data point from a connected device. It holds the OPC UA node address, data type, bit width, and a reference to its source. Created in IXON by `ApiClient.PostVariableAsync`.
+
+| *Deduplication*
+| The process of checking whether a Variable or Tag already exists in IXON before issuing a POST request. Implemented in `Scraper` using `HashSet<string>` lookups against node addresses and tag variable public IDs.
+
+| *Discovery Cycle*
+| One execution of `Scraper.ExecuteAsync`. It browses the OPC UA address space, fetches existing IXON entries, and creates any missing Variables and Tags. Runs every 15 minutes.
+
+| *Docker Buildx*
+| A Docker CLI plugin that extends `docker build` with multi-platform support. Used in `push_ixon.sh` to build a `linux/arm64/v8` image and push it directly to the SecureEdge Pro's local registry.
+
+| *Edge App*
+| Short name for the _Rebelit OT Discover Edge App_. The overall system documented in this arc42 document.
+
+| *EdgeApp (project)*
+| The .NET project `Rebelit.OT.Discover.EdgeApp`. Contains `Program`, `Application`, `IScraper`, and `Scraper`. The orchestration layer.
+
+| *ENV (Docker)*
+| A runtime environment variable available inside a running Docker container. In this project, all secrets are surfaced as ENV variables (sourced from build-time ARGs) and read by `Program.cs` at startup.
+
+| *Idempotent*
+| An operation that can be applied multiple times without changing the outcome beyond the first application. The discovery cycle is idempotent: running it twice produces the same IXON state as running it once.
+
+| *IXON Cloud*
+| A cloud-based IIoT platform by IXON B.V. Provides secure remote access, data logging, and dashboards for industrial machines. The application writes Variables and Tags to the IXON Cloud API v2.
+
+| *IXON SecureEdge Pro*
+| An industrial IoT edge gateway made by IXON. Runs Linux on ARM64, hosts a Docker daemon, and bridges the OT network to the internet. The production deployment target for the Edge App.
+
+| *MachineId (IXON AgentId)*
+| Used interchangeably with _Agent_ in some IXON contexts. In this application, `IXON_AgentId` is the public identifier of the target machine whose Variables and Tags are managed.
+
+| *Node (OPC UA)*
+| The fundamental addressable unit in an OPC UA address space. Nodes include variables (data points), objects (grouping nodes), methods, and views. Each node has a unique `NodeId`.
+
+| *NodeId (OPC UA)*
+| A unique identifier for a node within an OPC UA server. Composed of a namespace index and an identifier (numeric, string, or GUID). Used as the `Address` field of an IXON Variable.
+
+| *OPC UA (OPC Unified Architecture)*
+| An ISO/IEC 62541 standard for industrial data communication. Defines a platform-neutral, service-oriented architecture for machine-to-machine communication. Uses a binary TCP transport (`opc.tcp://`) with certificate-based security.
+
+| *OT (Operational Technology)*
+| Hardware and software that monitors and controls physical processes, devices, and infrastructure. Contrasted with IT (Information Technology). Examples: PLCs, SCADA systems, DCS, sensors, actuators.
+
+| *Port-and-Adapter*
+| An architectural style (also called Hexagonal Architecture) where the core domain logic communicates with the outside world only through defined interfaces (ports). Adapters implement those interfaces for specific technologies. Used in this system to decouple `Scraper` from OPC UA and IXON.
+
+| *ReferenceDescription (OPC UA)*
+| The data structure returned by a Browse operation. Contains the NodeId, DisplayName, BrowseName, and TypeDefinition of a referenced node. `Scraper` maps `ReferenceDescription` objects to IXON Variables.
+
+| *SecureEdge Pro*
+| See _IXON SecureEdge Pro_.
+
+| *Session (OPC UA)*
+| A stateful connection between an OPC UA client and server. Maintains authentication context and subscription state. Managed by `UAClient`, which keeps it alive via periodic keep-alive messages and reconnects automatically on failure.
+
+| *SessionReconnectHandler*
+| A class from the OPC Foundation SDK that manages automatic session reconnection with configurable retry intervals. Used by `UAClient` with 1 s initial period and 15 s exponential back-off cap.
+
+| *Source (IXON)*
+| An IXON sub-entity under an agent that identifies the industrial data source (e.g. a specific OPC UA connection). Variables are associated with a source via `IXON_SourcePublicId`.
+
+| *Tag*
+| See _Data Tag (IXON)_.
+
+| *Variable*
+| See _Data Variable (IXON)_.
+
+| *Zero-touch Onboarding*
+| The goal of the Edge App: automatically discovering and registering all OPC UA data points in IXON without any manual configuration step by an operator.
+|===
