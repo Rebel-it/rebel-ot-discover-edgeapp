@@ -33,4 +33,20 @@ internal class ApiClient(IOptions<Configuration> configuration, ILogger<ApiClien
         var uri = $"/api/agents/{agentId}/data-variables";
         return await Post<Response<Variable>>(uri, newVariable);
     }
+
+    public async Task<Response<DataSource[]>> GetDataSourcesAsync(string agentId)
+    {
+        var uri =
+            $"/api/agents/{agentId}/data-sources?fields=publicId,name,slug,disabled,protocol.publicId,device.publicId&page-size=4000";
+        return await Get<Response<DataSource[]>>(uri);
+    }
+
+    public async Task<Response<DataSource>?> PostDataSourceAsync(
+        string agentId,
+        DataSource newDataSource
+    )
+    {
+        var uri = $"/api/agents/{agentId}/data-sources";
+        return await Post<Response<DataSource>>(uri, newDataSource);
+    }
 }
