@@ -15,12 +15,12 @@ flowchart LR
     env["ENV in Docker image\n(baked in, invisible in logs)"]
     prog["Program.cs\nEnvironment.GetEnvironmentVariable()"]
 
-    ba -->|"9 values"| buildarg --> env --> prog
+    ba -->|"8 required + 1 optional"| buildarg --> env --> prog
 ....
 
-`Program.cs` reads all nine required variables at startup and calls `throw new ArgumentNullException(...)` if any are absent. This fail-fast strategy prevents the container from starting in a partially-configured state and silently skipping work.
+`Program.cs` reads eight required variables at startup and calls `throw new InvalidOperationException(...)` if any are absent. One additional variable (`IXON_DataSourceId`) is optional: when absent, the app creates a new OPC UA data source automatically. This fail-fast strategy prevents the container from starting in a partially-configured state and silently skipping work.
 
-The nine environment variables are:
+The environment variables are:
 
 [options="header", cols="2,3"]
 |===
@@ -30,7 +30,7 @@ The nine environment variables are:
 | `IXON_CompanyId` | IXON company public ID
 | `IXON_BearerToken` | IXON API bearer token (secret)
 | `IXON_AgentId` | Target IXON agent (machine) ID
-| `IXON_SourcePublicId` | IXON data source on the agent
+| `IXON_DataSourceId` _(optional)_ | IXON OPC UA data source on the agent. Omit to have the app create one automatically at startup.
 | `OPCUA_ServerAddress` | OPC UA endpoint URL (`opc.tcp://...`)
 | `OPCUA_Username` | OPC UA authentication username
 | `OPCUA_Password` | OPC UA authentication password (secret)

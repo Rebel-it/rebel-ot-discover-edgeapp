@@ -11,7 +11,7 @@ The following table lists identified risks and areas of technical debt, ordered 
 | *Credentials baked into the Docker image*
 | Medium
 | High
-| All nine secrets (bearer token, OPC UA password, etc.) are embedded as `ENV` layers in the Docker image via `--build-arg`. Anyone with pull access to the SecureEdge Pro registry at port 5000 or a copy of the image can inspect those values with `docker inspect` or layer extraction tools.
+| Eight secrets (bearer token, OPC UA password, etc.) are embedded as `ENV` layers in the Docker image via `--build-arg`. Anyone with pull access to the SecureEdge Pro registry at port 5000 or a copy of the image can inspect those values with `docker inspect` or layer extraction tools.
 | Short term: restrict access to the SecureEdge Pro registry to authorised operators only. Long term: investigate whether the SecureEdge Pro supports runtime environment variable injection or a secrets volume so that credentials can be rotated without rebuilding the image.
 
 | R-02
@@ -32,7 +32,7 @@ The following table lists identified risks and areas of technical debt, ordered 
 | *Single-agent scope per container instance*
 | Low
 | Medium
-| `IXON_AgentId` and `IXON_SourcePublicId` are single values, so one container instance manages exactly one agent. Customers with many agents must run one container per agent, each with its own image build.
+| `IXON_AgentId` is a single value, so one container instance manages exactly one agent. `IXON_DataSourceId` is optional -- the app auto-creates a data source when absent -- but the created source is still scoped to a single agent. Customers with many agents must run one container per agent, each with its own image build.
 | Extend `Scraper` to accept a list of agent/source pairs and loop over them in a single cycle. Supply the list as a JSON-encoded environment variable or a mounted configuration file.
 
 | R-05
