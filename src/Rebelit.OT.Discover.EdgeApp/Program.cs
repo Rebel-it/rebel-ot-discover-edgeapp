@@ -9,6 +9,7 @@ using Serilog;
 Console.WriteLine("Hello, World!");
 var configuration = new ConfigurationBuilder()
     .AddUserSecrets<Program>()
+    .AddEnvironmentVariables()
     .Build();
 
 Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateLogger();
