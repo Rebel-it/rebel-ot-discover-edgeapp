@@ -43,6 +43,12 @@ public interface IApiClient
     Task<Response<DataSource[]>> GetDataSourcesAsync(string agentId);
 
     /// <summary>
+    ///     Gets the agent details for the specified agent.
+    /// </summary>
+    /// <param name="agentId">The public ID of the agent.</param>
+    Task<Response<Agent>> GetAgentAsync(string agentId);
+
+    /// <summary>
     ///     Creates a new data source for the specified agent.
     /// </summary>
     /// <param name="agentId">The public ID of the agent.</param>

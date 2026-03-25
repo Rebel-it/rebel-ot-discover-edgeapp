@@ -251,6 +251,54 @@ public class ApiClientTests
     }
 
     [Test]
+    public async Task GetAgentAsync_WithOkResponse_ReturnsDeserializedAgent()
+    {
+        const string json =
+            """{"data":{"publicId":"9MuFepQeCJWL","name":"My Agent","deviceId":"dev-001"}}""";
+        var (client, _) = CreateSut(HttpStatusCode.OK, json);
+
+        var result = await client.GetAgentAsync("9MuFepQeCJWL");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data?.PublicId, Is.EqualTo("9MuFepQeCJWL"));
+            Assert.That(result.Data?.Name, Is.EqualTo("My Agent"));
+            Assert.That(result.Data?.DeviceId, Is.EqualTo("dev-001"));
+        });
+    }
+
+    [Test]
+    public async Task GetAgentAsync_WhenCalled_UsesCorrectUri()
+    {
+        var (client, handler) = CreateSut(HttpStatusCode.OK, """{"data":{"publicId":"abc"}}""");
+
+        await client.GetAgentAsync("agent-42");
+
+        Assert.That(
+            handler.LastRequest!.RequestUri!.ToString(),
+            Does.Contain("/api/agents/agent-42?fields=publicId,name,deviceId")
+        );
+    }
+
+    [Test]
+    public async Task GetAgentAsync_WhenCalled_SetsRequiredHeaders()
+    {
+        var (client, handler) = CreateSut(HttpStatusCode.OK, """{"data":{"publicId":"abc"}}""");
+
+        await client.GetAgentAsync("agent-1");
+
+        AssertCommonHeaders(handler.LastRequest!);
+    }
+
+    [Test]
+    public void GetAgentAsync_OnBadRequest_ThrowsHttpRequestException()
+    {
+        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
+
+        Assert.ThrowsAsync<HttpRequestException>(() => client.GetAgentAsync("agent-1"));
+    }
+
+    [Test]
     public async Task GetDataSourcesAsync_WithOkResponse_ReturnsDeserializedDataSources()
     {
         const string json =

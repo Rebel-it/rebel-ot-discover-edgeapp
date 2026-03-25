@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Opc.Ua;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
@@ -52,6 +53,10 @@ public class ScraperTests
     [Test]
     public async Task ExecuteAsync_WhenDataSourceIdNotProvided_CreatesNewDataSourceAndUsesItsId()
     {
+        _apiClient.GetAgentResponse = new Response<Agent>
+        {
+            Data = new Agent { PublicId = "agent-pub-id" },
+        };
         _apiClient.PostDataSourceResponse = new Response<DataSource>
         {
             Data = new DataSource { PublicId = "new-ds-id" },
@@ -65,13 +70,22 @@ public class ScraperTests
             Assert.That(_apiClient.PostDataSourceCallCount, Is.EqualTo(1));
             Assert.That(
                 _apiClient.LastPostDataSourceRequest?.Device.PublicId,
-                Is.EqualTo("test-agent-id")
+                Is.EqualTo("agent-pub-id")
             );
         });
     }
 
-    private Scraper CreateSut() =>
-        new(_uaClientFactory, _clientSamplerFactory, _apiClient, NullLogger<Scraper>.Instance);
+    private Scraper CreateSut()
+    {
+        var configuration = new ConfigurationBuilder().AddEnvironmentVariables().Build();
+        return new(
+            _uaClientFactory,
+            _clientSamplerFactory,
+            _apiClient,
+            configuration,
+            NullLogger<Scraper>.Instance
+        );
+    }
 
     private sealed class SpyApiClient : IApiClient
     {
@@ -79,6 +93,11 @@ public class ScraperTests
         public DataSource? LastPostDataSourceRequest { get; private set; }
         public Response<DataSource> PostDataSourceResponse { get; set; } =
             new() { Data = new DataSource { PublicId = "default-ds-id" } };
+        public Response<Agent> GetAgentResponse { get; set; } =
+            new() { Data = new Agent { PublicId = "default-agent-pub-id" } };
+
+        public Task<Response<Agent>> GetAgentAsync(string agentId) =>
+            Task.FromResult(GetAgentResponse);
 
         public Task<Response<DataSource>?> PostDataSourceAsync(
             string agentId,
