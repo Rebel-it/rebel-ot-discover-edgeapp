@@ -7,6 +7,7 @@ To install this EdgeApp onto a SecureEdge Pro, you will need to build the EdgeAp
 - link:https://docs.docker.com/get-docker/[Docker] with link:https://docs.docker.com/buildx/working-with-buildx/[BuildKit / `docker buildx`] enabled.
 - An IXON SecureEdge Pro device accessible on your local network (or with VPN connection through the portal).
 - An IXON Cloud account with the *API Integrations* module enabled.
+- Python version 3.11.1 installed to run the OPC UA test server.
 
 == Building the EdgeApp Image
 The script link:docker/push_ixon.sh[`docker/push_ixon.sh`] builds a `linux/arm64/v8` image and pushes it directly to the container registry on the SecureEdge Pro. Run it from the `docker/` directory:
@@ -104,3 +105,10 @@ image::docs/assets/sourceedge_docker_container.png[]
 . Press the *Run* (1) button to start the container. You can view the logs by clicking the *Logs* (2) button.
 
 image::docs/assets/sourceedge_docker_run.png[]
+
+== Connection to Opc Ua test server
+To test the EdgeApp without a real OPC UA server, you can run a local OPC UA test server using Python. 
+
+1. Open the folder Rebelit.OT.Discover.EdgeApp.OpcUATestServer in your terminal.
+2. Run this command .\.venv\Scripts\python.exe src/RebelOpcUaTestServer.py
+3. The test server will start and listen on `opc.tcp://127.0.0.1:53530/rebelit/server/`. You can use this address as the OPC ua server adress for the imports and test the EdgeApp functionality. the username and password are `user1` and `password1` respectively(only for testing purposes).

@@ -2,5 +2,7 @@
     "cSpell.words": [
         "Ixon",
         "Rebelit"
-    ]
+    ],
+    "python.defaultInterpreterPath": "${workspaceFolder}/src/Rebelit.OT.Discover.EdgeApp.OpcUATestServer/.venv/Scripts/python.exe",
+    "python-envs.defaultEnvManager": "ms-python.python:system"
 }
