@@ -5,6 +5,7 @@ using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Factory;
+using Device = Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models.Device;
 
 namespace Rebelit.OT.Discover.EdgeApp.Tests;
 
@@ -53,9 +54,9 @@ public class ScraperTests
     [Test]
     public async Task ExecuteAsync_WhenDataSourceIdNotProvided_CreatesNewDataSourceAndUsesItsId()
     {
-        _apiClient.GetAgentResponse = new Response<Agent>
+        _apiClient.GetDevicesResponse = new Response<Device[]>
         {
-            Data = new Agent { PublicId = "agent-pub-id" },
+            Data = [new Device { PublicId = "device-pub-id" }],
         };
         _apiClient.PostDataSourceResponse = new Response<DataSource>
         {
@@ -70,9 +71,61 @@ public class ScraperTests
             Assert.That(_apiClient.PostDataSourceCallCount, Is.EqualTo(1));
             Assert.That(
                 _apiClient.LastPostDataSourceRequest?.Device.PublicId,
-                Is.EqualTo("agent-pub-id")
+                Is.EqualTo("device-pub-id")
             );
         });
+    }
+
+    [Test]
+    public async Task ExecuteAsync_WhenDeviceIpMatchesOpcuaHost_UsesMatchedDevice()
+    {
+        Environment.SetEnvironmentVariable("OPCUA_ServerAddress", "opc.tcp://192.168.1.10:4840");
+        _apiClient.GetDevicesResponse = new Response<Device[]>
+        {
+            Data =
+            [
+                new Device { PublicId = "other-device", IpAddress = "192.168.1.99" },
+                new Device { PublicId = "matched-device", IpAddress = "192.168.1.10" },
+            ],
+        };
+        _apiClient.PostDataSourceResponse = new Response<DataSource>
+        {
+            Data = new DataSource { PublicId = "new-ds-id" },
+        };
+        var scraper = CreateSut();
+
+        await scraper.ExecuteAsync(CancellationToken.None);
+
+        Assert.That(
+            _apiClient.LastPostDataSourceRequest?.Device.PublicId,
+            Is.EqualTo("matched-device")
+        );
+    }
+
+    [Test]
+    public async Task ExecuteAsync_WhenNoDeviceIpMatchesOpcuaHost_FallsBackToFirstDevice()
+    {
+        Environment.SetEnvironmentVariable("OPCUA_ServerAddress", "opc.tcp://192.168.1.10:4840");
+        _apiClient.GetDevicesResponse = new Response<Device[]>
+        {
+            Data =
+            [
+                new Device { PublicId = "first-device", IpAddress = "10.0.0.1" },
+                new Device { PublicId = "second-device", IpAddress = "10.0.0.2" },
+            ],
+        };
+        _apiClient.PostDataSourceResponse = new Response<DataSource>
+        {
+            Data = new DataSource { PublicId = "new-ds-id" },
+        };
+        var scraper = CreateSut();
+
+        await scraper.ExecuteAsync(CancellationToken.None);
+
+        Assert.That(
+            _apiClient.LastPostDataSourceRequest?.Device.PublicId,
+            Is.EqualTo("first-device")
+        );
     }
 
     private Scraper CreateSut()
@@ -95,9 +148,14 @@ public class ScraperTests
             new() { Data = new DataSource { PublicId = "default-ds-id" } };
         public Response<Agent> GetAgentResponse { get; set; } =
             new() { Data = new Agent { PublicId = "default-agent-pub-id" } };
+        public Response<Device[]> GetDevicesResponse { get; set; } =
+            new() { Data = [new Device { PublicId = "default-device-pub-id" }] };
 
         public Task<Response<Agent>> GetAgentAsync(string agentId) =>
             Task.FromResult(GetAgentResponse);
+
+        public Task<Response<Device[]>> GetDevicesAsync(string agentId) =>
+            Task.FromResult(GetDevicesResponse);
 
         public Task<Response<DataSource>?> PostDataSourceAsync(
             string agentId,

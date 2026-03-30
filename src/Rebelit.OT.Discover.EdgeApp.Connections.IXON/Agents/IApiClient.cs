@@ -49,6 +49,12 @@ public interface IApiClient
     Task<Response<Agent>> GetAgentAsync(string agentId);
 
     /// <summary>
+    ///     Gets the devices associated with the specified agent.
+    /// </summary>
+    /// <param name="agentId">The public ID of the agent.</param>
+    Task<Response<Device[]>> GetDevicesAsync(string agentId);
+
+    /// <summary>
     ///     Creates a new data source for the specified agent.
     /// </summary>
     /// <param name="agentId">The public ID of the agent.</param>

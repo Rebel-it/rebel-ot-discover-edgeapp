@@ -100,12 +100,23 @@ public class Scraper(
 
         logger.LogInformation("No data source ID provided. Creating a new OPC-UA data source...");
 
-        var agentResponse = await apiClient.GetAgentAsync(agentId);
-        var agentPublicId =
-            agentResponse.Data?.PublicId
+        var devicesResponse = await apiClient.GetDevicesAsync(agentId);
+        var devices = devicesResponse.Data ?? [];
+
+        var matchedDevice = FindDeviceByHost(devices);
+
+        var devicePublicId =
+            matchedDevice?.PublicId
             ?? throw new InvalidOperationException(
-                $"Could not resolve publicId for agent '{agentId}'."
+                $"Could not resolve device publicId for agent '{agentId}'."
             );
+
+        logger.LogInformation(
+            "Using device '{DeviceName}' ({DevicePublicId}) with IP '{IpAddress}'.",
+            matchedDevice.Name,
+            devicePublicId,
+            matchedDevice.IpAddress
+        );
 
         var authenticationType = string.IsNullOrEmpty(Username) ? "anonymous" : "username";
 
@@ -114,7 +125,7 @@ public class Scraper(
             Name = "OPC UA",
             Slug = "opcua",
             Disabled = false,
-            Device = new Source { PublicId = agentPublicId },
+            Device = new Source { PublicId = devicePublicId },
             Protocol = new DataSourceProtocol
             {
                 PublicId = "opc-ua",
@@ -296,6 +307,33 @@ public class Scraper(
             }
         }
 
+        return null;
+    }
+
+    private Device? FindDeviceByHost(Device[] devices)
+    {
+        var opcuaHost = ExtractHost(Address);
+
+        if (string.IsNullOrEmpty(opcuaHost))
+            return devices.FirstOrDefault();
+
+        var matchedDevice = devices.FirstOrDefault(d =>
+            string.Equals(d.IpAddress, opcuaHost, StringComparison.OrdinalIgnoreCase)
+        );
+
+        if (matchedDevice == null)
+            logger.LogWarning(
+                "No device found with IP address '{Host}'. Falling back to first device.",
+                opcuaHost
+            );
+
+        return matchedDevice ?? devices.FirstOrDefault();
+    }
+
+    private static string? ExtractHost(string opcuaAddress)
+    {
+        if (Uri.TryCreate(opcuaAddress, UriKind.Absolute, out var uri))
+            return uri.Host;
         return null;
     }
 }

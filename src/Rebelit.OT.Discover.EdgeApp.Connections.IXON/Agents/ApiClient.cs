@@ -40,6 +40,13 @@ internal class ApiClient(IOptions<Configuration> configuration, ILogger<ApiClien
         return await Get<Response<Agent>>(uri);
     }
 
+    public async Task<Response<Device[]>> GetDevicesAsync(string agentId)
+    {
+        var uri =
+            $"/api/agents/{agentId}/devices?fields=publicId,name,ipAddress,macAddress,customAddress";
+        return await Get<Response<Device[]>>(uri);
+    }
+
     public async Task<Response<DataSource[]>> GetDataSourcesAsync(string agentId)
     {
         var uri =
