@@ -1,25 +1,25 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Opc.Ua;
-using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
-using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Factory;
-using Device = Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models.Device;
 
 namespace Rebelit.OT.Discover.EdgeApp.Tests;
 
 [TestFixture]
 public class ScraperTests
 {
-    private SpyApiClient _apiClient = null!;
+    private SpyNodeSynchronizer _nodeSynchronizer = null!;
+    private StubDataSourceResolver _dataSourceResolver = null!;
     private NullUAClientFactory _uaClientFactory = null!;
     private NullClientSamplerFactory _clientSamplerFactory = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _apiClient = new SpyApiClient();
+        _nodeSynchronizer = new SpyNodeSynchronizer();
+        _dataSourceResolver = new StubDataSourceResolver("resolved-ds-id");
         _uaClientFactory = new NullUAClientFactory();
         _clientSamplerFactory = new NullClientSamplerFactory();
 
@@ -27,7 +27,6 @@ public class ScraperTests
         Environment.SetEnvironmentVariable("IXON_AgentId", "test-agent-id");
         Environment.SetEnvironmentVariable("OPCUA_Username", "user");
         Environment.SetEnvironmentVariable("OPCUA_Password", "pass");
-        Environment.SetEnvironmentVariable("IXON_DataSourceId", null);
     }
 
     [TearDown]
@@ -37,94 +36,64 @@ public class ScraperTests
         Environment.SetEnvironmentVariable("IXON_AgentId", null);
         Environment.SetEnvironmentVariable("OPCUA_Username", null);
         Environment.SetEnvironmentVariable("OPCUA_Password", null);
-        Environment.SetEnvironmentVariable("IXON_DataSourceId", null);
     }
 
     [Test]
-    public async Task ExecuteAsync_WhenDataSourceIdProvided_UsesProvidedIdForVariables()
+    public async Task ExecuteAsync_WhenUAClientFails_DoesNotInitializeOrSyncNodes()
     {
-        Environment.SetEnvironmentVariable("IXON_DataSourceId", "existing-ds-id");
-        var scraper = CreateSut();
-
-        await scraper.ExecuteAsync(CancellationToken.None);
-
-        Assert.That(_apiClient.PostDataSourceCallCount, Is.EqualTo(0));
-    }
-
-    [Test]
-    public async Task ExecuteAsync_WhenDataSourceIdNotProvided_CreatesNewDataSourceAndUsesItsId()
-    {
-        _apiClient.GetDevicesResponse = new Response<Device[]>
-        {
-            Data = [new Device { PublicId = "device-pub-id" }],
-        };
-        _apiClient.PostDataSourceResponse = new Response<DataSource>
-        {
-            Data = new DataSource { PublicId = "new-ds-id" },
-        };
         var scraper = CreateSut();
 
         await scraper.ExecuteAsync(CancellationToken.None);
 
         Assert.Multiple(() =>
         {
-            Assert.That(_apiClient.PostDataSourceCallCount, Is.EqualTo(1));
-            Assert.That(
-                _apiClient.LastPostDataSourceRequest?.Device.PublicId,
-                Is.EqualTo("device-pub-id")
-            );
+            Assert.That(_nodeSynchronizer.InitializeCallCount, Is.EqualTo(0));
+            Assert.That(_nodeSynchronizer.SynchronizeCallCount, Is.EqualTo(0));
         });
     }
 
     [Test]
-    public async Task ExecuteAsync_WhenDeviceIpMatchesOpcuaHost_UsesMatchedDevice()
+    public async Task ExecuteAsync_WithNodes_InitializesNodeSynchronizerWithAgentId()
     {
-        Environment.SetEnvironmentVariable("OPCUA_ServerAddress", "opc.tcp://192.168.1.10:4840");
-        _apiClient.GetDevicesResponse = new Response<Device[]>
-        {
-            Data =
-            [
-                new Device { PublicId = "other-device", IpAddress = "192.168.1.99" },
-                new Device { PublicId = "matched-device", IpAddress = "192.168.1.10" },
-            ],
-        };
-        _apiClient.PostDataSourceResponse = new Response<DataSource>
-        {
-            Data = new DataSource { PublicId = "new-ds-id" },
-        };
-        var scraper = CreateSut();
+        var scraper = CreateFakeNodeScraper(nodeCount: 1);
 
         await scraper.ExecuteAsync(CancellationToken.None);
 
-        Assert.That(
-            _apiClient.LastPostDataSourceRequest?.Device.PublicId,
-            Is.EqualTo("matched-device")
-        );
+        Assert.That(_nodeSynchronizer.LastInitializedAgentId, Is.EqualTo("test-agent-id"));
     }
 
     [Test]
-    public async Task ExecuteAsync_WhenNoDeviceIpMatchesOpcuaHost_FallsBackToFirstDevice()
+    public async Task ExecuteAsync_WithNodes_PassesResolvedDataSourceIdToEachSynchronize()
     {
-        Environment.SetEnvironmentVariable("OPCUA_ServerAddress", "opc.tcp://192.168.1.10:4840");
-        _apiClient.GetDevicesResponse = new Response<Device[]>
-        {
-            Data =
-            [
-                new Device { PublicId = "first-device", IpAddress = "10.0.0.1" },
-                new Device { PublicId = "second-device", IpAddress = "10.0.0.2" },
-            ],
-        };
-        _apiClient.PostDataSourceResponse = new Response<DataSource>
-        {
-            Data = new DataSource { PublicId = "new-ds-id" },
-        };
-        var scraper = CreateSut();
+        var scraper = CreateFakeNodeScraper(nodeCount: 2);
+
+        await scraper.ExecuteAsync(CancellationToken.None);
+
+        Assert.That(_nodeSynchronizer.ReceivedDataSourceIds, Is.All.EqualTo("resolved-ds-id"));
+    }
+
+    [Test]
+    public async Task ExecuteAsync_WithManyNodes_SynchronizesAllNodes()
+    {
+        const int nodeCount = 15;
+        var scraper = CreateFakeNodeScraper(nodeCount);
+
+        await scraper.ExecuteAsync(CancellationToken.None);
+
+        Assert.That(_nodeSynchronizer.SynchronizeCallCount, Is.EqualTo(nodeCount));
+    }
+
+    [Test]
+    public async Task ExecuteAsync_WithManyNodes_ProcessesInBatchesOfBatchSize()
+    {
+        const int nodeCount = 11;
+        var scraper = CreateFakeNodeScraper(nodeCount);
 
         await scraper.ExecuteAsync(CancellationToken.None);
 
         Assert.That(
-            _apiClient.LastPostDataSourceRequest?.Device.PublicId,
-            Is.EqualTo("first-device")
+            _nodeSynchronizer.MaxConcurrentSynchronizeCalls,
+            Is.LessThanOrEqualTo(Scraper.BatchSize)
         );
     }
 
@@ -134,53 +103,108 @@ public class ScraperTests
         return new(
             _uaClientFactory,
             _clientSamplerFactory,
-            _apiClient,
+            _dataSourceResolver,
+            _nodeSynchronizer,
             configuration,
             NullLogger<Scraper>.Instance
         );
     }
 
-    private sealed class SpyApiClient : IApiClient
+    private Scraper CreateFakeNodeScraper(int nodeCount)
     {
-        public int PostDataSourceCallCount { get; private set; }
-        public DataSource? LastPostDataSourceRequest { get; private set; }
-        public Response<DataSource> PostDataSourceResponse { get; set; } =
-            new() { Data = new DataSource { PublicId = "default-ds-id" } };
-        public Response<Agent> GetAgentResponse { get; set; } =
-            new() { Data = new Agent { PublicId = "default-agent-pub-id" } };
-        public Response<Device[]> GetDevicesResponse { get; set; } =
-            new() { Data = [new Device { PublicId = "default-device-pub-id" }] };
+        var configuration = new ConfigurationBuilder().AddEnvironmentVariables().Build();
+        return new FakeNodeScraper(
+            _uaClientFactory,
+            _clientSamplerFactory,
+            _dataSourceResolver,
+            _nodeSynchronizer,
+            configuration,
+            NullLogger<Scraper>.Instance,
+            nodeCount
+        );
+    }
 
-        public Task<Response<Agent>> GetAgentAsync(string agentId) =>
-            Task.FromResult(GetAgentResponse);
+    private sealed class SpyNodeSynchronizer : INodeSynchronizer
+    {
+        private readonly object _syncLock = new();
+        private int _concurrentCalls;
 
-        public Task<Response<Device[]>> GetDevicesAsync(string agentId) =>
-            Task.FromResult(GetDevicesResponse);
+        public int InitializeCallCount { get; private set; }
+        public string? LastInitializedAgentId { get; private set; }
+        public int SynchronizeCallCount { get; private set; }
+        public int MaxConcurrentSynchronizeCalls { get; private set; }
+        public List<string> ReceivedDataSourceIds { get; } = [];
 
-        public Task<Response<DataSource>?> PostDataSourceAsync(
-            string agentId,
-            DataSource newDataSource
-        )
+        public Task InitializeAsync(string agentId)
         {
-            PostDataSourceCallCount++;
-            LastPostDataSourceRequest = newDataSource;
-            return Task.FromResult<Response<DataSource>?>(PostDataSourceResponse);
+            InitializeCallCount++;
+            LastInitializedAgentId = agentId;
+            return Task.CompletedTask;
         }
 
-        public Task<Response<Variable[]>> GetDataVariablesAsync(string agentId) =>
-            Task.FromResult(new Response<Variable[]> { Data = [] });
+        public async Task SynchronizeAsync(
+            ReferenceDescription referenceDescription,
+            string dataSourceId
+        )
+        {
+            lock (_syncLock)
+            {
+                _concurrentCalls++;
+                SynchronizeCallCount++;
+                ReceivedDataSourceIds.Add(dataSourceId);
+                if (_concurrentCalls > MaxConcurrentSynchronizeCalls)
+                    MaxConcurrentSynchronizeCalls = _concurrentCalls;
+            }
 
-        public Task<Response<Tag[]>> GetTagsAsync(string agentId) =>
-            Task.FromResult(new Response<Tag[]> { Data = [] });
+            await Task.Yield();
 
-        public Task<Response<Variable>?> PostVariableAsync(string agentId, Variable newVariable) =>
-            Task.FromResult<Response<Variable>?>(null);
+            lock (_syncLock)
+            {
+                _concurrentCalls--;
+            }
+        }
+    }
 
-        public Task<Response<Tag>?> PostTagAsync(string agentId, Tag newTag) =>
-            Task.FromResult<Response<Tag>?>(null);
+    private sealed class StubDataSourceResolver(string dataSourceId) : IDataSourceResolver
+    {
+        public Task<string> ResolveAsync(string agentId) => Task.FromResult(dataSourceId);
+    }
 
-        public Task<Response<DataSource[]>> GetDataSourcesAsync(string agentId) =>
-            Task.FromResult(new Response<DataSource[]> { Data = [] });
+    private sealed class FakeNodeScraper(
+        IUAClientFactory uaClientFactory,
+        IClientSamplerFactory clientSamplerFactory,
+        IDataSourceResolver dataSourceResolver,
+        INodeSynchronizer nodeSynchronizer,
+        IConfiguration configuration,
+        ILogger<Scraper> logger,
+        int nodeCount
+    )
+        : Scraper(
+            uaClientFactory,
+            clientSamplerFactory,
+            dataSourceResolver,
+            nodeSynchronizer,
+            configuration,
+            logger
+        )
+    {
+        protected override Task<ReferenceDescriptionCollection?> FetchReferenceDescriptionsAsync(
+            CancellationToken cancellationToken
+        )
+        {
+            var nodes = new ReferenceDescriptionCollection(
+                Enumerable.Range(0, nodeCount).Select(BuildFakeReferenceDescription)
+            );
+            return Task.FromResult<ReferenceDescriptionCollection?>(nodes);
+        }
+
+        private static ReferenceDescription BuildFakeReferenceDescription(int index) =>
+            new()
+            {
+                NodeId = new ExpandedNodeId((uint)(1000 + index)),
+                DisplayName = new LocalizedText($"Node{index}"),
+                TypeDefinition = new ExpandedNodeId(6u),
+            };
     }
 
     private sealed class NullUAClientFactory : IUAClientFactory

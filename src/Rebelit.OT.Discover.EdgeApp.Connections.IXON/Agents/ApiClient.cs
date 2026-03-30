@@ -5,9 +5,11 @@ using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 
 /// <inheritdoc />
-internal class ApiClient(IOptions<Configuration> configuration, ILogger<ApiClient> logger)
-    : BaseAgent(configuration, logger),
-        IApiClient
+internal class ApiClient(
+    IOptions<Configuration> configuration,
+    ILogger<ApiClient> logger,
+    TimeProvider timeProvider
+) : BaseAgent(configuration, logger, timeProvider), IApiClient
 {
     public async Task<Response<Variable[]>> GetDataVariablesAsync(string agentId)
     {
