@@ -79,10 +79,12 @@ classDiagram
         +AgentId string
         +Username string
         +Password string
-        +SourcePublicId string
+        +DataSourceId string?
         +ExistingAddresses HashSet~string~
         +ExistingTags HashSet~string~
         +ExecuteAsync(CancellationToken) Task
+        -ResolveDataSourceIdAsync(agentId) Task~string~
+        -FindDeviceByHost(devices) Device
         -CreateIxonVariableAsync() Task~Variable~
         -CreateTag() Task
         -MapNodeToVariable() Variable
@@ -110,7 +112,7 @@ classDiagram
 | Single-method interface that decouples `Application` from the concrete discovery logic. Enables the scraper implementation to be replaced or mocked in tests.
 
 | `Scraper`
-| Core business logic. On each call: (1) connects to the OPC UA server, (2) browses the full address space, (3) fetches existing IXON variables and tags into `HashSet` caches, (4) for each new OPC UA node, maps the node to an IXON `Variable` and POSTs it, then POSTs a `Tag` linked to that variable.
+| Core business logic. On each call: (1) resolves or auto-creates the IXON data source ID -- if absent, fetches the agent's devices, matches the device by OPC UA host IP (falling back to the first device), and POSTs a new OPC UA data source; (2) connects to the OPC UA server, (3) browses the full address space, (4) fetches existing IXON variables and tags into `HashSet` caches, (5) for each new OPC UA node, maps the node to an IXON `Variable` and POSTs it, then POSTs a `Tag` linked to that variable.
 |===
 
 ==== 5.2.2 Whitebox Connections.IXON
@@ -124,6 +126,10 @@ classDiagram
         +GetTagsAsync(agentId) Task~Response~Tag[]~~
         +PostVariableAsync(agentId, variable) Task~Response~Variable~~
         +PostTagAsync(agentId, tag) Task~Response~Tag~~
+        +GetDataSourcesAsync(agentId) Task~Response~DataSource[]~~
+        +PostDataSourceAsync(agentId, dataSource) Task~Response~DataSource~~
+        +GetAgentAsync(agentId) Task~Response~Agent~~
+        +GetDevicesAsync(agentId) Task~Response~Device[]~~
     }
 
     class BaseAgent {
@@ -144,6 +150,8 @@ classDiagram
         +GetTagsAsync() Task
         +PostVariableAsync() Task
         +PostTagAsync() Task
+        +GetDataSourcesAsync() Task
+        +PostDataSourceAsync() Task
     }
 
     class Configuration {
@@ -170,7 +178,7 @@ classDiagram
 | Component | Responsibility
 
 | `IApiClient`
-| Public interface consumed by `Scraper`. Declares four operations: read variables, read tags, create variable, create tag.
+| Public interface consumed by `Scraper`. Declares eight operations: read variables, read tags, create variable, create tag, read data sources, create data source, read agent details, read devices.
 
 | `BaseAgent`
 | Internal abstract base class. Creates a configured `HttpClient` per request (bearer token + `Api-Application`, `Api-Company`, `Api-Version` headers), sends GET/POST calls, logs `400 Bad Request` bodies, and calls `EnsureSuccessStatusCode` on every response.
@@ -184,8 +192,8 @@ classDiagram
 | `ServiceCollectionExtensions`
 | `AddIXONClient(appId, companyId, token)` extension method. Registers `Configuration` via `IOptions<>` and `ApiClient` as a singleton `IApiClient`.
 
-| *Models* (`Variable`, `Tag`, `Source`, `Response<T>`)
-| Plain data transfer objects used as request/response bodies for the IXON API. `Response<T>` wraps a `.Data` property used to extract the payload list.
+| *Models* (`Variable`, `Tag`, `Source`, `DataSource`, `DataSourceProtocol`, `Device`, `Agent`, `Response<T>`)
+| Plain data transfer objects used as request/response bodies for the IXON API. `DataSourceProtocol` carries the OPC UA protocol identifier and optional authentication fields. `Device` exposes `PublicId`, `Name`, `IpAddress`, `MacAddress`, and `CustomAddress` -- used to resolve which device to link to a new data source. `Response<T>` wraps a `.Data` property used to extract the payload.
 |===
 
 ==== 5.2.3 Whitebox Connections.OPCUA

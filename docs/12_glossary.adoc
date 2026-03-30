@@ -90,7 +90,7 @@
 | A class from the OPC Foundation SDK that manages automatic session reconnection with configurable retry intervals. Used by `UAClient` with 1 s initial period and 15 s exponential back-off cap.
 
 | *Source (IXON)*
-| An IXON sub-entity under an agent that identifies the industrial data source (e.g. a specific OPC UA connection). Variables are associated with a source via `IXON_SourcePublicId`.
+| An IXON sub-entity under an agent that identifies the industrial data source (e.g. a specific OPC UA connection). Variables are associated with a source via `IXON_DataSourceId`. If `IXON_DataSourceId` is not provided, the app creates a new OPC UA data source automatically and uses its ID.
 
 | *Tag*
 | See _Data Tag (IXON)_.

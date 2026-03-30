@@ -17,9 +17,7 @@ public class Scraper(
 {
     public string Address { get; } =
         configuration["OPCUA_ServerAddress"]
-        ?? throw new InvalidOperationException(
-            "OPCUA_ServerAddress configuration is not set."
-        );
+        ?? throw new InvalidOperationException("OPCUA_ServerAddress configuration is not set.");
 
     public string AgentId { get; } =
         configuration["IXON_AgentId"]
@@ -33,11 +31,7 @@ public class Scraper(
         configuration["OPCUA_Password"]
         ?? throw new InvalidOperationException("OPCUA_Password configuration is not set.");
 
-    public string SourcePublicId { get; } =
-        configuration["IXON_SourcePublicId"]
-        ?? throw new InvalidOperationException(
-            "IXON_SourcePublicId configuration is not set."
-        );
+    public string? DataSourceId { get; } = configuration["IXON_DataSourceId"] ?? null;
 
     /// <summary>
     ///     A set of existing variable addresses that have already been created in the IXON platform. This is used to avoid creating duplicate variables when scraping the OPC UA server. The set is populated at the beginning of the execution by fetching the existing variables from the IXON platform for the specified agent.
@@ -56,6 +50,8 @@ public class Scraper(
     /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
+        var resolvedDataSourceId = await ResolveDataSourceIdAsync(AgentId);
+
         var client = await clientFactory.Create(Address, Username, Password);
         if (client == null)
         {
@@ -80,7 +76,7 @@ public class Scraper(
 
         foreach (var referenceDescription in referenceDescriptions)
         {
-            var result = await CreateIxonVariableAsync(referenceDescription);
+            var result = await CreateIxonVariableAsync(referenceDescription, resolvedDataSourceId);
             if (result == null)
                 continue;
 
@@ -97,7 +93,61 @@ public class Scraper(
     /// <returns>
     ///     A Task that represents the asynchronous operation of creating a variable in the IXON platform. The task result is a Variable object if the variable was successfully created, or null if the variable already exists, is a type definition, or if there was an error during creation.
     /// </returns>
-    private async Task<Variable?> CreateIxonVariableAsync(ReferenceDescription referenceDescription)
+    private async Task<string> ResolveDataSourceIdAsync(string agentId)
+    {
+        if (!string.IsNullOrEmpty(DataSourceId))
+            return DataSourceId;
+
+        logger.LogInformation("No data source ID provided. Creating a new OPC-UA data source...");
+
+        var devicesResponse = await apiClient.GetDevicesAsync(agentId);
+        var devices = devicesResponse.Data ?? [];
+
+        var matchedDevice = FindDeviceByHost(devices);
+
+        var devicePublicId =
+            matchedDevice?.PublicId
+            ?? throw new InvalidOperationException(
+                $"Could not resolve device publicId for agent '{agentId}'."
+            );
+
+        logger.LogInformation(
+            "Using device '{DeviceName}' ({DevicePublicId}) with IP '{IpAddress}'.",
+            matchedDevice.Name,
+            devicePublicId,
+            matchedDevice.IpAddress
+        );
+
+        var authenticationType = string.IsNullOrEmpty(Username) ? "anonymous" : "username";
+
+        var newDataSource = new DataSource
+        {
+            Name = "OPC UA",
+            Slug = "opcua",
+            Disabled = false,
+            Device = new Source { PublicId = devicePublicId },
+            Protocol = new DataSourceProtocol
+            {
+                PublicId = "opc-ua",
+                AuthenticationType = authenticationType,
+                Username = string.IsNullOrEmpty(Username) ? null : Username,
+                Password = string.IsNullOrEmpty(Password) ? null : Password,
+            },
+        };
+
+        var result = await apiClient.PostDataSourceAsync(agentId, newDataSource);
+        var createdId =
+            result?.Data.PublicId
+            ?? throw new InvalidOperationException("Failed to create a new data source in IXON.");
+
+        logger.LogInformation("Created data source with ID '{DataSourceId}'.", createdId);
+        return createdId;
+    }
+
+    private async Task<Variable?> CreateIxonVariableAsync(
+        ReferenceDescription referenceDescription,
+        string dataSourceId
+    )
     {
         if (ExistingAddresses.Contains(referenceDescription.NodeId.ToString()))
         {
@@ -117,7 +167,7 @@ public class Scraper(
             return null;
         }
 
-        var variable = MapNodeToVariable(referenceDescription);
+        var variable = MapNodeToVariable(referenceDescription, dataSourceId);
         if (variable == null)
         {
             return null;
@@ -173,7 +223,10 @@ public class Scraper(
     /// </summary>
     /// <param name="referenceDescription"></param>
     /// <returns></returns>
-    private Variable? MapNodeToVariable(ReferenceDescription referenceDescription)
+    private Variable? MapNodeToVariable(
+        ReferenceDescription referenceDescription,
+        string dataSourceId
+    )
     {
         var builtInType = GetBuiltInType(referenceDescription.TypeDefinition);
         if (builtInType == null)
@@ -231,7 +284,7 @@ public class Scraper(
             Slug = new string([
                 .. referenceDescription.DisplayName.ToString().Where(char.IsLetterOrDigit),
             ]).ToLower(),
-            Source = new Source { PublicId = SourcePublicId },
+            Source = new Source { PublicId = dataSourceId },
             Signed = true,
         };
     }
@@ -254,6 +307,33 @@ public class Scraper(
             }
         }
 
+        return null;
+    }
+
+    private Device? FindDeviceByHost(Device[] devices)
+    {
+        var opcuaHost = ExtractHost(Address);
+
+        if (string.IsNullOrEmpty(opcuaHost))
+            return devices.FirstOrDefault();
+
+        var matchedDevice = devices.FirstOrDefault(d =>
+            string.Equals(d.IpAddress, opcuaHost, StringComparison.OrdinalIgnoreCase)
+        );
+
+        if (matchedDevice == null)
+            logger.LogWarning(
+                "No device found with IP address '{Host}'. Falling back to first device.",
+                opcuaHost
+            );
+
+        return matchedDevice ?? devices.FirstOrDefault();
+    }
+
+    private static string? ExtractHost(string opcuaAddress)
+    {
+        if (Uri.TryCreate(opcuaAddress, UriKind.Absolute, out var uri))
+            return uri.Host;
         return null;
     }
 }

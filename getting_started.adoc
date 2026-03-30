@@ -17,7 +17,7 @@ cd docker
 ./push_ixon.sh
 ----
 
-The script will prompt for nine values:
+The script will prompt for eight required values and one optional value:
 
 [cols="1,2,2", options="header"]
 |===
@@ -43,9 +43,9 @@ The script will prompt for nine values:
 | The `publicId` of the IXON agent (machine) to associate discovered data with.
 | Find it in the IXON portal under the device's agent settings, or via the IXON API.
 
-| *IXON Source Public ID*
-| The `publicId` of the data source on the IXON agent.
-| Find it in the IXON portal under the agent's data sources, or via the IXON API.
+| *IXON Data Source ID* _(optional)_
+| The `publicId` of an existing OPC UA data source on the IXON agent. Leave blank to let the app create a new OPC UA data source automatically using the OPC UA credentials supplied below.
+| Find it in the IXON portal under the agent's data sources, or via the IXON API. Leave empty on a first-time setup.
 
 | *OPC UA Server Address*
 | The OPC UA endpoint URL of the server to connect to (e.g. `opc.tcp://172.27.21.3:4840`).
