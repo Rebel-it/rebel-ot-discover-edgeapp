@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Opc.Ua;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Factory;
+using Rebelit.OT.Discover.EdgeApp.Resolvers;
+using Rebelit.OT.Discover.EdgeApp.Synchronizers;
 
 namespace Rebelit.OT.Discover.EdgeApp.Tests;
 

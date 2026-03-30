@@ -1,21 +1,23 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Opc.Ua;
-using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
-using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Factory;
+using Rebelit.OT.Discover.EdgeApp.Resolvers;
+using Rebelit.OT.Discover.EdgeApp.Synchronizers;
 
 namespace Rebelit.OT.Discover.EdgeApp;
 
 public class Scraper(
     IUAClientFactory clientFactory,
     IClientSamplerFactory clientSamplerFactory,
-    IApiClient apiClient,
+    IDataSourceResolver dataSourceResolver,
+    INodeSynchronizer nodeSynchronizer,
     IConfiguration configuration,
     ILogger<Scraper> logger
 ) : IScraper
 {
-    private const int BatchSize = 5;
+    internal const int BatchSize = 5;
+
     public string Address { get; } =
         configuration["OPCUA_ServerAddress"]
         ?? throw new InvalidOperationException("OPCUA_ServerAddress configuration is not set.");
@@ -32,18 +34,36 @@ public class Scraper(
         configuration["OPCUA_Password"]
         ?? throw new InvalidOperationException("OPCUA_Password configuration is not set.");
 
-    public string? DataSourceId { get; } = configuration["IXON_DataSourceId"] ?? null;
+    public async Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        var dataSourceId = await dataSourceResolver.ResolveAsync(AgentId);
 
-    /// <summary>
-    ///     A set of existing variable addresses that have already been created in the IXON platform. This is used to avoid creating duplicate variables when scraping the OPC UA server. The set is populated at the beginning of the execution by fetching the existing variables from the IXON platform for the specified agent.
-    /// </summary>
-    public HashSet<string> ExistingAddresses { get; private set; } = new();
+        var nodes = await FetchReferenceDescriptionsAsync(cancellationToken);
+        if (nodes is null)
+            return;
 
-    /// <summary>
-    ///     A set of existing tag public IDs that have already been created in the IXON platform. This is used to avoid creating duplicate tags when scraping the OPC UA server. The set is populated at the beginning of the execution by fetching the existing tags from the IXON platform for the specified agent.
-    /// </summary>
-    public HashSet<string> ExistingTags { get; private set; } = new();
+        await nodeSynchronizer.InitializeAsync(AgentId);
 
-    /// <summary>
-    ///     Executes the scraping process. This method connects to the OPC UA server, browses the full address space, and creates variables and tags in the IXON platform for each relevant node found in the OPC UA server. It checks for existing variables and tags to avoid duplicates and logs the progress of the scraping process.
-    /// </summary>
+        foreach (var batch in nodes.Chunk(BatchSize))
+            await Task.WhenAll(
+                batch.Select(rd => nodeSynchronizer.SynchronizeAsync(rd, dataSourceId))
+            );
+    }
+
+    protected virtual async Task<ReferenceDescriptionCollection?> FetchReferenceDescriptionsAsync(
+        CancellationToken cancellationToken
+    )
+    {
+        var client = await clientFactory.Create(Address, Username, Password);
+        if (client == null)
+        {
+            logger.LogError("Failed to create UAClient. Aborting execution.");
+            return null;
+        }
+
+        var sampler = await clientSamplerFactory.CreateAsync();
+        return await sampler
+            .BrowseFullAddressSpaceAsync(client, Objects.RootFolder, ct: cancellationToken)
+            .ConfigureAwait(false);
+    }
+}
