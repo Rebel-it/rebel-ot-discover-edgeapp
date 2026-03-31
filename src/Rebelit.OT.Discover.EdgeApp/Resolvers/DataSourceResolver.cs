@@ -53,6 +53,18 @@ internal sealed class DataSourceResolver(
             device.IpAddress
         );
 
+        var existingDataSource = await FindExistingDataSourceAsync(agentId, device.PublicId);
+        if (existingDataSource is not null)
+        {
+            logger.LogInformation(
+                "Found existing data source '{Name}' ({PublicId}) for device '{DeviceName}'. Reusing it.",
+                existingDataSource.Name,
+                existingDataSource.PublicId,
+                device.Name
+            );
+            return existingDataSource.PublicId!;
+        }
+
         var newDataSource = BuildDataSource(device.PublicId);
         var result = await apiClient.PostDataSourceAsync(agentId, newDataSource);
         var createdId =
@@ -61,6 +73,19 @@ internal sealed class DataSourceResolver(
 
         logger.LogInformation("Created data source with ID '{DataSourceId}'.", createdId);
         return createdId;
+    }
+
+    private async Task<DataSource?> FindExistingDataSourceAsync(
+        string agentId,
+        string devicePublicId
+    )
+    {
+        var dataSourcesResponse = await apiClient.GetDataSourcesAsync(agentId);
+        var dataSources = dataSourcesResponse.Data ?? [];
+        return dataSources.FirstOrDefault(ds =>
+            ds.Device?.PublicId == devicePublicId
+            && string.Equals(ds.Slug, "opcua", StringComparison.OrdinalIgnoreCase)
+        );
     }
 
     private DataSource BuildDataSource(string devicePublicId)

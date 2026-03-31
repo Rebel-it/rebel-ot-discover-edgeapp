@@ -25,11 +25,25 @@ sequenceDiagram
         alt IXON_DataSourceId env var is set
             Sc->>Sc: Use provided DataSourceId
         else IXON_DataSourceId is absent
-            Sc->>AC: PostDataSourceAsync(agentId, newOpcUaDataSource)
-            AC->>IXON: POST /api/agents/{id}/data-sources
-            IXON-->>AC: Response<DataSource> (with publicId)
-            AC-->>Sc: Response<DataSource>
-            Sc->>Sc: Store created DataSourceId
+            Sc->>AC: GetDevicesAsync(agentId)
+            AC->>IXON: GET /api/agents/{id}/devices
+            IXON-->>AC: Response<Device[]>
+            AC-->>Sc: matched Device
+
+            Sc->>AC: GetDataSourcesAsync(agentId)
+            AC->>IXON: GET /api/agents/{id}/data-sources
+            IXON-->>AC: Response<DataSource[]>
+
+            alt Existing data source found (device.publicId + slug "opcua" match)
+                AC-->>Sc: Existing DataSource
+                Sc->>Sc: Reuse existing DataSourceId (no POST)
+            else No matching data source exists
+                Sc->>AC: PostDataSourceAsync(agentId, newOpcUaDataSource)
+                AC->>IXON: POST /api/agents/{id}/data-sources
+                IXON-->>AC: Response<DataSource> (with publicId)
+                AC-->>Sc: Response<DataSource>
+                Sc->>Sc: Store created DataSourceId
+            end
         end
 
         Sc->>UF: Create(address, username, password)
@@ -79,7 +93,7 @@ sequenceDiagram
 Key points:
 
 * `Application` does not know about OPC UA or IXON -- it simply calls `IScraper.ExecuteAsync`.
-* Before connecting to OPC UA, `Scraper` resolves the data source ID: it uses the `IXON_DataSourceId` env var when set, or POSTs a new OPC UA data source to the IXON API and uses the returned ID.
+* Before connecting to OPC UA, `Scraper` resolves the data source ID via `DataSourceResolver`: it uses the `IXON_DataSourceId` env var when set; otherwise it fetches existing data sources for the resolved device and reuses a matching one (slug `opcua`); only if no match exists does it POST a new OPC UA data source.
 * Variables and tags already present in IXON are skipped via `HashSet.Contains` before any POST is issued.
 * The delay occurs *after* the scraping completes (in the `finally` block), so a slow cycle does not cause drift.
 

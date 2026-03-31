@@ -53,7 +53,65 @@ public class DataSourceResolverTests
     public async Task ResolveAsync_WhenNoDataSourceIdConfigured_CreatesNewDataSourceAndReturnsItsId()
     {
         var device = new Device { PublicId = "device-1", IpAddress = "127.0.0.1" };
-        var apiClient = new SpyApiClient([device], "new-ds-id");
+        var apiClient = new SpyApiClient([device], newDataSourceId: "new-ds-id");
+        var resolver = new DataSourceResolver(
+            apiClient,
+            BuildConfig(),
+            NullLogger<DataSourceResolver>.Instance
+        );
+
+        var result = await resolver.ResolveAsync(DefaultAgentId);
+
+        Assert.That(result, Is.EqualTo("new-ds-id"));
+    }
+
+    [Test]
+    public async Task ResolveAsync_WhenExistingDataSourceMatchesDevice_ReturnsExistingIdWithoutPosting()
+    {
+        var device = new Device { PublicId = "device-1", IpAddress = "127.0.0.1" };
+        var existingDataSource = new DataSource
+        {
+            PublicId = "existing-ds-id",
+            Name = "OPC UA",
+            Slug = "opcua",
+            Device = new Source { PublicId = "device-1" },
+        };
+        var apiClient = new SpyApiClient(
+            [device],
+            newDataSourceId: "new-ds-id",
+            existingDataSources: [existingDataSource]
+        );
+        var resolver = new DataSourceResolver(
+            apiClient,
+            BuildConfig(),
+            NullLogger<DataSourceResolver>.Instance
+        );
+
+        var result = await resolver.ResolveAsync(DefaultAgentId);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.EqualTo("existing-ds-id"));
+            Assert.That(apiClient.PostedDataSource, Is.Null);
+        });
+    }
+
+    [Test]
+    public async Task ResolveAsync_WhenExistingDataSourceDoesNotMatchDevice_CreatesNewDataSource()
+    {
+        var device = new Device { PublicId = "device-1", IpAddress = "127.0.0.1" };
+        var nonMatchingDataSource = new DataSource
+        {
+            PublicId = "other-ds-id",
+            Name = "OPC UA",
+            Slug = "opcua",
+            Device = new Source { PublicId = "device-other" },
+        };
+        var apiClient = new SpyApiClient(
+            [device],
+            newDataSourceId: "new-ds-id",
+            existingDataSources: [nonMatchingDataSource]
+        );
         var resolver = new DataSourceResolver(
             apiClient,
             BuildConfig(),
@@ -105,7 +163,11 @@ public class DataSourceResolverTests
         Assert.That(apiClient.PostedDataSource?.Device?.PublicId, Is.EqualTo("dev-first"));
     }
 
-    private sealed class SpyApiClient(Device[] devices, string? newDataSourceId = null) : IApiClient
+    private sealed class SpyApiClient(
+        Device[] devices,
+        string? newDataSourceId = null,
+        DataSource[]? existingDataSources = null
+    ) : IApiClient
     {
         public int GetDevicesCallCount { get; private set; }
         public DataSource? PostedDataSource { get; private set; }
@@ -129,6 +191,9 @@ public class DataSourceResolverTests
             return Task.FromResult<Response<DataSource>?>(response);
         }
 
+        public Task<Response<DataSource[]>> GetDataSourcesAsync(string agentId) =>
+            Task.FromResult(new Response<DataSource[]> { Data = existingDataSources ?? [] });
+
         public Task<Response<Variable[]>> GetDataVariablesAsync(string agentId) =>
             throw new NotSupportedException();
 
@@ -139,9 +204,6 @@ public class DataSourceResolverTests
             throw new NotSupportedException();
 
         public Task<Response<Tag>?> PostTagAsync(string agentId, Tag newTag) =>
-            throw new NotSupportedException();
-
-        public Task<Response<DataSource[]>> GetDataSourcesAsync(string agentId) =>
             throw new NotSupportedException();
 
         public Task<Response<Agent>> GetAgentAsync(string agentId) =>
