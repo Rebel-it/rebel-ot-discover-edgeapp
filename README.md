@@ -17,6 +17,11 @@ The result is that all OPC UA variables exposed by connected industrial equipmen
 
 Architecture and design documentation is located in the [`docs/`](docs/) folder and follows the [arc42](https://arc42.org/) template.
 
+## Contributing
+
+- **Feature requests** — open an issue using the [User Story](.github/ISSUE_TEMPLATE/user_story.md) template.
+- **Bug reports** — open an issue using the [Bug Report](.github/ISSUE_TEMPLATE/bug_report.md) template.
+
 ## Getting started
 
 For a full step-by-step deployment guide, see [getting_started.adoc](getting_started.adoc).
