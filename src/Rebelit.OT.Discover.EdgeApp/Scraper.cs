@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Opc.Ua;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
+using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Clients;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Factory;
 
 namespace Rebelit.OT.Discover.EdgeApp;
@@ -80,7 +81,15 @@ public class Scraper(
 
         foreach (var referenceDescription in referenceDescriptions)
         {
-            var result = await CreateIxonVariableAsync(referenceDescription);
+            if(referenceDescription.NodeId.NamespaceIndex == 0)
+            {
+                logger.LogDebug(
+                    "Skipping node {NodeId} in namespace 0.",
+                    referenceDescription.NodeId
+                );
+                continue;
+            }
+            var result = await CreateIxonVariableAsync(client,referenceDescription);
             if (result == null)
                 continue;
 
@@ -97,7 +106,7 @@ public class Scraper(
     /// <returns>
     ///     A Task that represents the asynchronous operation of creating a variable in the IXON platform. The task result is a Variable object if the variable was successfully created, or null if the variable already exists, is a type definition, or if there was an error during creation.
     /// </returns>
-    private async Task<Variable?> CreateIxonVariableAsync(ReferenceDescription referenceDescription)
+    private async Task<Variable?> CreateIxonVariableAsync(UAClient client,ReferenceDescription referenceDescription)
     {
         if (ExistingAddresses.Contains(referenceDescription.NodeId.ToString()))
         {
@@ -117,7 +126,7 @@ public class Scraper(
             return null;
         }
 
-        var variable = MapNodeToVariable(referenceDescription);
+        var variable = await MapNodeToVariable(client, referenceDescription);
         if (variable == null)
         {
             return null;
@@ -173,11 +182,41 @@ public class Scraper(
     /// </summary>
     /// <param name="referenceDescription"></param>
     /// <returns></returns>
-    private Variable? MapNodeToVariable(ReferenceDescription referenceDescription)
+    private async Task<Variable?> MapNodeToVariable(UAClient client, ReferenceDescription referenceDescription)
     {
-        var builtInType = GetBuiltInType(referenceDescription.TypeDefinition);
+        // Only process Variable nodes
+        if (referenceDescription.NodeClass != NodeClass.Variable)
+        {
+            logger.LogDebug(
+                "Node {NodeId} is not a Variable (NodeClass: {NodeClass}). Skipping.",
+                referenceDescription.NodeId,
+                referenceDescription.NodeClass
+            );
+            return null;
+        }
+        var dataTypeNodeId = await ReadDataTypeAttributeAsync(client, (NodeId)referenceDescription.NodeId);
+
+        if (dataTypeNodeId == null)
+        {
+            logger.LogWarning(
+                "Could not read DataType attribute for node {NodeId}. Skipping variable creation.",
+                referenceDescription.NodeId
+            );
+            return null;
+        }
+
+        var builtInType = GetBuiltInType(dataTypeNodeId);
         if (builtInType == null)
         {
+            return null;
+        }
+
+        if (builtInType == BuiltInType.String)
+        {
+            logger.LogDebug(
+                "Node {NodeId} is a String type. Skipping as strings are not supported.",
+                referenceDescription.NodeId
+            );
             return null;
         }
 
@@ -200,7 +239,7 @@ public class Scraper(
 
         var width = builtInType switch
         {
-            BuiltInType.Boolean => "1",
+            BuiltInType.Boolean => null,
             BuiltInType.SByte => "8",
             BuiltInType.Byte => "8",
             BuiltInType.Int16 => "16",
@@ -211,6 +250,7 @@ public class Scraper(
             BuiltInType.UInt64 => "64",
             BuiltInType.Float => "32",
             BuiltInType.Double => "64",
+            BuiltInType.String => "128",
             _ => null,
         };
 
@@ -227,13 +267,61 @@ public class Scraper(
             Name = referenceDescription.DisplayName.ToString(),
             Address = referenceDescription.NodeId.ToString(),
             Type = type,
-            Width = width ?? "Unknown",
+            Width = width ,
             Slug = new string([
                 .. referenceDescription.DisplayName.ToString().Where(char.IsLetterOrDigit),
             ]).ToLower(),
             Source = new Source { PublicId = SourcePublicId },
             Signed = true,
         };
+    }
+
+    /// <summary>
+    /// Asynchronously reads the DataType attribute of the specified OPC UA node.
+    /// </summary>
+    /// <remarks>Returns null if the read operation fails or if the DataType attribute cannot be determined.
+    /// The caller should check for a null result before using the returned value.</remarks>
+    /// <param name="client">The UAClient instance used to communicate with the OPC UA server. Cannot be null.</param>
+    /// <param name="nodeId">The NodeId of the node whose DataType attribute is to be read. Cannot be null.</param>
+    /// <returns>A NodeId representing the DataType of the specified node if the read operation succeeds; otherwise, null.</returns>
+    private async Task<NodeId> ReadDataTypeAttributeAsync(UAClient client, NodeId nodeId)
+    {
+        try
+        {
+            var readValueId = new ReadValueId
+            {
+                NodeId = nodeId,
+                AttributeId = Attributes.DataType,
+            };
+
+            var nodesToRead = new ReadValueIdCollection { readValueId };
+            var response = await client.Session.ReadAsync(
+                null,
+                0,
+                TimestampsToReturn.Neither,
+                nodesToRead,
+                CancellationToken.None
+            );
+
+            if (response.Results.Count > 0 && response.Results[0].StatusCode == StatusCodes.Good)
+            {
+                return response.Results[0].Value as NodeId ?? NodeId.Null;
+            }
+            else
+            {
+                logger.LogError(
+                    "Failed to read DataType attribute for node {NodeId}. StatusCode: {StatusCode}",
+                    nodeId,
+                    response.Results.Count > 0 ? response.Results[0].StatusCode : StatusCodes.Bad
+                );
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error reading DataType attribute for node {NodeId}", nodeId);
+            return null;
+        }
     }
 
     /// <summary>
