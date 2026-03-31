@@ -75,10 +75,14 @@ internal abstract class BaseAgent(
 
     private async Task HandleResponseErrors(HttpResponseMessage response)
     {
-        if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+        if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
-            logger.LogError("Bad Request: {ErrorContent}", errorContent);
+            logger.LogError(
+                "Request failed with status code {StatusCode}: {ErrorContent}",
+                response.StatusCode,
+                errorContent
+            );
         }
         response.EnsureSuccessStatusCode();
     }

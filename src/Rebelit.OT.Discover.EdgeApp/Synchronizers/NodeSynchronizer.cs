@@ -44,9 +44,22 @@ internal sealed class NodeSynchronizer(
         string dataSourceId
     )
     {
-        var variable = await CreateVariableIfNewAsync(referenceDescription, dataSourceId);
-        if (variable is not null)
-            await CreateTagIfNewAsync(variable);
+        try
+        {
+            var variable = await CreateVariableIfNewAsync(referenceDescription, dataSourceId);
+            if (variable is not null)
+                await CreateTagIfNewAsync(variable);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Error synchronizing node {NodeId} with address {Address}: {Message}",
+                referenceDescription.NodeId,
+                referenceDescription.NodeId.ToString(),
+                ex.Message
+            );
+        }
     }
 
     private async Task<Variable?> CreateVariableIfNewAsync(
