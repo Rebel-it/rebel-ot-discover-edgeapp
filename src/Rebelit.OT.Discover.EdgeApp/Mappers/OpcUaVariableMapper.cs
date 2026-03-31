@@ -6,7 +6,7 @@ namespace Rebelit.OT.Discover.EdgeApp.Mappers;
 
 public interface IOpcUaVariableMapper
 {
-    Variable? Map(ReferenceDescription referenceDescription, string dataSourceId);
+    Variable? Map(NodeId dataTypeNodeId, ReferenceDescription referenceDescription, string dataSourceId);
 }
 
 internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
@@ -14,7 +14,7 @@ internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
 {
     private static readonly Dictionary<BuiltInType, (string Type, string? Width)> TypeMap = new()
     {
-        [BuiltInType.Boolean] = ("bool", "1"),
+        [BuiltInType.Boolean] = ("bool", null),
         [BuiltInType.SByte] = ("sbyte", "8"),
         [BuiltInType.Byte] = ("byte", "8"),
         [BuiltInType.Int16] = ("short", "16"),
@@ -28,9 +28,9 @@ internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
         [BuiltInType.String] = ("string", null),
     };
 
-    public Variable? Map(ReferenceDescription referenceDescription, string dataSourceId)
+    public Variable? Map(NodeId dataTypeNodeId,ReferenceDescription referenceDescription, string dataSourceId)
     {
-        var builtInType = ResolveBuiltInType(referenceDescription.TypeDefinition);
+        var builtInType = ResolveBuiltInType(dataTypeNodeId);
         if (builtInType is null)
             return null;
 
@@ -50,7 +50,7 @@ internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
             Name = referenceDescription.DisplayName.ToString(),
             Address = referenceDescription.NodeId.ToString(),
             Type = type,
-            Width = width ?? "Unknown",
+            Width = width ?? null,
             Slug = new string([
                 .. referenceDescription.DisplayName.ToString().Where(char.IsLetterOrDigit),
             ]).ToLower(),

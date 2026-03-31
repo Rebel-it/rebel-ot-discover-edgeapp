@@ -26,6 +26,7 @@ public class Variable
     public string Type { get; set; } = null!;
 
     [JsonPropertyName("width")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string Width { get; set; } = null!;
 
     [JsonPropertyName("source")]

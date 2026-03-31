@@ -38,15 +38,30 @@ public class Scraper(
     {
         var dataSourceId = await dataSourceResolver.ResolveAsync(AgentId);
 
+        var client = await clientFactory.Create(Address, Username, Password);
+
         var nodes = await FetchReferenceDescriptionsAsync(cancellationToken);
         if (nodes is null)
             return;
 
         await nodeSynchronizer.InitializeAsync(AgentId);
 
-        foreach (var batch in nodes.Chunk(BatchSize))
+        var filteredNodes = nodes.Where(rd =>
+        {
+            if (rd.NodeId.NamespaceIndex == 0)
+            {
+                logger.LogDebug(
+                    "Skipping node {NodeId} in namespace 0.",
+                    rd.NodeId
+                );
+                return false;
+            }
+            return true;
+        });
+
+        foreach (var batch in filteredNodes.Chunk(BatchSize))
             await Task.WhenAll(
-                batch.Select(rd => nodeSynchronizer.SynchronizeAsync(rd, dataSourceId))
+                batch.Select(rd => nodeSynchronizer.SynchronizeAsync(client, rd, dataSourceId))
             );
     }
 
