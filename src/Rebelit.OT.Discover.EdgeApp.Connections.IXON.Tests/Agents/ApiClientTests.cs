@@ -251,6 +251,172 @@ public class ApiClientTests
     }
 
     [Test]
+    public async Task GetAgentAsync_WithOkResponse_ReturnsDeserializedAgent()
+    {
+        const string json =
+            """{"data":{"publicId":"9MuFepQeCJWL","name":"My Agent","deviceId":"dev-001"}}""";
+        var (client, _) = CreateSut(HttpStatusCode.OK, json);
+
+        var result = await client.GetAgentAsync("9MuFepQeCJWL");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data?.PublicId, Is.EqualTo("9MuFepQeCJWL"));
+            Assert.That(result.Data?.Name, Is.EqualTo("My Agent"));
+            Assert.That(result.Data?.DeviceId, Is.EqualTo("dev-001"));
+        });
+    }
+
+    [Test]
+    public async Task GetAgentAsync_WhenCalled_UsesCorrectUri()
+    {
+        var (client, handler) = CreateSut(HttpStatusCode.OK, """{"data":{"publicId":"abc"}}""");
+
+        await client.GetAgentAsync("agent-42");
+
+        Assert.That(
+            handler.LastRequest!.RequestUri!.ToString(),
+            Does.Contain("/api/agents/agent-42?fields=publicId,name,deviceId")
+        );
+    }
+
+    [Test]
+    public async Task GetAgentAsync_WhenCalled_SetsRequiredHeaders()
+    {
+        var (client, handler) = CreateSut(HttpStatusCode.OK, """{"data":{"publicId":"abc"}}""");
+
+        await client.GetAgentAsync("agent-1");
+
+        AssertCommonHeaders(handler.LastRequest!);
+    }
+
+    [Test]
+    public void GetAgentAsync_OnBadRequest_ThrowsHttpRequestException()
+    {
+        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
+
+        Assert.ThrowsAsync<HttpRequestException>(() => client.GetAgentAsync("agent-1"));
+    }
+
+    [Test]
+    public async Task GetDataSourcesAsync_WithOkResponse_ReturnsDeserializedDataSources()
+    {
+        const string json =
+            """{"data":[{"publicId":"ds-1","name":"My Source","slug":"my-source","device":{"publicId":"dev-1"},"protocol":{"publicId":"modbus"}}]}""";
+        var (client, _) = CreateSut(HttpStatusCode.OK, json);
+
+        var result = await client.GetDataSourcesAsync("agent-1");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data, Has.Length.EqualTo(1));
+            Assert.That(result.Data[0].PublicId, Is.EqualTo("ds-1"));
+            Assert.That(result.Data[0].Protocol.PublicId, Is.EqualTo("modbus"));
+        });
+    }
+
+    [Test]
+    public async Task GetDataSourcesAsync_WhenCalled_UsesCorrectUri()
+    {
+        var (client, handler) = CreateSut(HttpStatusCode.OK, """{"data":[]}""");
+
+        await client.GetDataSourcesAsync("agent-42");
+
+        Assert.That(
+            handler.LastRequest!.RequestUri!.ToString(),
+            Does.Contain("/api/agents/agent-42/data-sources")
+        );
+    }
+
+    [Test]
+    public async Task GetDataSourcesAsync_WhenCalled_SetsRequiredHeaders()
+    {
+        var (client, handler) = CreateSut(HttpStatusCode.OK, """{"data":[]}""");
+
+        await client.GetDataSourcesAsync("agent-1");
+
+        AssertCommonHeaders(handler.LastRequest!);
+    }
+
+    [Test]
+    public void GetDataSourcesAsync_OnBadRequest_ThrowsHttpRequestException()
+    {
+        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
+
+        Assert.ThrowsAsync<HttpRequestException>(() => client.GetDataSourcesAsync("agent-1"));
+    }
+
+    [Test]
+    public void GetDataSourcesAsync_OnServerError_ThrowsHttpRequestException()
+    {
+        var (client, _) = CreateSut(HttpStatusCode.InternalServerError, "server error");
+
+        Assert.ThrowsAsync<HttpRequestException>(() => client.GetDataSourcesAsync("agent-1"));
+    }
+
+    [Test]
+    public async Task PostDataSourceAsync_WithOkResponse_ReturnsDeserializedDataSource()
+    {
+        const string json =
+            """{"data":{"publicId":"ds-1","name":"My Source","slug":"my-source","device":{"publicId":"dev-1"},"protocol":{"publicId":"modbus"}}}""";
+        var (client, _) = CreateSut(HttpStatusCode.OK, json);
+        var newDataSource = new DataSource
+        {
+            Name = "My Source",
+            Slug = "my-source",
+            Device = new Source { PublicId = "dev-1" },
+            Protocol = new DataSourceProtocol { PublicId = "modbus" },
+        };
+
+        var result = await client.PostDataSourceAsync("agent-1", newDataSource);
+
+        Assert.That(result!.Data.PublicId, Is.EqualTo("ds-1"));
+    }
+
+    [Test]
+    public async Task PostDataSourceAsync_WhenCalled_UsesCorrectUriAndMethod()
+    {
+        const string json =
+            """{"data":{"publicId":"ds-1","name":"n","slug":"s","device":{"publicId":"d"},"protocol":{"publicId":"modbus"}}}""";
+        var (client, handler) = CreateSut(HttpStatusCode.OK, json);
+        var newDataSource = new DataSource
+        {
+            Name = "n",
+            Slug = "s",
+            Device = new Source { PublicId = "d" },
+            Protocol = new DataSourceProtocol { PublicId = "modbus" },
+        };
+
+        await client.PostDataSourceAsync("agent-5", newDataSource);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(handler.LastRequest!.Method, Is.EqualTo(HttpMethod.Post));
+            Assert.That(
+                handler.LastRequest.RequestUri!.ToString(),
+                Does.Contain("/api/agents/agent-5/data-sources")
+            );
+        });
+    }
+
+    [Test]
+    public void PostDataSourceAsync_OnBadRequest_ThrowsHttpRequestException()
+    {
+        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
+        var newDataSource = new DataSource
+        {
+            Name = "n",
+            Slug = "s",
+            Device = new Source { PublicId = "d" },
+            Protocol = new DataSourceProtocol { PublicId = "modbus" },
+        };
+
+        Assert.ThrowsAsync<HttpRequestException>(() =>
+            client.PostDataSourceAsync("agent-1", newDataSource)
+        );
+    }
+
+    [Test]
     public async Task Post_WhenCalled_SendsPostRequest()
     {
         var (agent, handler) = CreateBaseAgentSut(HttpStatusCode.OK);

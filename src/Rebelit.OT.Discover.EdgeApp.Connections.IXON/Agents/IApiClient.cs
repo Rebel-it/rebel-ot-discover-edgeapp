@@ -35,4 +35,29 @@ public interface IApiClient
     /// <param name="newTag"></param>
     /// <returns></returns>
     Task<Response<Tag>?> PostTagAsync(string agentId, Tag newTag);
+
+    /// <summary>
+    ///     Gets all data sources for the specified agent.
+    /// </summary>
+    /// <param name="agentId">The public ID of the agent.</param>
+    Task<Response<DataSource[]>> GetDataSourcesAsync(string agentId);
+
+    /// <summary>
+    ///     Gets the agent details for the specified agent.
+    /// </summary>
+    /// <param name="agentId">The public ID of the agent.</param>
+    Task<Response<Agent>> GetAgentAsync(string agentId);
+
+    /// <summary>
+    ///     Gets the devices associated with the specified agent.
+    /// </summary>
+    /// <param name="agentId">The public ID of the agent.</param>
+    Task<Response<Device[]>> GetDevicesAsync(string agentId);
+
+    /// <summary>
+    ///     Creates a new data source for the specified agent.
+    /// </summary>
+    /// <param name="agentId">The public ID of the agent.</param>
+    /// <param name="newDataSource">The data source to create.</param>
+    Task<Response<DataSource>?> PostDataSourceAsync(string agentId, DataSource newDataSource);
 }

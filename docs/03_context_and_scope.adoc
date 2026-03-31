@@ -51,7 +51,7 @@ flowchart LR
 | New variable definitions and tag configurations for all OT nodes not yet present in the cloud
 
 | *OT Engineer* (operator)
-| Deployment parameters: OPC UA endpoint address and credentials, IXON API token, company ID, application ID, agent ID, and source ID
+| Deployment parameters: OPC UA endpoint address and credentials, IXON API token, company ID, application ID, agent ID, and optionally a data source ID (auto-created when absent)
 | — (no interactive runtime output; structured logs are available via the container console)
 |===
 
