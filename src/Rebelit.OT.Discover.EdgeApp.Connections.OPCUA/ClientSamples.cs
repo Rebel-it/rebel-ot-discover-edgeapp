@@ -20,6 +20,12 @@ namespace Rebelit.OT.Discover.EdgeApp.Connections.OPCUA;
 public class ClientSamples
 {
     private const int MaxSearchDepth = 128;
+    private const int MaxRetryAttempts = 3;
+
+    /// <summary>
+    /// Timeout in ms applied to each individual OPC UA service call via RequestHeader. Default: 15 000 ms.
+    /// </summary>
+    public int OperationTimeout { get; set; } = 15_000;
 
     public ClientSamples(
         ITelemetryContext telemetry,
@@ -65,81 +71,101 @@ public class ClientSamples
     /// <summary>
     /// Read a list of nodes from Server
     /// </summary>
-    public async Task ReadNodesAsync(ISession session, CancellationToken ct = default)
+    public async Task ReadNodesAsync(UAClient uaClient, CancellationToken ct = default)
     {
-        if (session == null || !session.Connected)
+        if (!uaClient.IsConnected)
         {
             _logger.LogWarning("Session not connected.");
             return;
         }
 
-        try
+        for (int attempt = 1; attempt <= MaxRetryAttempts; attempt++)
         {
-            // build a list of nodes to be read
-            var nodesToRead = new ReadValueIdCollection
+            try
             {
-                // Value of ServerStatus
-                new ReadValueId
+                // build a list of nodes to be read
+                var nodesToRead = new ReadValueIdCollection
                 {
-                    NodeId = Variables.Server_ServerStatus,
-                    AttributeId = Attributes.Value,
-                },
-                // BrowseName of ServerStatus_StartTime
-                new ReadValueId
+                    // Value of ServerStatus
+                    new ReadValueId
+                    {
+                        NodeId = Variables.Server_ServerStatus,
+                        AttributeId = Attributes.Value,
+                    },
+                    // BrowseName of ServerStatus_StartTime
+                    new ReadValueId
+                    {
+                        NodeId = Variables.Server_ServerStatus_StartTime,
+                        AttributeId = Attributes.BrowseName,
+                    },
+                    // Value of ServerStatus_StartTime
+                    new ReadValueId
+                    {
+                        NodeId = Variables.Server_ServerStatus_StartTime,
+                        AttributeId = Attributes.Value,
+                    },
+                };
+
+                // Read the node attributes
+                _logger.LogInformation("Reading nodes...");
+
+                // Call Read Service
+                ReadResponse response = await uaClient
+                    .Session!.ReadAsync(
+                        CreateRequestHeader(),
+                        0,
+                        TimestampsToReturn.Both,
+                        nodesToRead,
+                        ct
+                    )
+                    .ConfigureAwait(false);
+
+                DataValueCollection resultsValues = response.Results;
+
+                // Validate the results
+                ValidateResponse(resultsValues, nodesToRead);
+
+                // Display the results.
+                foreach (DataValue result in resultsValues)
                 {
-                    NodeId = Variables.Server_ServerStatus_StartTime,
-                    AttributeId = Attributes.BrowseName,
-                },
-                // Value of ServerStatus_StartTime
-                new ReadValueId
-                {
-                    NodeId = Variables.Server_ServerStatus_StartTime,
-                    AttributeId = Attributes.Value,
-                },
-            };
+                    _logger.LogInformation(
+                        "Read Value = {Value}, StatusCode = {StatusCode}",
+                        result.Value,
+                        result.StatusCode
+                    );
+                }
 
-            // Read the node attributes
-            _logger.LogInformation("Reading nodes...");
-
-            // Call Read Service
-            ReadResponse response = await session
-                .ReadAsync(null, 0, TimestampsToReturn.Both, nodesToRead, ct)
-                .ConfigureAwait(false);
-
-            DataValueCollection resultsValues = response.Results;
-
-            // Validate the results
-            ValidateResponse(resultsValues, nodesToRead);
-
-            // Display the results.
-            foreach (DataValue result in resultsValues)
+                // Read Server NamespaceArray
+                _logger.LogInformation("Reading NamespaceArray node value...");
+                DataValue namespaceArray = await uaClient
+                    .Session!.ReadValueAsync(Variables.Server_NamespaceArray, ct)
+                    .ConfigureAwait(false);
+                _logger.LogInformation("NamespaceArray Value = {NamespaceArray}", namespaceArray);
+                return;
+            }
+            catch (ServiceResultException sre)
+                when (IsTransientFault(sre) && attempt < MaxRetryAttempts)
             {
-                _logger.LogInformation(
-                    "Read Value = {Value}, StatusCode = {StatusCode}",
-                    result.Value,
-                    result.StatusCode
+                _logger.LogWarning(
+                    "Read Nodes transient error on attempt {Attempt}: {Error}. Retrying...",
+                    attempt,
+                    sre.Message
                 );
             }
-
-            // Read Server NamespaceArray
-            _logger.LogInformation("Reading NamespaceArray node value...");
-            DataValue namespaceArray = await session
-                .ReadValueAsync(Variables.Server_NamespaceArray, ct)
-                .ConfigureAwait(false);
-            _logger.LogInformation("NamespaceArray Value = {NamespaceArray}", namespaceArray);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Read Nodes Error.");
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Read Nodes Error.");
+                return;
+            }
         }
     }
 
     /// <summary>
     /// Write a list of nodes to the Server.
     /// </summary>
-    public async Task WriteNodesAsync(ISession session, CancellationToken ct = default)
+    public async Task WriteNodesAsync(UAClient uaClient, CancellationToken ct = default)
     {
-        if (session == null || !session.Connected)
+        if (!uaClient.IsConnected)
         {
             _logger.LogWarning("Session not connected.");
             return;
@@ -181,8 +207,8 @@ public class ClientSamples
             _logger.LogInformation("Writing nodes...");
 
             // Call Write Service
-            WriteResponse response = await session
-                .WriteAsync(null, nodesToWrite, ct)
+            WriteResponse response = await uaClient
+                .Session!.WriteAsync(null, nodesToWrite, ct)
                 .ConfigureAwait(false);
 
             StatusCodeCollection results = response.Results;
@@ -207,57 +233,71 @@ public class ClientSamples
     /// <summary>
     /// Browse Server nodes
     /// </summary>
-    public async Task BrowseAsync(ISession session, CancellationToken ct = default)
+    public async Task BrowseAsync(UAClient uaClient, CancellationToken ct = default)
     {
-        if (session == null || !session.Connected)
+        if (!uaClient.IsConnected)
         {
             _logger.LogWarning("Session not connected.");
             return;
         }
 
-        try
+        for (int attempt = 1; attempt <= MaxRetryAttempts; attempt++)
         {
-            // Create a Browser object
-            var browser = new Browser(session)
+            try
             {
-                // Set browse parameters
-                BrowseDirection = BrowseDirection.Forward,
-                NodeClassMask = (int)NodeClass.Object | (int)NodeClass.Variable,
-                ReferenceTypeId = ReferenceTypeIds.HierarchicalReferences,
-                IncludeSubtypes = true,
-            };
+                // Create a Browser object
+                var browser = new Browser(uaClient.Session)
+                {
+                    // Set browse parameters
+                    BrowseDirection = BrowseDirection.Forward,
+                    NodeClassMask = (int)NodeClass.Object | (int)NodeClass.Variable,
+                    ReferenceTypeId = ReferenceTypeIds.HierarchicalReferences,
+                    IncludeSubtypes = true,
+                };
 
-            NodeId nodeToBrowse = ObjectIds.Server;
+                NodeId nodeToBrowse = ObjectIds.Server;
 
-            // Call Browse service
-            _logger.LogInformation("Browsing {NodeId} node...", nodeToBrowse);
-            ReferenceDescriptionCollection browseResults = await browser
-                .BrowseAsync(nodeToBrowse, ct)
-                .ConfigureAwait(false);
+                // Call Browse service
+                _logger.LogInformation("Browsing {NodeId} node...", nodeToBrowse);
+                ReferenceDescriptionCollection browseResults = await browser
+                    .BrowseAsync(nodeToBrowse, ct)
+                    .ConfigureAwait(false);
 
-            _logger.LogInformation("Browse returned {Count} results:", browseResults.Count);
+                _logger.LogInformation("Browse returned {Count} results:", browseResults.Count);
 
-            foreach (ReferenceDescription result in browseResults)
+                foreach (ReferenceDescription result in browseResults)
+                {
+                    _logger.LogInformation(
+                        "  DisplayName = {DisplayName}, NodeClass = {NodeClass}",
+                        result.DisplayName.Text,
+                        result.NodeClass
+                    );
+                }
+                return;
+            }
+            catch (ServiceResultException sre)
+                when (IsTransientFault(sre) && attempt < MaxRetryAttempts)
             {
-                _logger.LogInformation(
-                    "  DisplayName = {DisplayName}, NodeClass = {NodeClass}",
-                    result.DisplayName.Text,
-                    result.NodeClass
+                _logger.LogWarning(
+                    "Browse transient error on attempt {Attempt}: {Error}. Retrying...",
+                    attempt,
+                    sre.Message
                 );
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Browse Error.");
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Browse Error.");
+                return;
+            }
         }
     }
 
     /// <summary>
     /// Call UA method
     /// </summary>
-    public async Task CallMethodAsync(ISession session, CancellationToken ct = default)
+    public async Task CallMethodAsync(UAClient uaClient, CancellationToken ct = default)
     {
-        if (session == null || !session.Connected)
+        if (!uaClient.IsConnected)
         {
             _logger.LogWarning("Session not connected.");
             return;
@@ -275,8 +315,8 @@ public class ClientSamples
             // Input argument requires a Float and an UInt32 value
             // Invoke Call service
             _logger.LogInformation("Calling UA method for node {NodeId}...", methodId);
-            var outputArguments = await session
-                .CallAsync(objectId, methodId, ct, (float)10.5, (uint)10)
+            var outputArguments = await uaClient
+                .Session!.CallAsync(objectId, methodId, ct, (float)10.5, (uint)10)
                 .ConfigureAwait(false);
 
             _logger.LogInformation(
@@ -299,12 +339,12 @@ public class ClientSamples
     /// Call the Start method for Alarming to enable events
     /// </summary>
     public async Task EnableEventsAsync(
-        ISession session,
+        UAClient uaClient,
         uint timeToRun,
         CancellationToken ct = default
     )
     {
-        if (session == null || !session.Connected)
+        if (!uaClient.IsConnected)
         {
             _logger.LogWarning("Session not connected.");
             return;
@@ -322,7 +362,12 @@ public class ClientSamples
             // Input argument requires a Float and an UInt32 value
             // Invoke Call service
             _logger.LogInformation("Calling UA method for node {NodeId}...", methodId);
-            var outputArguments = await session.CallAsync(objectId, methodId, ct, timeToRun);
+            var outputArguments = await uaClient.Session!.CallAsync(
+                objectId,
+                methodId,
+                ct,
+                timeToRun
+            );
 
             _logger.LogInformation(
                 "Method call returned {Count} output argument(s):",
@@ -344,7 +389,7 @@ public class ClientSamples
     /// Create Subscription and MonitoredItems for DataChanges
     /// </summary>
     public async Task<bool> SubscribeToDataChangesAsync(
-        ISession session,
+        UAClient uaClient,
         uint minLifeTime,
         bool enableDurableSubscriptions,
         CancellationToken ct = default
@@ -352,7 +397,7 @@ public class ClientSamples
     {
         bool isDurable = false;
 
-        if (session == null || !session.Connected)
+        if (!uaClient.IsConnected)
         {
             _logger.LogWarning("Session not connected.");
             return isDurable;
@@ -360,6 +405,7 @@ public class ClientSamples
 
         try
         {
+            ISession session = uaClient.Session!;
             // Create a subscription for receiving data change notifications
             const int subscriptionPublishingInterval = 1000;
             const int itemSamplingInterval = 1000;
@@ -553,15 +599,15 @@ public class ClientSamples
         if (clearNodeCache)
         {
             // clear NodeCache to fetch all nodes from server
-            uaClient.Session.NodeCache.Clear();
-            await FetchReferenceIdTypesAsync(uaClient.Session, ct).ConfigureAwait(false);
+            uaClient.Session!.NodeCache.Clear();
+            await FetchReferenceIdTypesAsync(uaClient.Session!, ct).ConfigureAwait(false);
         }
 
         // add root node
         if (addRootNode)
         {
             INode rootNode = await uaClient
-                .Session.NodeCache.FindAsync(startingNode, ct)
+                .Session!.NodeCache.FindAsync(startingNode, ct)
                 .ConfigureAwait(false);
             nodeDictionary[rootNode.NodeId] = rootNode;
         }
@@ -582,8 +628,13 @@ public class ClientSamples
                 nodesToBrowse.Count,
                 stopwatch.ElapsedMilliseconds
             );
-            IList<INode> response = await uaClient
-                .Session.NodeCache.FindReferencesAsync(nodesToBrowse, references, false, true, ct)
+
+            IList<INode> response = await FetchReferencesWithRetryAsync(
+                    uaClient,
+                    nodesToBrowse,
+                    references,
+                    ct
+                )
                 .ConfigureAwait(false);
 
             var nextNodesToBrowse = new ExpandedNodeIdCollection();
@@ -683,6 +734,41 @@ public class ClientSamples
         return result;
     }
 
+    private async Task<IList<INode>> FetchReferencesWithRetryAsync(
+        UAClient uaClient,
+        ExpandedNodeIdCollection nodesToBrowse,
+        NodeIdCollection references,
+        CancellationToken ct
+    )
+    {
+        for (int attempt = 1; attempt <= MaxRetryAttempts; attempt++)
+        {
+            try
+            {
+                return await uaClient
+                    .Session!.NodeCache.FindReferencesAsync(
+                        nodesToBrowse,
+                        references,
+                        false,
+                        true,
+                        ct
+                    )
+                    .ConfigureAwait(false);
+            }
+            catch (ServiceResultException sre)
+                when (IsTransientFault(sre) && attempt < MaxRetryAttempts)
+            {
+                _logger.LogWarning(
+                    "FetchReferences transient error on attempt {Attempt}: {Error}. Retrying...",
+                    attempt,
+                    sre.Message
+                );
+            }
+        }
+
+        return [];
+    }
+
     /// <summary>
     /// Browse full address space using the ManagedBrowseMethod, which
     /// will take care of not sending to many nodes to the server,
@@ -766,7 +852,7 @@ public class ClientSamples
             {
                 (IList<ReferenceDescriptionCollection> descriptions, IList<ServiceResult> errors) =
                     await uaClient
-                        .Session.ManagedBrowseAsync(
+                        .Session!.ManagedBrowseAsync(
                             null,
                             null,
                             nodesToBrowse,
@@ -782,6 +868,14 @@ public class ClientSamples
                 allReferenceDescriptions.AddRange(descriptions);
                 newReferenceDescriptions.AddRange(descriptions);
                 allServiceResults.AddRange(errors);
+            }
+            catch (ServiceResultException sre) when (IsTransientFault(sre))
+            {
+                _logger.LogWarning(
+                    sre,
+                    "ManagedBrowse transient error, retrying next iteration..."
+                );
+                continue;
             }
             catch (ServiceResultException sre)
             {
@@ -1096,7 +1190,7 @@ public class ClientSamples
     /// types that were successfully added to the session encodeable type factory.
     /// </remarks>
     public async Task<ComplexTypeSystem> LoadTypeSystemAsync(
-        ISession session,
+        UAClient uaClient,
         CancellationToken ct = default
     )
     {
@@ -1105,7 +1199,7 @@ public class ClientSamples
         var stopWatch = new Stopwatch();
         stopWatch.Start();
 
-        var complexTypeSystem = new ComplexTypeSystem(session, _telemetry);
+        var complexTypeSystem = new ComplexTypeSystem(uaClient.Session!, _telemetry);
         await complexTypeSystem.LoadAsync(throwOnError: true, ct: ct).ConfigureAwait(false);
 
         stopWatch.Stop();
@@ -1600,7 +1694,7 @@ public class ClientSamples
     /// <param name="session">The session to use for exporting.</param>
     /// <param name="nodes">The list of nodes to export.</param>
     /// <param name="filePath">The path where the NodeSet2 XML file will be saved.</param>
-    public void ExportNodesToNodeSet2(ISession session, IList<INode> nodes, string filePath)
+    public void ExportNodesToNodeSet2(UAClient uaClient, IList<INode> nodes, string filePath)
     {
         _logger.LogInformation("Exporting {Count} nodes to {FilePath}...", nodes.Count, filePath);
 
@@ -1610,8 +1704,8 @@ public class ClientSamples
         using var outputStream = new FileStream(filePath, FileMode.Create);
         var systemContext = new SystemContext(_telemetry)
         {
-            NamespaceUris = session.NamespaceUris,
-            ServerUris = session.ServerUris,
+            NamespaceUris = uaClient.Session!.NamespaceUris,
+            ServerUris = uaClient.Session!.ServerUris,
         };
 
         CoreClientUtils.ExportNodesToNodeSet2(systemContext, nodes, outputStream);
@@ -1638,15 +1732,15 @@ public class ClientSamples
     /// <exception cref="ArgumentNullException">Thrown when session, nodes, or outputDirectory is null.</exception>
     /// <exception cref="ArgumentException">Thrown when outputDirectory is empty or whitespace.</exception>
     public async Task<IReadOnlyDictionary<string, string>> ExportNodesToNodeSet2PerNamespaceAsync(
-        ISession session,
+        UAClient uaClient,
         IList<INode> nodes,
         string outputDirectory,
         CancellationToken cancellationToken = default
     )
     {
-        if (session == null)
+        if (uaClient == null)
         {
-            throw new ArgumentNullException(nameof(session));
+            throw new ArgumentNullException(nameof(uaClient));
         }
         if (nodes == null)
         {
@@ -1659,6 +1753,8 @@ public class ClientSamples
                 nameof(outputDirectory)
             );
         }
+
+        ISession session = uaClient.Session!;
 
         _logger.LogInformation(
             "Exporting {Count} nodes to separate NodeSet2 files per namespace in {Directory}...",
@@ -1812,6 +1908,14 @@ public class ClientSamples
             ClientBase.ValidateResponse((IList)responses, (IList)requests);
         }
     }
+
+    private RequestHeader CreateRequestHeader() => new() { TimeoutHint = (uint)OperationTimeout };
+
+    private static bool IsTransientFault(ServiceResultException sre) =>
+        sre.StatusCode == StatusCodes.BadTimeout
+        || sre.StatusCode == StatusCodes.BadSessionNotActivated
+        || sre.StatusCode == StatusCodes.BadConnectionClosed
+        || sre.StatusCode == StatusCodes.BadNoCommunication;
 
     private readonly Action<IList, IList> _validateResponse;
     private readonly ITelemetryContext _telemetry;

@@ -1,8 +1,8 @@
 using System.Net;
-using System.Net.Http.Headers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Time.Testing;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 
@@ -28,7 +28,8 @@ public class ApiClientTests
         var client = new FakeApiClient(
             Options.Create(DefaultConfig),
             NullLogger<ApiClient>.Instance,
-            handler
+            handler,
+            TimeProvider.System
         );
         return (client, handler);
     }
@@ -42,7 +43,8 @@ public class ApiClientTests
         var agent = new TestBaseAgent(
             Options.Create(DefaultConfig),
             NullLogger<BaseAgent>.Instance,
-            handler
+            handler,
+            TimeProvider.System
         );
         return (agent, handler);
     }
@@ -434,6 +436,206 @@ public class ApiClientTests
         Assert.ThrowsAsync<HttpRequestException>(() => agent.PostAsync("/api/test", new { }));
     }
 
+    [Test]
+    public async Task GetDataVariablesAsync_WhenNoConnectionOnFirstAttempt_RetriesAndReturnsResult()
+    {
+        const string json =
+            """{"data":[{"publicId":"v1","address":"40001","name":"Temp","slug":"t","type":"int16","width":"1"}]}""";
+        var responses = new Queue<Func<HttpResponseMessage>>([
+            () => throw new HttpRequestException("Connection refused"),
+            () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json) },
+        ]);
+        var handler = new SequentialMockHttpMessageHandler(responses);
+        var fakeTime = new FakeTimeProvider();
+        var client = new FakeApiClient(
+            Options.Create(DefaultConfig),
+            NullLogger<ApiClient>.Instance,
+            handler,
+            fakeTime
+        );
+
+        using var cts = new CancellationTokenSource();
+        var advanceTask = AdvanceTimeInBackgroundAsync(fakeTime, cts.Token);
+
+        var result = await client.GetDataVariablesAsync("agent-1");
+
+        await cts.CancelAsync();
+        await advanceTask;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data, Has.Length.EqualTo(1));
+            Assert.That(handler.RequestCount, Is.EqualTo(2));
+        });
+    }
+
+    [Test]
+    public async Task GetDataVariablesAsync_WhenRateLimited_WaitsTwoMinutesAndRetries()
+    {
+        const string json = """{"data":[]}""";
+        var responses = new Queue<Func<HttpResponseMessage>>([
+            () => new HttpResponseMessage(HttpStatusCode.TooManyRequests),
+            () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json) },
+        ]);
+        var handler = new SequentialMockHttpMessageHandler(responses);
+        var fakeTime = new FakeTimeProvider();
+        var client = new FakeApiClient(
+            Options.Create(DefaultConfig),
+            NullLogger<ApiClient>.Instance,
+            handler,
+            fakeTime
+        );
+
+        using var cts = new CancellationTokenSource();
+        var advanceTask = AdvanceTimeInBackgroundAsync(fakeTime, cts.Token);
+
+        var result = await client.GetDataVariablesAsync("agent-1");
+
+        await cts.CancelAsync();
+        await advanceTask;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data, Is.Empty);
+            Assert.That(handler.RequestCount, Is.EqualTo(2));
+        });
+    }
+
+    [Test]
+    public async Task PostVariableAsync_WhenNoConnectionOnFirstAttempt_RetriesAndReturnsResult()
+    {
+        const string json =
+            """{"data":{"publicId":"var-1","address":"40001","name":"Temp","slug":"temp","type":"int16","width":"1"}}""";
+        var responses = new Queue<Func<HttpResponseMessage>>([
+            () => throw new HttpRequestException("Connection refused"),
+            () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json) },
+        ]);
+        var handler = new SequentialMockHttpMessageHandler(responses);
+        var fakeTime = new FakeTimeProvider();
+        var client = new FakeApiClient(
+            Options.Create(DefaultConfig),
+            NullLogger<ApiClient>.Instance,
+            handler,
+            fakeTime
+        );
+        var variable = new Variable
+        {
+            PublicId = "var-1",
+            Address = "40001",
+            Name = "Temp",
+            Slug = "temp",
+            Type = "int16",
+            Width = "1",
+        };
+
+        using var cts = new CancellationTokenSource();
+        var advanceTask = AdvanceTimeInBackgroundAsync(fakeTime, cts.Token);
+
+        var result = await client.PostVariableAsync("agent-1", variable);
+
+        await cts.CancelAsync();
+        await advanceTask;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result!.Data.PublicId, Is.EqualTo("var-1"));
+            Assert.That(handler.RequestCount, Is.EqualTo(2));
+        });
+    }
+
+    [Test]
+    public async Task PostVariableAsync_WhenRateLimited_WaitsTwoMinutesAndRetries()
+    {
+        const string json =
+            """{"data":{"publicId":"var-1","address":"40001","name":"Temp","slug":"temp","type":"int16","width":"1"}}""";
+        var responses = new Queue<Func<HttpResponseMessage>>([
+            () => new HttpResponseMessage(HttpStatusCode.TooManyRequests),
+            () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json) },
+        ]);
+        var handler = new SequentialMockHttpMessageHandler(responses);
+        var fakeTime = new FakeTimeProvider();
+        var client = new FakeApiClient(
+            Options.Create(DefaultConfig),
+            NullLogger<ApiClient>.Instance,
+            handler,
+            fakeTime
+        );
+        var variable = new Variable
+        {
+            PublicId = "var-1",
+            Address = "40001",
+            Name = "Temp",
+            Slug = "temp",
+            Type = "int16",
+            Width = "1",
+        };
+
+        using var cts = new CancellationTokenSource();
+        var advanceTask = AdvanceTimeInBackgroundAsync(fakeTime, cts.Token);
+
+        var result = await client.PostVariableAsync("agent-1", variable);
+
+        await cts.CancelAsync();
+        await advanceTask;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result!.Data.PublicId, Is.EqualTo("var-1"));
+            Assert.That(handler.RequestCount, Is.EqualTo(2));
+        });
+    }
+
+    [Test]
+    public async Task GetDataVariablesAsync_WhenMultipleNoConnectionFailures_RetriesEachTime()
+    {
+        const string json = """{"data":[]}""";
+        var responses = new Queue<Func<HttpResponseMessage>>([
+            () => throw new HttpRequestException("Connection refused"),
+            () => throw new HttpRequestException("Connection refused"),
+            () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json) },
+        ]);
+        var handler = new SequentialMockHttpMessageHandler(responses);
+        var fakeTime = new FakeTimeProvider();
+        var client = new FakeApiClient(
+            Options.Create(DefaultConfig),
+            NullLogger<ApiClient>.Instance,
+            handler,
+            fakeTime
+        );
+
+        using var cts = new CancellationTokenSource();
+        var advanceTask = AdvanceTimeInBackgroundAsync(fakeTime, cts.Token);
+
+        var result = await client.GetDataVariablesAsync("agent-1");
+
+        await cts.CancelAsync();
+        await advanceTask;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Data, Is.Empty);
+            Assert.That(handler.RequestCount, Is.EqualTo(3));
+        });
+    }
+
+    private static Task AdvanceTimeInBackgroundAsync(
+        FakeTimeProvider timeProvider,
+        CancellationToken cancellationToken
+    )
+    {
+        return Task.Run(
+            async () =>
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    timeProvider.Advance(TimeSpan.FromMinutes(5));
+                    await Task.Delay(10, CancellationToken.None);
+                }
+            },
+            CancellationToken.None
+        );
+    }
+
     private static void AssertCommonHeaders(HttpRequestMessage request)
     {
         Assert.Multiple(() =>
@@ -463,11 +665,29 @@ public class ApiClientTests
         }
     }
 
+    private sealed class SequentialMockHttpMessageHandler(
+        Queue<Func<HttpResponseMessage>> responses
+    ) : HttpMessageHandler
+    {
+        public int RequestCount { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
+        {
+            RequestCount++;
+            var factory = responses.Dequeue();
+            return Task.FromResult(factory());
+        }
+    }
+
     private sealed class FakeApiClient(
         IOptions<Configuration> config,
         ILogger<ApiClient> logger,
-        HttpMessageHandler handler
-    ) : ApiClient(config, logger)
+        HttpMessageHandler handler,
+        TimeProvider timeProvider
+    ) : ApiClient(config, logger, timeProvider)
     {
         protected override HttpMessageHandler? GetHttpMessageHandler() => handler;
     }
@@ -475,8 +695,9 @@ public class ApiClientTests
     private sealed class TestBaseAgent(
         IOptions<Configuration> config,
         ILogger<BaseAgent> logger,
-        HttpMessageHandler handler
-    ) : BaseAgent(config, logger)
+        HttpMessageHandler handler,
+        TimeProvider timeProvider
+    ) : BaseAgent(config, logger, timeProvider)
     {
         protected override HttpMessageHandler? GetHttpMessageHandler() => handler;
 

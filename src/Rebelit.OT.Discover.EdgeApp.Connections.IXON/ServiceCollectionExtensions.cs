@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensions
             })
             .ValidateOnStart();
         services.AddSingleton<IApiClient, ApiClient>();
+        services.AddSingleton(TimeProvider.System);
         return services;
     }
 }

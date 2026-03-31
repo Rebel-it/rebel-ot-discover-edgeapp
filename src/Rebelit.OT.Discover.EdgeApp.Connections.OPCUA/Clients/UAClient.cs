@@ -29,6 +29,26 @@ public class UAClient : IDisposable
     public ISession? Session { get; private set; }
 
     /// <summary>
+    /// Raised whenever the session state changes.
+    /// </summary>
+    public event EventHandler<SessionStateChangedEventArgs>? SessionStateChanged;
+
+    /// <summary>
+    /// Gets whether the current session is connected.
+    /// </summary>
+    public bool IsConnected => Session?.Connected == true;
+
+    /// <summary>
+    /// The timeout in ms for establishing a connection. Default: 30 000 ms.
+    /// </summary>
+    public int ConnectTimeout { get; set; } = 30_000;
+
+    /// <summary>
+    /// The timeout in ms for waiting on a reverse connection endpoint. Default: 30 000 ms.
+    /// </summary>
+    public int ReverseConnectTimeout { get; set; } = 30_000;
+
+    /// <summary>
     /// The session keepalive interval to be used in ms.
     /// </summary>
     public int KeepAliveInterval { get; set; } = 5000;
@@ -106,25 +126,30 @@ public class UAClient : IDisposable
         CancellationToken ct = default
     )
     {
-        bool success = false;
-        SubscriptionCollection subscriptions = [.. Session.Subscriptions];
+        SubscriptionCollection subscriptions = [.. Session!.Subscriptions];
+        ISession? previousSession = Session;
         Session = null;
+
         if (
-            await ConnectAsync(serverUrl, useSecurity, ct).ConfigureAwait(false)
-            && subscriptions != null
-            && Session != null
+            !await ConnectAsync(serverUrl, useSecurity, ct).ConfigureAwait(false)
+            || Session == null
         )
         {
-            Console.WriteLine(
-                $"Transferring {subscriptions.Count} subscriptions from old session to new session..."
-            );
-            success = await Session
-                .TransferSubscriptionsAsync(subscriptions, true, ct)
-                .ConfigureAwait(false);
-            if (success)
-            {
-                Console.WriteLine("Subscriptions transferred.");
-            }
+            Session = previousSession;
+            return false;
+        }
+
+        _logger.LogInformation(
+            "Transferring {Count} subscriptions from old session to new session...",
+            subscriptions.Count
+        );
+        bool success = await Session
+            .TransferSubscriptionsAsync(subscriptions, true, ct)
+            .ConfigureAwait(false);
+
+        if (success)
+        {
+            _logger.LogInformation("Subscriptions transferred.");
         }
 
         return success;
@@ -157,10 +182,16 @@ public class UAClient : IDisposable
                 return true;
             }
 
+            using var connectCts = new CancellationTokenSource(ConnectTimeout);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                ct,
+                connectCts.Token
+            );
+
             var (endpointDescription, connection) = await ResolveEndpointAsync(
                     serverUrl,
                     useSecurity,
-                    ct
+                    linkedCts.Token
                 )
                 .ConfigureAwait(false);
 
@@ -179,18 +210,22 @@ public class UAClient : IDisposable
                     SessionLifeTime,
                     UserIdentity,
                     null,
-                    ct
+                    linkedCts.Token
                 )
                 .ConfigureAwait(false);
 
-            if (session?.Connected == true)
+            if (session?.Connected != true)
             {
-                ConfigureSession(session);
-                _logger.LogInformation(
-                    "New Session Created with SessionName = {SessionName}",
-                    session.SessionName
-                );
+                _logger.LogWarning("Session created but not in Connected state.");
+                session?.Dispose();
+                return false;
             }
+
+            ConfigureSession(session);
+            _logger.LogInformation(
+                "New Session Created with SessionName = {SessionName}",
+                session.SessionName
+            );
 
             return true;
         }
@@ -233,7 +268,7 @@ public class UAClient : IDisposable
         ITransportWaitingConnection? connection = null;
         do
         {
-            using var cts = new CancellationTokenSource(30_000);
+            using var cts = new CancellationTokenSource(ReverseConnectTimeout);
             using var linkedCTS = CancellationTokenSource.CreateLinkedTokenSource(ct, cts.Token);
             connection = await _reverseConnectManager
                 .WaitForConnectionAsync(new Uri(serverUrl), null, linkedCTS.Token)
@@ -270,6 +305,7 @@ public class UAClient : IDisposable
             true,
             ReconnectPeriodExponentialBackoff
         );
+        OnSessionStateChanged(new SessionStateChangedEventArgs(UAClientState.Connected, session));
     }
 
     /// <summary>
@@ -282,7 +318,7 @@ public class UAClient : IDisposable
         {
             if (Session != null)
             {
-                Console.WriteLine("Disconnecting...");
+                _logger.LogInformation("Disconnecting...");
 
                 lock (_lock)
                 {
@@ -294,24 +330,21 @@ public class UAClient : IDisposable
                 await Session.CloseAsync(!leaveChannelOpen, ct).ConfigureAwait(false);
                 if (leaveChannelOpen)
                 {
-                    // detach the channel, so it doesn't get
-                    // closed when the session is disposed.
                     Session.DetachChannel();
                 }
                 Session.Dispose();
                 Session = null;
 
-                // Log Session Disconnected event
-                Console.WriteLine("Session Disconnected.");
+                _logger.LogInformation("Session Disconnected.");
+                OnSessionStateChanged(new SessionStateChangedEventArgs(UAClientState.Disconnected));
             }
             else
             {
-                Console.WriteLine("Session not created!");
+                _logger.LogWarning("DisconnectAsync called but no active session.");
             }
         }
         catch (Exception ex)
         {
-            // Log Error
             _logger.LogError(ex, "Disconnect Error");
         }
     }
@@ -328,6 +361,7 @@ public class UAClient : IDisposable
         }
         if (disposing)
         {
+            _reconnectHandler?.Dispose();
             Utils.SilentDispose(Session);
             _configuration.CertificateValidator.CertificateValidation -= CertificateValidation;
         }
@@ -372,6 +406,9 @@ public class UAClient : IDisposable
                         e.Status,
                         state,
                         ReconnectPeriod
+                    );
+                    OnSessionStateChanged(
+                        new SessionStateChangedEventArgs(UAClientState.Reconnecting, Session)
                     );
                 }
                 else
@@ -428,12 +465,23 @@ public class UAClient : IDisposable
                         _reconnectHandler.Session.SessionId
                     );
                 }
+                OnSessionStateChanged(
+                    new SessionStateChangedEventArgs(UAClientState.Reconnected, Session)
+                );
             }
             else
             {
                 _logger.LogInformation("--- RECONNECT KeepAlive recovered ---");
+                OnSessionStateChanged(
+                    new SessionStateChangedEventArgs(UAClientState.Reconnected, Session)
+                );
             }
         }
+    }
+
+    private void OnSessionStateChanged(SessionStateChangedEventArgs args)
+    {
+        SessionStateChanged?.Invoke(this, args);
     }
 
     /// <summary>

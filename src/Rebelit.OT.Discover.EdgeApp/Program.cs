@@ -4,6 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Rebelit.OT.Discover.EdgeApp;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Extensions;
+using Rebelit.OT.Discover.EdgeApp.Mappers;
+using Rebelit.OT.Discover.EdgeApp.Resolvers;
+using Rebelit.OT.Discover.EdgeApp.Synchronizers;
 using Serilog;
 
 Console.WriteLine("Hello, World!");
@@ -19,6 +22,9 @@ ServiceCollection services = new();
 services.AddSingleton<IConfiguration>(configuration);
 services.AddSingleton<Application>();
 services.AddSingleton<IScraper, Scraper>();
+services.AddSingleton<IOpcUaVariableMapper, OpcUaVariableMapper>();
+services.AddSingleton<IDataSourceResolver, DataSourceResolver>();
+services.AddSingleton<INodeSynchronizer, NodeSynchronizer>();
 services.AddOPCUAClient("Rebelit.OT.Scraper");
 services.AddIXONClient(
     configuration["IXON_ApplicationId"]

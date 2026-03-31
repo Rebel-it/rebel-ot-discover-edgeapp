@@ -119,6 +119,31 @@ Use a simple `Task.Delay(15 minutes)` loop inside `Application.Run`. The interva
 
 ---
 
+=== ADR-07: Reuse Existing Data Source Instead of Always Creating One
+
+*Status:* Accepted +
+*Date:* 2026-03-31
+
+*Context:*
+When `IXON_DataSourceId` is not configured, `DataSourceResolver` previously always called `POST /api/agents/{id}/data-sources`. If the device already had a data source with slug `opcua`, the IXON API returned `400 Bad Request` with `"Already used"` on the `slug` property. This caused the application to crash on every startup after the first successful run.
+
+*Decision:*
+Before posting a new data source, call `GetDataSourcesAsync` and search the results for an entry whose `device.publicId` matches the resolved device and whose `slug` equals `"opcua"` (case-insensitive). If such a data source is found, return its `publicId` directly without issuing a POST. Only proceed with the POST when no matching data source exists.
+
+*Rejected alternatives:*
+
+* *Catch the 400 and parse the error body*: brittle -- depends on a specific error message string from a third-party API.
+* *Always require `IXON_DataSourceId` to be set by the operator*: shifts operational burden onto the installer and breaks the zero-touch goal.
+
+*Consequences:*
+
+* (+) Idempotent: running the application a second time against the same device no longer fails.
+* (+) No new API surface required -- `GetDataSourcesAsync` was already available on `IApiClient` and already requested the necessary fields (`device.publicId`, `slug`).
+* (+) One additional GET request per startup cycle when `IXON_DataSourceId` is not set.
+* (-) The lookup is linear across all data sources for the agent; acceptable given the expected low cardinality.
+
+---
+
 === ADR-06: Auto-Accept Untrusted OPC UA Certificates
 
 *Status:* Accepted (with known trade-off -- see Risk R-02) +
