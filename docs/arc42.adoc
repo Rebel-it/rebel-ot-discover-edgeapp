@@ -1,0 +1,64 @@
+= Rebelit OT Discover Edge App: Architecture Documentation
+:toc: left
+:toc-title: Table of Contents
+:toclevels: 3
+:sectnums:
+:sectnumlevels: 4
+:icons: font
+:source-highlighter: highlightjs
+:imagesdir: assets
+:doctype: book
+:revdate: 2026-03-31
+:revnumber: 1.0
+:lang: en
+
+// arc42 template, version 8
+// https://arc42.org
+
+<<<
+
+include::01_introduction_and_goals.adoc[]
+
+<<<
+
+include::02_architecture_constraints.adoc[]
+
+<<<
+
+include::03_context_and_scope.adoc[]
+
+<<<
+
+include::04_solution_strategy.adoc[]
+
+<<<
+
+include::05_building_block_view.adoc[]
+
+<<<
+
+include::06_runtime_view.adoc[]
+
+<<<
+
+include::07_deployment_view.adoc[]
+
+<<<
+
+include::08_crosscutting_concepts.adoc[]
+
+<<<
+
+include::09_architecture_decisions.adoc[]
+
+<<<
+
+include::10_quality_requirements.adoc[]
+
+<<<
+
+include::11_risks_and_technical_debt.adoc[]
+
+<<<
+
+include::12_glossary.adoc[]
