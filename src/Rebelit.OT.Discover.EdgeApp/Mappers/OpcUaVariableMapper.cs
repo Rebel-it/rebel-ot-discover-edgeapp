@@ -32,10 +32,25 @@ internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
     {
         var builtInType = ResolveBuiltInType(referenceDescription.TypeDefinition);
         if (builtInType is null)
+        {
+            logger.LogWarning(
+                "Node '{DisplayName}' ({NodeId}) could not be mapped: TypeDefinition NodeId is not a known numeric type.",
+                referenceDescription.DisplayName,
+                referenceDescription.NodeId
+            );
             return null;
+        }
 
         if (!TypeMap.TryGetValue(builtInType.Value, out var mapping))
+        {
+            logger.LogWarning(
+                "Node '{DisplayName}' ({NodeId}) could not be mapped: built-in type '{BuiltInType}' is not supported.",
+                referenceDescription.DisplayName,
+                referenceDescription.NodeId,
+                builtInType.Value
+            );
             return null;
+        }
 
         var (type, width) = mapping;
 

@@ -58,9 +58,13 @@ The script will prompt for eight required values and one optional value:
 | *OPC UA Password*
 | Password for authenticating with the OPC UA server.
 | Check the credentials configured on your OPC UA server or PLC.
+
+| *Log level* _(optional)_
+| Minimum log level written to the container output. Accepted values: `Verbose`, `Debug`, `Information`, `Warning`, `Error`, `Fatal`. Defaults to `Information`.
+| Choose based on your scenario. Use `Warning` for normal production operation; use `Information` to also see creation events; use `Debug` or `Verbose` only for troubleshooting.
 |===
 
-The credentials are baked into the Docker image as environment variables at build time, so no secrets need to be managed on the device after deployment.
+The credentials and log level are baked into the Docker image as environment variables at build time, so no secrets need to be managed on the device after deployment. To change the log level, rebuild the image with a different value.
 
 === Generating an IXON Bearer Token
 A bearer token is obtained by calling the `AccessTokenList` endpoint with your IXON email and password using HTTP Basic Auth. The token expires after the duration you specify (`expiresIn`, in seconds; maximum 60 days / 5 184 000 seconds).

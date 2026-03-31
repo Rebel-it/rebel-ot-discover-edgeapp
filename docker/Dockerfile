@@ -51,4 +51,8 @@ ENV OPCUA_ServerAddress="$OPCUA_ServerAddress"
 ENV OPCUA_Username="$OPCUA_Username"
 ENV OPCUA_Password="$OPCUA_Password"
 
+# ── Logging ────────────────────────────────────────────────────────────────────
+ARG  LOG_LEVEL
+ENV  LOG_LEVEL="$LOG_LEVEL"
+
 ENTRYPOINT ["dotnet", "Rebelit.OT.Discover.EdgeApp.dll"]

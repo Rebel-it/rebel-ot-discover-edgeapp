@@ -16,6 +16,9 @@ read -rp "OPC UA Server Address (e.g. opc.tcp://172.27.21.3:4840): " OPCUA_Serve
 read -rp "OPC UA Username:       " OPCUA_Username
 read -rp "OPC UA Password:      " OPCUA_Password
 echo
+read -rp "Log level (Verbose/Debug/Information/Warning/Error/Fatal) [Information]: " LOG_LEVEL
+LOG_LEVEL=${LOG_LEVEL:-Information}
+echo
 
 if [[ -z "$SECURE_EDGE_IP" || -z "$IXON_ApplicationId" || -z "$IXON_CompanyId" || -z "$IXON_BearerToken" \
    || -z "$IXON_AgentId" \
@@ -58,5 +61,6 @@ docker buildx build \
     --build-arg OPCUA_ServerAddress="$OPCUA_ServerAddress" \
     --build-arg OPCUA_Username="$OPCUA_Username" \
     --build-arg OPCUA_Password="$OPCUA_Password" \
+    --build-arg LOG_LEVEL="$LOG_LEVEL" \
     -f ./Dockerfile \
     ../src
