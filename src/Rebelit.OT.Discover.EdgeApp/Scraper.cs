@@ -32,7 +32,7 @@ public class Scraper(
         configuration["OPCUA_Password"]
         ?? throw new InvalidOperationException("OPCUA_Password configuration is not set.");
 
-    public string? DataSourceId { get; } = configuration["IXON_DataSourceId"] ?? null;
+    public string? DataSourceId { get; } = configuration["IXON_DataSourceId"] ?? throw new InvalidOperationException("IXON_DataSourceId configuration is not set.");
 
     /// <summary>
     ///     A set of existing variable addresses that have already been created in the IXON platform. This is used to avoid creating duplicate variables when scraping the OPC UA server. The set is populated at the beginning of the execution by fetching the existing variables from the IXON platform for the specified agent.
@@ -104,6 +104,7 @@ public class Scraper(
     /// </returns>
     private async Task<string> ResolveDataSourceIdAsync(string agentId)
     {
+        
         if (!string.IsNullOrEmpty(DataSourceId))
             return DataSourceId;
 
@@ -154,6 +155,7 @@ public class Scraper(
     }
 
     private async Task<Variable?> CreateIxonVariableAsync(
+        UAClient client,
         ReferenceDescription referenceDescription,
         string dataSourceId
     )
@@ -321,6 +323,7 @@ public class Scraper(
             Slug = new string([
                 .. referenceDescription.DisplayName.ToString().Where(char.IsLetterOrDigit),
             ]).ToLower(),
+            PublicId = dataSourceId,
             Source = new Source { PublicId = dataSourceId },
             Signed = true,
         };
