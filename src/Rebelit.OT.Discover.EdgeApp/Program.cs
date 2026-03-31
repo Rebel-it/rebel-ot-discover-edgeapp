@@ -1,5 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Rebelit.OT.Discover.EdgeApp;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON;
@@ -8,6 +7,7 @@ using Rebelit.OT.Discover.EdgeApp.Mappers;
 using Rebelit.OT.Discover.EdgeApp.Resolvers;
 using Rebelit.OT.Discover.EdgeApp.Synchronizers;
 using Serilog;
+using Serilog.Events;
 
 Console.WriteLine("Hello, World!");
 var configuration = new ConfigurationBuilder()
@@ -15,7 +15,12 @@ var configuration = new ConfigurationBuilder()
     .AddEnvironmentVariables()
     .Build();
 
-Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateLogger();
+var logLevelStr = configuration["LOG_LEVEL"] ?? "Information";
+var logLevel = Enum.TryParse<LogEventLevel>(logLevelStr, ignoreCase: true, out var parsed)
+    ? parsed
+    : LogEventLevel.Information;
+
+Log.Logger = new LoggerConfiguration().MinimumLevel.Is(logLevel).WriteTo.Console().CreateLogger();
 Log.Logger.Debug("Starting console app...");
 
 ServiceCollection services = new();

@@ -42,6 +42,10 @@ public class Scraper(
         if (nodes is null)
             return;
 
+        logger.LogInformation("Found {NodeCount} nodes in the OPC UA address space.", nodes.Count);
+        foreach (var rd in nodes)
+            logger.LogTrace("Found node {NodeId} ({DisplayName}).", rd.NodeId, rd.DisplayName);
+
         await nodeSynchronizer.InitializeAsync(AgentId);
 
         foreach (var batch in nodes.Chunk(BatchSize))

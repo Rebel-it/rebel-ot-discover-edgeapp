@@ -6,6 +6,6 @@ public class ClientSamplerFactory(ITelemetryContext telemetryContext) : IClientS
 {
     public async Task<ClientSamples> CreateAsync()
     {
-        return new ClientSamples(telemetryContext, null, null, true);
+        return new ClientSamples(telemetryContext, null, null);
     }
 }

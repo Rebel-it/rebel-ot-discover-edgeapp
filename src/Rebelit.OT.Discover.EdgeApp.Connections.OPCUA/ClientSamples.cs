@@ -30,8 +30,7 @@ public class ClientSamples
     public ClientSamples(
         ITelemetryContext telemetry,
         Action<IList, IList> validateResponse,
-        ManualResetEvent quitEvent = null,
-        bool verbose = false
+        ManualResetEvent quitEvent = null
     )
     {
         _telemetry = telemetry;
@@ -39,7 +38,6 @@ public class ClientSamples
         _validateResponse = validateResponse;
 
         _quitEvent = quitEvent;
-        _verbose = verbose;
         _desiredEventFields = [];
         int fieldIndex = 0;
 
@@ -75,7 +73,7 @@ public class ClientSamples
     {
         if (!uaClient.IsConnected)
         {
-            _logger.LogWarning("Session not connected.");
+            _logger.LogError("Session not connected.");
             return;
         }
 
@@ -107,7 +105,7 @@ public class ClientSamples
                 };
 
                 // Read the node attributes
-                _logger.LogInformation("Reading nodes...");
+                _logger.LogTrace("Reading nodes...");
 
                 // Call Read Service
                 ReadResponse response = await uaClient
@@ -128,7 +126,7 @@ public class ClientSamples
                 // Display the results.
                 foreach (DataValue result in resultsValues)
                 {
-                    _logger.LogInformation(
+                    _logger.LogTrace(
                         "Read Value = {Value}, StatusCode = {StatusCode}",
                         result.Value,
                         result.StatusCode
@@ -136,11 +134,11 @@ public class ClientSamples
                 }
 
                 // Read Server NamespaceArray
-                _logger.LogInformation("Reading NamespaceArray node value...");
+                _logger.LogTrace("Reading NamespaceArray node value...");
                 DataValue namespaceArray = await uaClient
                     .Session!.ReadValueAsync(Variables.Server_NamespaceArray, ct)
                     .ConfigureAwait(false);
-                _logger.LogInformation("NamespaceArray Value = {NamespaceArray}", namespaceArray);
+                _logger.LogTrace("NamespaceArray Value = {NamespaceArray}", namespaceArray);
                 return;
             }
             catch (ServiceResultException sre)
@@ -167,7 +165,7 @@ public class ClientSamples
     {
         if (!uaClient.IsConnected)
         {
-            _logger.LogWarning("Session not connected.");
+            _logger.LogError("Session not connected.");
             return;
         }
 
@@ -617,13 +615,13 @@ public class ClientSamples
         {
             if (_quitEvent?.WaitOne(0) == true)
             {
-                _logger.LogInformation("Browse aborted.");
+                _logger.LogTrace("Browse aborted.");
                 break;
             }
 
             searchDepth++;
-            _logger.LogInformation(
-                "{Depth}: Find {Count} references after {Duration}ms",
+            _logger.LogTrace(
+                "Browse pass {Depth}: resolving {Count} node(s) ({Duration}ms elapsed)",
                 searchDepth,
                 nodesToBrowse.Count,
                 stopwatch.ElapsedMilliseconds
@@ -692,17 +690,11 @@ public class ClientSamples
             }
             if (duplicates > 0)
             {
-                _logger.LogInformation(
-                    "Find References {Count} duplicate nodes were ignored",
-                    duplicates
-                );
+                _logger.LogTrace("Skipped {Count} duplicate node(s)", duplicates);
             }
             if (leafNodes > 0)
             {
-                _logger.LogInformation(
-                    "Find References {Count} leaf nodes were ignored",
-                    leafNodes
-                );
+                _logger.LogTrace("Skipped {Count} leaf node(s)", leafNodes);
             }
             nodesToBrowse = nextNodesToBrowse;
         }
@@ -710,7 +702,7 @@ public class ClientSamples
         stopwatch.Stop();
 
         _logger.LogInformation(
-            "FetchAllNodesNodeCache found {Count} nodes in {Duration}ms",
+            "Address space browse complete. Found {Count} node(s) in {Duration}ms.",
             nodeDictionary.Count,
             stopwatch.ElapsedMilliseconds
         );
@@ -718,17 +710,14 @@ public class ClientSamples
         var result = nodeDictionary.Values.ToList();
         result.Sort((x, y) => x.NodeId.CompareTo(y.NodeId));
 
-        if (_verbose)
+        foreach (INode node in result)
         {
-            foreach (INode node in result)
-            {
-                _logger.LogInformation(
-                    "NodeId {NodeId} {NodeClass} {BrowseName}",
-                    node.NodeId,
-                    node.NodeClass,
-                    node.BrowseName
-                );
-            }
+            _logger.LogTrace(
+                "NodeId {NodeId} {NodeClass} {BrowseName}",
+                node.NodeId,
+                node.NodeClass,
+                node.BrowseName
+            );
         }
 
         return result;
@@ -835,8 +824,8 @@ public class ClientSamples
         while (nodesToBrowse.Count != 0 && searchDepth < MaxSearchDepth)
         {
             searchDepth++;
-            _logger.LogInformation(
-                "{Depth}: Browse {Count} nodes after {Duration}ms",
+            _logger.LogTrace(
+                "Browse pass {Depth}: resolving {Count} node(s) ({Duration}ms elapsed)",
                 searchDepth,
                 nodesToBrowse.Count,
                 stopWatch.ElapsedMilliseconds
@@ -844,7 +833,7 @@ public class ClientSamples
 
             if (_quitEvent?.WaitOne(0) == true)
             {
-                _logger.LogInformation("Browse aborted.");
+                _logger.LogTrace("Browse aborted.");
                 break;
             }
 
@@ -917,10 +906,7 @@ public class ClientSamples
 
             if (duplicates > 0)
             {
-                _logger.LogInformation(
-                    "Managed Browse Result {Count} duplicate nodes were ignored.",
-                    duplicates
-                );
+                _logger.LogTrace("Skipped {Count} duplicate node(s)", duplicates);
             }
         }
 
@@ -931,22 +917,19 @@ public class ClientSamples
         result.Sort((x, y) => x.NodeId.CompareTo(y.NodeId));
 
         _logger.LogInformation(
-            "ManagedBrowseFullAddressSpace found {Count} references on server in {Duration}ms.",
+            "Address space browse complete. Found {Count} node(s) in {Duration}ms.",
             result.Count,
             stopWatch.ElapsedMilliseconds
         );
 
-        if (_verbose)
+        foreach (ReferenceDescription reference in result)
         {
-            foreach (ReferenceDescription reference in result)
-            {
-                _logger.LogInformation(
-                    "NodeId {NodeId} {NodeClass} {BrowseName}",
-                    reference.NodeId,
-                    reference.NodeClass,
-                    reference.BrowseName
-                );
-            }
+            _logger.LogTrace(
+                "NodeId {NodeId} {NodeClass} {BrowseName}",
+                reference.NodeId,
+                reference.NodeClass,
+                reference.BrowseName
+            );
         }
 
         uaClient.Session.ContinuationPointPolicy = policyBackup;
@@ -997,8 +980,8 @@ public class ClientSamples
         while (browseDescriptionCollection.Count > 0 && searchDepth < MaxSearchDepth)
         {
             searchDepth++;
-            _logger.LogInformation(
-                "{Depth}: Browse {Count} nodes after {Duration}ms",
+            _logger.LogTrace(
+                "Browse pass {Depth}: resolving {Count} node(s) ({Duration}ms elapsed)",
                 searchDepth,
                 browseDescriptionCollection.Count,
                 stopWatch.ElapsedMilliseconds
@@ -1013,7 +996,7 @@ public class ClientSamples
             {
                 if (_quitEvent?.WaitOne(0) == true)
                 {
-                    _logger.LogInformation("Browse aborted.");
+                    _logger.LogTrace("Browse aborted.");
                     break;
                 }
 
@@ -1094,11 +1077,11 @@ public class ClientSamples
             {
                 if (_quitEvent?.WaitOne(0) == true)
                 {
-                    _logger.LogInformation("Browse aborted.");
+                    _logger.LogTrace("Browse aborted.");
                 }
 
-                _logger.LogInformation(
-                    "BrowseNext {Count} continuation points.",
+                _logger.LogTrace(
+                    "Fetching next batch ({Count} continuation point(s))",
                     continuationPoints.Count
                 );
                 BrowseNextResponse browseNextResult = await uaClient
@@ -1140,10 +1123,7 @@ public class ClientSamples
             }
             if (duplicates > 0)
             {
-                _logger.LogInformation(
-                    "Browse Result {Count} duplicate nodes were ignored.",
-                    duplicates
-                );
+                _logger.LogTrace("Skipped {Count} duplicate node(s)", duplicates);
             }
             browseDescriptionCollection.AddRange(
                 CreateBrowseDescriptionCollectionFromNodeId(browseTable, browseTemplate)
@@ -1159,24 +1139,21 @@ public class ClientSamples
         result.Sort((x, y) => x.NodeId.CompareTo(y.NodeId));
 
         _logger.LogInformation(
-            "BrowseFullAddressSpace found {Count} references on server in {Duration}ms.",
+            "Address space browse complete. Found {Count} node(s) in {Duration}ms.",
             referenceDescriptions.Count,
             stopWatch.ElapsedMilliseconds
         );
 
-        if (_verbose)
+        foreach (ReferenceDescription reference in result)
         {
-            foreach (ReferenceDescription reference in result)
-            {
-                _logger.LogInformation(
-                    "NodeId Id:{NodeId}; Class:{NodeClass}; BrowseName:{BrowseName}; TypeDefinition:{TypeDefinition}, DisplayName:{DisplayName}",
-                    reference.NodeId,
-                    reference.NodeClass,
-                    reference.BrowseName,
-                    reference.TypeDefinition,
-                    reference.DisplayName
-                );
-            }
+            _logger.LogTrace(
+                "NodeId Id:{NodeId}; Class:{NodeClass}; BrowseName:{BrowseName}; TypeDefinition:{TypeDefinition}, DisplayName:{DisplayName}",
+                reference.NodeId,
+                reference.NodeClass,
+                reference.BrowseName,
+                reference.TypeDefinition,
+                reference.DisplayName
+            );
         }
 
         return result;
@@ -1194,7 +1171,7 @@ public class ClientSamples
         CancellationToken ct = default
     )
     {
-        _logger.LogInformation("Load the server type system.");
+        _logger.LogTrace("Loading server type system...");
 
         var stopWatch = new Stopwatch();
         stopWatch.Start();
@@ -1205,32 +1182,26 @@ public class ClientSamples
         stopWatch.Stop();
 
         _logger.LogInformation(
-            "Loaded {Count} types took {Duration}ms.",
+            "Type system loaded. {Count} custom type(s) in {Duration}ms.",
             complexTypeSystem.GetDefinedTypes().Length,
             stopWatch.ElapsedMilliseconds
         );
 
-        if (_verbose)
+        _logger.LogTrace("Custom types defined for this session:");
+        foreach (Type type in complexTypeSystem.GetDefinedTypes())
         {
-            _logger.LogInformation("Custom types defined for this session:");
-            foreach (Type type in complexTypeSystem.GetDefinedTypes())
-            {
-                _logger.LogInformation("{Namespace}.{TypeName}", type.Namespace, type.Name);
-            }
+            _logger.LogTrace("{Namespace}.{TypeName}", type.Namespace, type.Name);
+        }
 
-            _logger.LogInformation(
-                "Loaded {Count} dictionaries:",
-                complexTypeSystem.DataTypeSystem.Count
-            );
-            foreach (
-                KeyValuePair<NodeId, DataDictionary> dictionary in complexTypeSystem.DataTypeSystem
-            )
+        _logger.LogTrace("Loaded {Count} dictionaries:", complexTypeSystem.DataTypeSystem.Count);
+        foreach (
+            KeyValuePair<NodeId, DataDictionary> dictionary in complexTypeSystem.DataTypeSystem
+        )
+        {
+            _logger.LogTrace(" + {DictionaryName}", dictionary.Value.Name);
+            foreach (KeyValuePair<NodeId, QualifiedName> type in dictionary.Value.DataTypes)
             {
-                _logger.LogInformation(" + {DictionaryName}", dictionary.Value.Name);
-                foreach (KeyValuePair<NodeId, QualifiedName> type in dictionary.Value.DataTypes)
-                {
-                    _logger.LogInformation(" -- {NodeId}:{BrowseName}", type.Key, type.Value);
-                }
+                _logger.LogTrace(" -- {NodeId}:{BrowseName}", type.Key, type.Value);
             }
         }
 
@@ -1921,7 +1892,6 @@ public class ClientSamples
     private readonly ITelemetryContext _telemetry;
     private readonly ILogger _logger;
     private readonly ManualResetEvent _quitEvent;
-    private readonly bool _verbose;
     private readonly Dictionary<int, QualifiedNameCollection> _desiredEventFields;
     private int _processedEvents;
     private DateTime _lastEventTime = DateTime.Now;

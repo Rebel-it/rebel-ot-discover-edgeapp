@@ -71,7 +71,7 @@ internal sealed class NodeSynchronizer(
 
         if (_existingAddresses.Contains(address))
         {
-            logger.LogInformation(
+            logger.LogTrace(
                 "Variable with address {Address} already exists. Skipping creation.",
                 address
             );
@@ -80,7 +80,7 @@ internal sealed class NodeSynchronizer(
 
         if (address.Contains("(type)"))
         {
-            logger.LogInformation(
+            logger.LogTrace(
                 "Node {NodeId} is a type definition. Skipping variable creation.",
                 address
             );
@@ -89,7 +89,14 @@ internal sealed class NodeSynchronizer(
 
         var variable = variableMapper.Map(referenceDescription, dataSourceId);
         if (variable is null)
+        {
+            logger.LogWarning(
+                "Node '{DisplayName}' ({NodeId}) could not be mapped to an IXON variable and was skipped.",
+                referenceDescription.DisplayName,
+                referenceDescription.NodeId
+            );
             return null;
+        }
 
         logger.LogInformation(
             "Creating variable '{VariableName}' with address '{VariableAddress}' and type '{VariableType}'...",
@@ -110,7 +117,7 @@ internal sealed class NodeSynchronizer(
 
         if (_existingTags.Contains(variable.PublicId))
         {
-            logger.LogInformation(
+            logger.LogTrace(
                 "Tag for variable '{PublicId}' already exists. Skipping creation.",
                 variable.PublicId
             );
