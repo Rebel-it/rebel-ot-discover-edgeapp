@@ -162,3 +162,24 @@ sequenceDiagram
 ....
 
 The `Application`-level exception catch ensures that a full OPC UA outage never kills the process. The next cycle will attempt a fresh connection.
+
+=== 6.4 IXON Variable mapping   
+We map the Node variables we get from a OPC UA server to IXON Variables and Tags. Ixon only supports specific variables types here is a overview how we do the mapping:
+[cols="3*", options="header"]
+|==================================================================
+| OPCUA Variable    | IXON Variable type | Width 
+| bool            | bool               | null  
+| uint8           | int                | 8       
+| uint16          | int                | 16      
+| uint32          | int                | 32     
+| uint64          | int                | 64      
+| int8            | int                | 8       
+| int16           | int                | 16    
+| int32           | int                | 32     
+| int64           | int                | 64   
+| string          | str             | null     
+| float           | float              | 32    
+| double          | float              | 64
+|==================================================================
+
+
