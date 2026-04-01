@@ -61,7 +61,7 @@ internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
 
     private static BuiltInType? ResolveBuiltInType(ExpandedNodeId dataTypeId)
     {
-        if (dataTypeId.IdType != IdType.Numeric)
+        if (dataTypeId.IdType != IdType.Numeric || dataTypeId.Identifier == null)
             return null;
 
         uint numericId = (uint)dataTypeId.Identifier;
