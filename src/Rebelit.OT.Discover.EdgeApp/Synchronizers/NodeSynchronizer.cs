@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Opc.Ua;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
+using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Clients;
 using Rebelit.OT.Discover.EdgeApp.Mappers;
 
 namespace Rebelit.OT.Discover.EdgeApp.Synchronizers;
@@ -10,7 +11,7 @@ namespace Rebelit.OT.Discover.EdgeApp.Synchronizers;
 public interface INodeSynchronizer
 {
     Task InitializeAsync(string agentId);
-    Task SynchronizeAsync(ReferenceDescription referenceDescription, string dataSourceId);
+    Task SynchronizeAsync(UAClient client, ReferenceDescription referenceDescription, string dataSourceId);
 }
 
 internal sealed class NodeSynchronizer(
@@ -26,7 +27,6 @@ internal sealed class NodeSynchronizer(
 
     private HashSet<string> _existingAddresses = [];
     private HashSet<string> _existingTags = [];
-
     public async Task InitializeAsync(string agentId)
     {
         _existingAddresses =
@@ -40,13 +40,14 @@ internal sealed class NodeSynchronizer(
     }
 
     public async Task SynchronizeAsync(
+        UAClient client,
         ReferenceDescription referenceDescription,
         string dataSourceId
     )
     {
         try
         {
-            var variable = await CreateVariableIfNewAsync(referenceDescription, dataSourceId);
+            var variable = await CreateVariableIfNewAsync(client,referenceDescription, dataSourceId);
             if (variable is not null)
                 await CreateTagIfNewAsync(variable);
         }
@@ -62,7 +63,51 @@ internal sealed class NodeSynchronizer(
         }
     }
 
+    private async Task<NodeId?> ReadDataTypeAttributeAsync(
+        UAClient client,
+        NodeId nodeId
+    )
+    {
+        try
+        {
+            var readValueId = new ReadValueId
+            {
+                NodeId = nodeId,
+                AttributeId = Attributes.DataType,
+            };
+
+            var nodesToRead = new ReadValueIdCollection { readValueId };
+            var response = await client.Session.ReadAsync(
+                null,
+                0,
+                TimestampsToReturn.Neither,
+                nodesToRead,
+                CancellationToken.None
+            );
+
+            if (response.Results.Count > 0 && response.Results[0].StatusCode == StatusCodes.Good)
+            {
+                return response.Results[0].Value as NodeId ?? NodeId.Null;
+            }
+            else
+            {
+                logger.LogError(
+                    "Failed to read DataType attribute for node {NodeId}. StatusCode: {StatusCode}",
+                    nodeId,
+                    response.Results.Count > 0 ? response.Results[0].StatusCode : StatusCodes.Bad
+                );
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error reading DataType attribute for node {NodeId}", nodeId);
+            return null;
+        }
+    }
+
     private async Task<Variable?> CreateVariableIfNewAsync(
+        UAClient client,
         ReferenceDescription referenceDescription,
         string dataSourceId
     )
@@ -87,7 +132,9 @@ internal sealed class NodeSynchronizer(
             return null;
         }
 
-        var variable = variableMapper.Map(referenceDescription, dataSourceId);
+        var dataTypeNodeId = await ReadDataTypeAttributeAsync(client, (NodeId)referenceDescription.NodeId);
+
+        var variable = variableMapper.Map(dataTypeNodeId,referenceDescription, dataSourceId);
         if (variable is null)
         {
             logger.LogWarning(

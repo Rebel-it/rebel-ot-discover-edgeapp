@@ -35,16 +35,16 @@ async def main():
 
     # Uint variables
     uint_variable_16 = await myobj.add_variable(ua.NodeId("UInt16Variable", idx), "MyUInt16Variable", 65535, ua.VariantType.UInt16)
-    uint_variable_32 = await myobj.add_variable(ua.NodeId("UInt32Variable", idx), "MyUIntVariable", 123, ua.VariantType.UInt32)
+    uint_variable_32 = await myobj.add_variable(ua.NodeId("UInt32Variable", idx), "MyUInt32Variable", 123, ua.VariantType.UInt32)
     uint_variable_64 = await myobj.add_variable(ua.NodeId("UInt64Variable", idx), "MyUInt64Variable", 12345678901234567890, ua.VariantType.UInt64)
 
     # int variables
     int_variable_16 = await myobj.add_variable(ua.NodeId("Int16Variable", idx), "MyInt16Variable", 1234, ua.VariantType.Int16)
-    int_variable_32 = await myobj.add_variable(ua.NodeId("Int32Variable", idx), "MyIntVariable", 123, ua.VariantType.Int32)
+    int_variable_32 = await myobj.add_variable(ua.NodeId("Int32Variable", idx), "MyInt32Variable", 123, ua.VariantType.Int32)
     int_variable_64 = await myobj.add_variable(ua.NodeId("Int64Variable", idx), "MyInt64Variable", 1234567890123456789, ua.VariantType.Int64)
 
     # bool variable
-    bool_variable_true = await myobj.add_variable(ua.NodeId("BoolVariableTrue", idx), "MyBoolVariable", True, ua.VariantType.Boolean)
+    bool_variable_true = await myobj.add_variable(ua.NodeId("BoolVariableTrue", idx), "MyBoolVariableTrue", True, ua.VariantType.Boolean)
     bool_variable_false = await myobj.add_variable(ua.NodeId("BoolVariableFalse", idx), "MyBoolVariableFalse", False, ua.VariantType.Boolean)
 
     # string variable
@@ -52,6 +52,10 @@ async def main():
 
     # float variable
     float_variable = await myobj.add_variable(ua.NodeId("FloatVariable", idx), "MyFloatVariable", 3.14, ua.VariantType.Float)
+    
+    # double variable
+    double_variable = await myobj.add_variable(ua.NodeId("DoubleVariable", idx), "MyDoubleVariable", 3.141592653589793, ua.VariantType.Double)  
+
 
     await uint_variable_16.set_writable()
     await uint_variable_32.set_writable()
@@ -63,6 +67,7 @@ async def main():
     await bool_variable_false.set_writable()
     await string_variable.set_writable()
     await float_variable.set_writable()
+    await double_variable.set_writable()
 
     print("✅ Server running at: opc.tcp://127.0.0.1:53530/rebelit/server/")
 

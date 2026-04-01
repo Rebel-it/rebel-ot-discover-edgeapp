@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Opc.Ua;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA;
+using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Clients;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Factory;
 using Rebelit.OT.Discover.EdgeApp.Resolvers;
 using Rebelit.OT.Discover.EdgeApp.Synchronizers;
@@ -144,10 +145,7 @@ public class ScraperTests
             return Task.CompletedTask;
         }
 
-        public async Task SynchronizeAsync(
-            ReferenceDescription referenceDescription,
-            string dataSourceId
-        )
+        public async Task SynchronizeAsync(UAClient client, ReferenceDescription referenceDescription, string dataSourceId)
         {
             lock (_syncLock)
             {
@@ -203,7 +201,7 @@ public class ScraperTests
         private static ReferenceDescription BuildFakeReferenceDescription(int index) =>
             new()
             {
-                NodeId = new ExpandedNodeId((uint)(1000 + index)),
+                NodeId = new ExpandedNodeId((uint)(1000 + index), namespaceIndex: 2),
                 DisplayName = new LocalizedText($"Node{index}"),
                 TypeDefinition = new ExpandedNodeId(6u),
             };

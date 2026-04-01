@@ -11,7 +11,8 @@ namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 public class Variable
 {
     [JsonPropertyName("publicId")]
-    public string PublicId { get; set; } = null!;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PublicId { get; set; }
 
     [JsonPropertyName("address")]
     public string Address { get; set; } = null!;
@@ -26,11 +27,23 @@ public class Variable
     public string Type { get; set; } = null!;
 
     [JsonPropertyName("width")]
-    public string Width { get; set; } = null!;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Width { get; set; }
+
+    [JsonPropertyName("maxStringLength")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? MaxStringLength { get; set; }
 
     [JsonPropertyName("source")]
     public Source Source { get; set; } = null!;
 
     [JsonPropertyName("signed")]
     public bool? Signed { get; set; }
+
+    // Conditional serialization methods
+    public bool ShouldSerializeWidth() => Type != "str" && Width != null;
+
+    public bool ShouldSerializeMaxStringLength() => Type == "str" && MaxStringLength != null;
+
+    public bool ShouldSerializeSigned() => Type != "str" && Type != "bool";
 }
