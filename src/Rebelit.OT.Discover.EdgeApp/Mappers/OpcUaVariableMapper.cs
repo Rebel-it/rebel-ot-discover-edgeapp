@@ -12,20 +12,20 @@ public interface IOpcUaVariableMapper
 internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
     : IOpcUaVariableMapper
 {
-    private static readonly Dictionary<BuiltInType, (string Type, string? Width)> TypeMap = new()
+    private static readonly Dictionary<BuiltInType, (string Type, string? Width, int? MaxStringLength)> TypeMap = new()
     {
-        [BuiltInType.Boolean] = ("bool", null),
-        [BuiltInType.SByte] = ("sbyte", "8"),
-        [BuiltInType.Byte] = ("byte", "8"),
-        [BuiltInType.Int16] = ("int", "16"),
-        [BuiltInType.UInt16] = ("uint", "16"),
-        [BuiltInType.Int32] = ("int", "32"),
-        [BuiltInType.UInt32] = ("uint", "32"),
-        [BuiltInType.Int64] = ("int", "64"),
-        [BuiltInType.UInt64] = ("uint", "64"),
-        [BuiltInType.Float] = ("float", "32"),
-        [BuiltInType.Double] = ("double", "64"),
-        [BuiltInType.String] = ("string", null),
+        [BuiltInType.Boolean] = ("bool", null, null),
+        [BuiltInType.SByte] = ("int", "8",null),
+        [BuiltInType.Byte] = ("int", "8", null),
+        [BuiltInType.Int16] = ("int", "16", null),
+        [BuiltInType.UInt16] = ("int", "16", null),
+        [BuiltInType.Int32] = ("int", "32", null),
+        [BuiltInType.UInt32] = ("int", "32", null),
+        [BuiltInType.Int64] = ("int", "64", null),
+        [BuiltInType.UInt64] = ("int", "64", null),
+        [BuiltInType.Float] = ("float", "32", null),
+        [BuiltInType.Double] = ("float", "64", null),
+        [BuiltInType.String] = ("str", null, 128),
     };
 
     public Variable? Map(NodeId dataTypeNodeId,ReferenceDescription referenceDescription, string dataSourceId)
@@ -37,7 +37,7 @@ internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
         if (!TypeMap.TryGetValue(builtInType.Value, out var mapping))
             return null;
 
-        var (type, width) = mapping;
+        var (type, width, MaxStringLength) = mapping;
 
         if (width is null)
             logger.LogWarning(
@@ -51,6 +51,7 @@ internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
             Address = referenceDescription.NodeId.ToString(),
             Type = type,
             Width = width ?? null,
+            MaxStringLength = MaxStringLength ?? null,
             Slug = new string([
                 .. referenceDescription.DisplayName.ToString().Where(char.IsLetterOrDigit),
             ]).ToLower(),
