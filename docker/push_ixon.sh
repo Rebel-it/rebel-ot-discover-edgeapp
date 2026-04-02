@@ -3,6 +3,8 @@
 # Output executed commands and stop on errors.
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 # Prompt for SecureEdge IP and IXON credentials
 read -rp "SecureEdge IP address (e.g. 172.27.21.1): " SECURE_EDGE_IP
 echo
@@ -28,7 +30,7 @@ if [[ -z "$SECURE_EDGE_IP" || -z "$IXON_ApplicationId" || -z "$IXON_CompanyId" |
 fi
 
 # Write the buildkitd config with the provided IP
-cat > "$(dirname "$0")/buildkitd-secure-edge-pro.toml" <<EOF
+cat > "${SCRIPT_DIR}/buildkitd-secure-edge-pro.toml" <<EOF
 [registry."${SECURE_EDGE_IP}:5000"]
 http = true
 EOF
@@ -44,7 +46,7 @@ docker buildx rm secure-edge-pro || true
 
 # Create and initialize the build environment.
 docker buildx create --name secure-edge-pro \
-                     --config buildkitd-secure-edge-pro.toml
+                     --config "${SCRIPT_DIR}/buildkitd-secure-edge-pro.toml"
 docker buildx use secure-edge-pro
 
 # Build and push the image with credentials baked in via build args
@@ -62,5 +64,5 @@ docker buildx build \
     --build-arg OPCUA_Username="$OPCUA_Username" \
     --build-arg OPCUA_Password="$OPCUA_Password" \
     --build-arg LOG_LEVEL="$LOG_LEVEL" \
-    -f ./Dockerfile \
-    ../src
+    -f "${SCRIPT_DIR}/Dockerfile" \
+    "${SCRIPT_DIR}/../src"
