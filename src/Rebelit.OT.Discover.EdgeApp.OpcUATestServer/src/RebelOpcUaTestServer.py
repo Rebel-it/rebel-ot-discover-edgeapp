@@ -20,7 +20,7 @@ async def main():
     server.set_security_IDs(["Username"])
     server.user_manager = MyUserManager()
 
-    server.set_endpoint("opc.tcp://127.0.0.1:53530/rebelit/server/")
+    server.set_endpoint("opc.tcp://0.0.0.0:53530/rebelit/server/")
     server.set_server_name("Rebel OPC UA Test Server")
 
     server.set_security_policy([ua.SecurityPolicyType.NoSecurity, ua.SecurityPolicyType.Basic256Sha256_Sign ,ua.SecurityPolicyType.Basic256Sha256_SignAndEncrypt])

@@ -32,8 +32,20 @@ internal sealed class DataSourceResolver(
 
     public async Task<string> ResolveAsync(string agentId)
     {
+        logger.LogDebug(
+            "IXON_DataSourceId from configuration: '{DataSourceId}' (IsNullOrEmpty: {IsEmpty})",
+            _configuredDataSourceId ?? "NULL",
+            string.IsNullOrEmpty(_configuredDataSourceId)
+        );
+
         if (!string.IsNullOrEmpty(_configuredDataSourceId))
+        {
+            logger.LogInformation(
+                "Using configured data source ID: '{DataSourceId}'",
+                _configuredDataSourceId
+            );
             return _configuredDataSourceId;
+        }
 
         logger.LogInformation("No data source ID provided. Creating a new OPC-UA data source...");
 
