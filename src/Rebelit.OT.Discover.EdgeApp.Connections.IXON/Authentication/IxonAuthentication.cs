@@ -36,7 +36,7 @@ public class IxonAuthentication
 
         var body = new
         {
-            expiresIn = 900 
+            expiresIn = 900 // Token validity duration in seconds (15 minutes) 
         };
 
         var json = JsonSerializer.Serialize(body);
