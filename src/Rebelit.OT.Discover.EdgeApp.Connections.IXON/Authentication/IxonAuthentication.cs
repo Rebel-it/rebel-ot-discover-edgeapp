@@ -3,11 +3,16 @@ using System.Collections.Generic;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Authentication;
 
 public class IxonAuthentication
 {
+    private string? _cachedToken;
+    private DateTime _tokenExpiry = DateTime.MinValue;
+    private readonly SemaphoreSlim _refreshLock = new(1, 1);
+
     /// <summary>
     /// Asynchronously obtains a bearer token for API authentication using the specified user credentials and
     /// application identifier.
@@ -36,7 +41,7 @@ public class IxonAuthentication
 
         var body = new
         {
-            expiresIn = 900 // Token validity duration in seconds (15 minutes) 
+            expiresIn = 10 // Token validity duration in seconds (15 minutes) 
         };
 
         var json = JsonSerializer.Serialize(body);
@@ -75,4 +80,32 @@ public class IxonAuthentication
         return Convert.ToBase64String(bytes);
     }
 
+    public async Task<string> GetValidTokenAsync(string email, string password, 
+        string applicationId, string? otpCode = null)
+    {
+        if (_cachedToken != null && DateTime.UtcNow < _tokenExpiry)
+        {
+            return _cachedToken;
+        }
+
+        await _refreshLock.WaitAsync();
+        try
+        {
+            // Double-check after acquiring lock
+            if (_cachedToken != null && DateTime.UtcNow < _tokenExpiry)
+            {
+                return _cachedToken;
+            }
+
+            _cachedToken = await BearerTokenGenerator(email, password, applicationId, otpCode);
+            // Set expiry slightly before actual expiry (e.g., 30 seconds buffer)
+            _tokenExpiry = DateTime.UtcNow.AddSeconds(870); // 870 = 900 - 30
+            
+            return _cachedToken;
+        }
+        finally
+        {
+            _refreshLock.Release();
+        }
+    }
 }
