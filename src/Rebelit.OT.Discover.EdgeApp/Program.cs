@@ -90,7 +90,10 @@ services.AddIXONClient(
     applicationId,
     configuration["IXON_CompanyId"]
         ?? throw new ArgumentNullException("IXON_CompanyId environment variable is not set."),
-    bearerToken
+    bearerToken,
+    username ?? throw new ArgumentNullException("Username cannot be empty"),
+    password,
+    otpCode
 );
 
 services.AddLogging(builder =>
@@ -107,3 +110,4 @@ await app.Run(CancellationToken.None);
 
 Log.Logger.Debug("Ending console app...");
 Log.CloseAndFlush();
+

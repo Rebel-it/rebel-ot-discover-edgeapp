@@ -41,7 +41,7 @@ public class IxonAuthentication
 
         var body = new
         {
-            expiresIn = 10 // Token validity duration in seconds (15 minutes) 
+            expiresIn = 900 // Token validity duration in seconds (15 minutes) 
         };
 
         var json = JsonSerializer.Serialize(body);
@@ -80,6 +80,12 @@ public class IxonAuthentication
         return Convert.ToBase64String(bytes);
     }
 
+    /// <summary>
+    /// Asynchronously retrieves a valid bearer token for the specified user and application, refreshing the token if
+    /// necessary.
+    /// </summary>
+    /// value must be provided.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a valid bearer token as a string.</returns>
     public async Task<string> GetValidTokenAsync(string email, string password, 
         string applicationId, string? otpCode = null)
     {
