@@ -17,13 +17,6 @@ public class IxonAuthentication
     /// Asynchronously obtains a bearer token for API authentication using the specified user credentials and
     /// application identifier.
     /// </summary>
-    /// <remarks>The returned bearer token is valid for a limited duration (typically 15 minutes). Ensure that
-    /// the provided credentials and application ID are correct and that multi-factor authentication requirements are
-    /// met if applicable.</remarks>
-    /// <param name="email">The email address associated with the user account. Cannot be null or empty.</param>
-    /// <param name="password">The password for the user account. Cannot be null or empty.</param>
-    /// <param name="applicationId">The unique identifier of the application requesting the token. Cannot be null or empty.</param>
-    /// <param name="otpCode">An optional one-time password (OTP) code for multi-factor authentication. If required by the account, this value
     /// must be provided.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the bearer token as a string, which
     /// can be used for authenticated API requests.</returns>
