@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
+using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Authentication;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 
 namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Tests.Agents;
@@ -25,8 +26,11 @@ public class ApiClientTests
     )
     {
         var handler = new MockHttpMessageHandler(status, responseJson);
+        var optionsMonitor = new FakeOptionsMonitor(DefaultConfig);
+        var ixonAuth = new IxonAuthentication();
         var client = new FakeApiClient(
-            Options.Create(DefaultConfig),
+            optionsMonitor,
+            ixonAuth,
             NullLogger<ApiClient>.Instance,
             handler,
             TimeProvider.System
@@ -40,8 +44,11 @@ public class ApiClientTests
     )
     {
         var handler = new MockHttpMessageHandler(status, responseJson);
+        var optionsMonitor = new FakeOptionsMonitor(DefaultConfig);
+        var ixonAuth = new IxonAuthentication();
         var agent = new TestBaseAgent(
-            Options.Create(DefaultConfig),
+            optionsMonitor,
+            ixonAuth,
             NullLogger<BaseAgent>.Instance,
             handler,
             TimeProvider.System
@@ -447,8 +454,11 @@ public class ApiClientTests
         ]);
         var handler = new SequentialMockHttpMessageHandler(responses);
         var fakeTime = new FakeTimeProvider();
+        var optionsMonitor = new FakeOptionsMonitor(DefaultConfig);
+        var ixonAuth = new IxonAuthentication();
         var client = new FakeApiClient(
-            Options.Create(DefaultConfig),
+            optionsMonitor,
+            ixonAuth,
             NullLogger<ApiClient>.Instance,
             handler,
             fakeTime
@@ -479,8 +489,11 @@ public class ApiClientTests
         ]);
         var handler = new SequentialMockHttpMessageHandler(responses);
         var fakeTime = new FakeTimeProvider();
+        var optionsMonitor = new FakeOptionsMonitor(DefaultConfig);
+        var ixonAuth = new IxonAuthentication();
         var client = new FakeApiClient(
-            Options.Create(DefaultConfig),
+            optionsMonitor,
+            ixonAuth,
             NullLogger<ApiClient>.Instance,
             handler,
             fakeTime
@@ -512,8 +525,11 @@ public class ApiClientTests
         ]);
         var handler = new SequentialMockHttpMessageHandler(responses);
         var fakeTime = new FakeTimeProvider();
+        var optionsMonitor = new FakeOptionsMonitor(DefaultConfig);
+        var ixonAuth = new IxonAuthentication();
         var client = new FakeApiClient(
-            Options.Create(DefaultConfig),
+            optionsMonitor,
+            ixonAuth,
             NullLogger<ApiClient>.Instance,
             handler,
             fakeTime
@@ -554,8 +570,11 @@ public class ApiClientTests
         ]);
         var handler = new SequentialMockHttpMessageHandler(responses);
         var fakeTime = new FakeTimeProvider();
+        var optionsMonitor = new FakeOptionsMonitor(DefaultConfig);
+        var ixonAuth = new IxonAuthentication();
         var client = new FakeApiClient(
-            Options.Create(DefaultConfig),
+            optionsMonitor,
+            ixonAuth,
             NullLogger<ApiClient>.Instance,
             handler,
             fakeTime
@@ -596,8 +615,11 @@ public class ApiClientTests
         ]);
         var handler = new SequentialMockHttpMessageHandler(responses);
         var fakeTime = new FakeTimeProvider();
+        var optionsMonitor = new FakeOptionsMonitor(DefaultConfig);
+        var ixonAuth = new IxonAuthentication();
         var client = new FakeApiClient(
-            Options.Create(DefaultConfig),
+            optionsMonitor,
+            ixonAuth,
             NullLogger<ApiClient>.Instance,
             handler,
             fakeTime
@@ -683,24 +705,35 @@ public class ApiClientTests
     }
 
     private sealed class FakeApiClient(
-        IOptions<Configuration> config,
+        IOptionsMonitor<Configuration> config,
+        IxonAuthentication ixonAuth,
         ILogger<ApiClient> logger,
         HttpMessageHandler handler,
         TimeProvider timeProvider
-    ) : ApiClient(config, logger, timeProvider)
+    ) : ApiClient(config, ixonAuth, logger, timeProvider)
     {
         protected override HttpMessageHandler? GetHttpMessageHandler() => handler;
     }
 
     private sealed class TestBaseAgent(
-        IOptions<Configuration> config,
+        IOptionsMonitor<Configuration> config,
+        IxonAuthentication ixonAuth,
         ILogger<BaseAgent> logger,
         HttpMessageHandler handler,
         TimeProvider timeProvider
-    ) : BaseAgent(config, logger, timeProvider)
+    ) : BaseAgent(config, ixonAuth, logger, timeProvider)
     {
         protected override HttpMessageHandler? GetHttpMessageHandler() => handler;
 
         public Task PostAsync(string uri, object body) => Post(uri, body);
+    }
+
+    private sealed class FakeOptionsMonitor(Configuration config) : IOptionsMonitor<Configuration>
+    {
+        public Configuration CurrentValue => config;
+
+        public Configuration Get(string? name) => config;
+
+        public IDisposable? OnChange(Action<Configuration, string?> listener) => null;
     }
 }
