@@ -17,6 +17,7 @@ internal abstract class BaseAgent(
 
     protected async Task<T> Get<T>(string uri)
     {
+        logger.LogInformation("Get<{Type}> called with uri: {Uri}", typeof(T).Name, uri);
         var response = await ExecuteRequestAsync(http =>
             http.GetAsync($"{configuration.Value.BaseUrl}{uri}")
         );
@@ -27,6 +28,7 @@ internal abstract class BaseAgent(
 
     protected async Task<T?> Post<T>(string uri, object body)
     {
+        logger.LogInformation("Post<{Type}> called with uri: {Uri}", typeof(T).Name, uri);
         var response = await ExecuteRequestAsync(http =>
             http.PostAsync($"{configuration.Value.BaseUrl}{uri}", CreateJsonContent(body))
         );
@@ -38,6 +40,7 @@ internal abstract class BaseAgent(
 
     protected async Task Post(string uri, object body)
     {
+        logger.LogInformation("Post called with uri: {Uri}", uri);
         var response = await ExecuteRequestAsync(http =>
             http.PostAsync($"{configuration.Value.BaseUrl}{uri}", CreateJsonContent(body))
         );
@@ -48,6 +51,7 @@ internal abstract class BaseAgent(
         Func<HttpClient, Task<HttpResponseMessage>> send
     )
     {
+        logger.LogDebug("ExecuteRequestAsync called");
         return await _pipeline.ExecuteAsync(async _ =>
         {
             using var httpClient = CreateHttpClient();
@@ -59,6 +63,7 @@ internal abstract class BaseAgent(
 
     private HttpClient CreateHttpClient()
     {
+        logger.LogDebug("CreateHttpClient called");
         var httpClient = GetHttpMessageHandler() is { } handler
             ? new HttpClient(handler)
             : new HttpClient();
@@ -75,6 +80,7 @@ internal abstract class BaseAgent(
 
     private async Task HandleResponseErrors(HttpResponseMessage response)
     {
+        logger.LogDebug("HandleResponseErrors called with status code: {StatusCode}", response.StatusCode);
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
@@ -89,6 +95,7 @@ internal abstract class BaseAgent(
 
     private StringContent CreateJsonContent(object body)
     {
+        logger.LogDebug("CreateJsonContent called");
         var serialized = System.Text.Json.JsonSerializer.Serialize(body);
         logger.LogInformation("Request JSON: {Json}", serialized);
         return new StringContent(serialized, System.Text.Encoding.UTF8, "application/json");
