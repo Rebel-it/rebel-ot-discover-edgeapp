@@ -33,7 +33,9 @@ internal sealed class DataSourceResolver(
     public async Task<string> ResolveAsync(string agentId)
     {
         if (!string.IsNullOrEmpty(_configuredDataSourceId))
+        {
             return _configuredDataSourceId;
+        }
 
         logger.LogInformation("No data source ID provided. Creating a new OPC-UA data source...");
 
