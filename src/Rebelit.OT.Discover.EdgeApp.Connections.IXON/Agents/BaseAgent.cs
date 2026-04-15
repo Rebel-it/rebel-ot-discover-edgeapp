@@ -87,9 +87,10 @@ internal abstract class BaseAgent(
         response.EnsureSuccessStatusCode();
     }
 
-    private static StringContent CreateJsonContent(object body)
+    private StringContent CreateJsonContent(object body)
     {
         var serialized = System.Text.Json.JsonSerializer.Serialize(body);
+        logger.LogInformation("Request JSON: {Json}", serialized);
         return new StringContent(serialized, System.Text.Encoding.UTF8, "application/json");
     }
 }
