@@ -12,6 +12,8 @@ public class IxonAuthentication
     private string? _cachedToken;
     private DateTime _tokenExpiry = DateTime.MinValue;
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
+    private const int TokenValiditySeconds = 900; // 15 minutes
+    private const int TokenRefreshBufferSeconds = 870; // token validity minus 30 seconds buffer
 
     /// <summary>
     /// Asynchronously obtains a bearer token for API authentication using the specified user credentials and
@@ -34,7 +36,7 @@ public class IxonAuthentication
 
         var body = new
         {
-            expiresIn = 900 // Token validity duration in seconds (15 minutes) 
+            TokenValiditySeconds 
         };
 
         var json = JsonSerializer.Serialize(body);
@@ -97,8 +99,7 @@ public class IxonAuthentication
             }
 
             _cachedToken = await BearerTokenGenerator(email, password, applicationId, otpCode);
-            // Set expiry slightly before actual expiry (e.g., 30 seconds buffer)
-            _tokenExpiry = DateTime.UtcNow.AddSeconds(870); // 870 = 900 - 30
+            _tokenExpiry = DateTime.UtcNow.AddSeconds(TokenRefreshBufferSeconds); 
             
             return _cachedToken;
         }
