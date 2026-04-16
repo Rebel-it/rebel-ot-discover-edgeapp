@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Opc.Ua;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Factory;
+using Rebelit.OT.Discover.EdgeApp.Exporters;
 using Rebelit.OT.Discover.EdgeApp.Resolvers;
 using Rebelit.OT.Discover.EdgeApp.Synchronizers;
 
@@ -10,6 +11,7 @@ namespace Rebelit.OT.Discover.EdgeApp;
 
 public class Scraper(
     IUAClientFactory clientFactory,
+    ICsvExporters csvExporters,
     IClientSamplerFactory clientSamplerFactory,
     IDataSourceResolver dataSourceResolver,
     INodeSynchronizer nodeSynchronizer,
@@ -18,6 +20,7 @@ public class Scraper(
 ) : IScraper
 {
     internal const int BatchSize = 5;
+    private const string DefaultExportFolder = "exports";
 
     public string Address { get; } =
         configuration["OPCUA_ServerAddress"]
@@ -111,14 +114,42 @@ public class Scraper(
           _CreatedTags.Count
       );
 
-        //Build and create tags
+        //Export to csv
+        var exportFolder = GetExportFolder();
+        EnsureExportFolderExists(exportFolder);
 
-        //foreach (var batch in filteredNodes.Chunk(BatchSize))
-        //    await Task.WhenAll(
-        //        batch.Select(rd => nodeSynchronizer.SynchronizeAsync(client, rd, dataSourceId))
-        //    );
+        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var variableFilePath = Path.Combine(exportFolder, $"variables_{timestamp}.csv");
+        var tagFilePath = Path.Combine(exportFolder, $"tags_{timestamp}.csv");
+
+        await csvExporters.CreateVariableCsvFileAsync(_CreatedVariables, variableFilePath);
+        await csvExporters.CreateTagCsvFileAsync(_CreatedTags, tagFilePath);
+
     }
 
+    private string GetExportFolder()
+    {
+        var configuredPath = configuration["ExportPath"];
+
+        if (!string.IsNullOrWhiteSpace(configuredPath))
+        {
+            logger.LogInformation("Using configured export path: {ExportPath}", configuredPath);
+            return configuredPath;
+        }
+
+        var defaultPath = Path.Combine(Directory.GetCurrentDirectory(), DefaultExportFolder);
+        logger.LogInformation("Using default export path: {ExportPath}", defaultPath);
+        return defaultPath;
+    }
+
+    private void EnsureExportFolderExists(string folderPath)
+    {
+        if (!Directory.Exists(folderPath))
+        {
+            logger.LogInformation("Creating export folder: {FolderPath}", folderPath);
+            Directory.CreateDirectory(folderPath);
+        }
+    }
     protected virtual async Task<ReferenceDescriptionCollection?> FetchReferenceDescriptionsAsync(
         CancellationToken cancellationToken
     )
