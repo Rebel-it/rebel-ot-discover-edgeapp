@@ -26,6 +26,21 @@ internal class Configuration
     public string CompanyId { get; set; } = null!;
 
     /// <summary>
+    ///     User email for token refresh.
+    /// </summary>
+    public string? Email { get; set; }
+
+    /// <summary>
+    ///     User password for token refresh.
+    /// </summary>
+    public string? Password { get; set; }
+
+    /// <summary>
+    ///     Optional OTP code for token refresh.
+    /// </summary>
+    public string? OtpCode { get; set; }
+
+    /// <summary>
     ///     The version of the IXON API to use. This value determines which API endpoints and features are available.
     /// </summary>
     public int Version { get; set; } = 2;

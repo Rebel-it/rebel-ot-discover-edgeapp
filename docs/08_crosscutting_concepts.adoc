@@ -28,7 +28,6 @@ The environment variables are:
 
 | `IXON_ApplicationId` | IXON API application identifier
 | `IXON_CompanyId` | IXON company public ID
-| `IXON_BearerToken` | IXON API bearer token (secret)
 | `IXON_AgentId` | Target IXON agent (machine) ID
 | `IXON_DataSourceId` _(optional)_ | IXON OPC UA data source on the agent. Omit to have the app create one automatically at startup.
 | `OPCUA_ServerAddress` | OPC UA endpoint URL (`opc.tcp://...`)
