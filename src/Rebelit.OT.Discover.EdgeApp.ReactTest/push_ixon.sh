@@ -25,7 +25,7 @@ docker buildx use secure-edge
 
 docker buildx build \
   --platform linux/arm64/v8 \
-  --tag "${SECURE_EDGE_IP}:5000/my-react-ui:latest" \
+  --tag "${SECURE_EDGE_IP}:5000/rebel-ot-discover-edgeapp-react:latest" \
   --push \
-  -f Dockerfile \
+  -f DockerFile \
   .
