@@ -13,7 +13,7 @@ public class ServiceCollectionExtensionsTests
     {
         var services = new ServiceCollection();
 
-        services.AddIXONClient("app", "company", "token");
+        services.AddIXONClient("app", "company", "token", "email@test.com", "password");
 
         var descriptor = services.Single(d => d.ServiceType == typeof(IApiClient));
         Assert.That(descriptor.Lifetime, Is.EqualTo(ServiceLifetime.Singleton));
@@ -24,7 +24,7 @@ public class ServiceCollectionExtensionsTests
     {
         var services = new ServiceCollection();
 
-        services.AddIXONClient("my-app", "my-company", "my-token");
+        services.AddIXONClient("my-app", "my-company", "my-token", "test@example.com", "pass");
 
         var options = services.BuildServiceProvider().GetRequiredService<IOptions<Configuration>>();
         Assert.Multiple(() =>
@@ -40,7 +40,7 @@ public class ServiceCollectionExtensionsTests
     {
         var services = new ServiceCollection();
 
-        var result = services.AddIXONClient("a", "b", "c");
+        var result = services.AddIXONClient("a", "b", "c", "email@test.com", "password");
 
         Assert.That(result, Is.SameAs(services));
     }
