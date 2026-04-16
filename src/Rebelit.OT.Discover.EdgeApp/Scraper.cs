@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Opc.Ua;
+using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Factory;
 using Rebelit.OT.Discover.EdgeApp.Resolvers;
 using Rebelit.OT.Discover.EdgeApp.Synchronizers;
@@ -34,6 +35,16 @@ public class Scraper(
         configuration["OPCUA_Password"]
         ?? throw new InvalidOperationException("OPCUA_Password configuration is not set.");
 
+    /// <summary>
+    /// Contains all the variables that are created on runtime
+    /// </summary>
+    private List<Variable> _CreatedVariables;
+
+    /// <summary>
+    /// Contains all the tags that are created on runtime
+    /// </summary>
+    private List<Tag> _CreatedTags = [];
+
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         var dataSourceId = await dataSourceResolver.ResolveAsync(AgentId);
@@ -63,10 +74,49 @@ public class Scraper(
             return true;
         });
 
-        foreach (var batch in filteredNodes.Chunk(BatchSize))
-            await Task.WhenAll(
-                batch.Select(rd => nodeSynchronizer.SynchronizeAsync(client, rd, dataSourceId))
-            );
+        _CreatedVariables = [];
+
+        //map all vartiables in a list
+        foreach(var batch in filteredNodes.Chunk(BatchSize))
+        {
+            var batchVariables = await Task.WhenAll(
+                batch.Select(rd => nodeSynchronizer.MapVariableAsync(client, rd, dataSourceId)));
+            _CreatedVariables.AddRange(batchVariables.Where(v => v is not null)!);
+        }
+
+        logger.LogInformation(
+            "Mapped {VariableCount} variables from OPC UA nodes.",
+            _CreatedVariables.Count
+        );
+
+        _CreatedTags = [];
+
+        //Create Tags
+        foreach(var variable in _CreatedVariables)
+        {
+            var tag = nodeSynchronizer.CreateTag(variable);
+            if(tag is not null)
+            {
+                _CreatedTags.Add(tag);
+            }
+        }
+        logger.LogInformation(
+            "Built {TagCount} tags from variables.",
+            _CreatedTags.Count
+        );
+
+        logger.LogInformation(
+          "Scraping complete. {VariableCount} variables and {TagCount} tags ready for export.",
+          _CreatedVariables.Count,
+          _CreatedTags.Count
+      );
+
+        //Build and create tags
+
+        //foreach (var batch in filteredNodes.Chunk(BatchSize))
+        //    await Task.WhenAll(
+        //        batch.Select(rd => nodeSynchronizer.SynchronizeAsync(client, rd, dataSourceId))
+        //    );
     }
 
     protected virtual async Task<ReferenceDescriptionCollection?> FetchReferenceDescriptionsAsync(
