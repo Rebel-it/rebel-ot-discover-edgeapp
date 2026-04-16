@@ -6,12 +6,6 @@ using System.Text;
 
 namespace Rebelit.OT.Discover.EdgeApp.Exporters;
 
-public interface ICsvExporters
-{
-    Task CreateVariableCsvFileAsync(List<Variable> variables, string filePath);
-    Task CreateTagCsvFileAsync(List<Tag> tags, string filePath);
-}
-
 internal sealed class CsvExporters(
     ILogger<CsvExporters> logger
     ) : ICsvExporters
