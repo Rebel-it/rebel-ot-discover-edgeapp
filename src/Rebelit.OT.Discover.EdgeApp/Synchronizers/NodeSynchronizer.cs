@@ -12,6 +12,20 @@ public interface INodeSynchronizer
 {
     Task InitializeAsync(string agentId);
     Task SynchronizeAsync(UAClient client, ReferenceDescription referenceDescription, string dataSourceId);
+
+    /// <summary>
+    /// Asynchronously maps an OPC UA reference to a Variable object using the specified client and data source
+    /// identifier.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the mapped Variable if successful;
+    /// otherwise, null if the mapping could not be performed.</returns>
+    Task<Variable?> MapVariableAsync(UAClient client, ReferenceDescription referenceDescription, string dataSourceId);
+
+    /// <summary>
+    /// Creates a new tag associated with the specified variable.
+    /// </summary>
+    /// <returns>A Tag instance representing the specified variable.</returns>
+    Tag CreateTag(Variable variable);
 }
 
 internal sealed class NodeSynchronizer(
@@ -27,6 +41,7 @@ internal sealed class NodeSynchronizer(
 
     private HashSet<string> _existingAddresses = [];
     private HashSet<string> _existingTags = [];
+
     public async Task InitializeAsync(string agentId)
     {
         _existingAddresses =
@@ -63,6 +78,10 @@ internal sealed class NodeSynchronizer(
         }
     }
 
+    /// <summary>
+    /// Asynchronously reads the DataType attribute of the specified OPC UA node.
+    /// </summary>
+    /// <returns>A NodeId representing the DataType attribute of the specified node if the read is successful; otherwise, null.</returns>
     private async Task<NodeId?> ReadDataTypeAttributeAsync(
         UAClient client,
         NodeId nodeId
@@ -189,5 +208,60 @@ internal sealed class NodeSynchronizer(
         );
 
         await apiClient.PostTagAsync(_agentId, tag);
+    }
+
+    public Tag CreateTag(Variable variable)
+    {
+        if (string.IsNullOrEmpty(variable.Source.PublicId))
+            return null;
+
+        var tag = new Tag
+        {
+            Name = variable.Name,
+            Slug = variable.Slug,
+            Source = variable.Source,
+            Variable = variable,
+            RetentionPolicy = "260w",
+            LogEvent = "change",
+            LoggingInterval = "72s",
+        };
+
+        return tag;
+    }
+
+    public async Task<Variable?> MapVariableAsync(UAClient client, ReferenceDescription referenceDescription, string dataSourceId)
+    {
+        var address = referenceDescription.NodeId.ToString();
+        if (_existingAddresses.Contains(address))
+        {
+            logger.LogTrace(
+                "Variable with address {Address} already exists. Skipping creation.",
+                address
+            );
+            return null;
+        }
+
+        if (address.Contains("(type)"))
+        {
+            logger.LogTrace(
+                "Node {NodeId} is a type definition. Skipping variable creation.",
+                address
+            );
+            return null;
+        }
+
+        var dataTypeNodeId = await ReadDataTypeAttributeAsync(client, (NodeId)referenceDescription.NodeId);
+        var variable = variableMapper.Map(dataTypeNodeId, referenceDescription, dataSourceId);
+
+        if (variable is null)
+        {
+            logger.LogWarning(
+                "Node '{DisplayName}' ({NodeId}) could not be mapped to an IXON variable and was skipped.",
+                referenceDescription.DisplayName,
+                referenceDescription.NodeId
+            );
+            return null;
+        }
+        return variable;
     }
 }
