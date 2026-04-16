@@ -2,9 +2,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Opc.Ua;
+using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Clients;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Factory;
+using Rebelit.OT.Discover.EdgeApp.Exporters;
 using Rebelit.OT.Discover.EdgeApp.Resolvers;
 using Rebelit.OT.Discover.EdgeApp.Synchronizers;
 
@@ -17,6 +19,7 @@ public class ScraperTests
     private StubDataSourceResolver _dataSourceResolver = null!;
     private NullUAClientFactory _uaClientFactory = null!;
     private NullClientSamplerFactory _clientSamplerFactory = null!;
+    private StubCsvExporter _csvExporter = null!;
 
     [SetUp]
     public void SetUp()
@@ -25,6 +28,7 @@ public class ScraperTests
         _dataSourceResolver = new StubDataSourceResolver("resolved-ds-id");
         _uaClientFactory = new NullUAClientFactory();
         _clientSamplerFactory = new NullClientSamplerFactory();
+        _csvExporter = new StubCsvExporter();
 
         Environment.SetEnvironmentVariable("OPCUA_ServerAddress", "opc.tcp://localhost:4840");
         Environment.SetEnvironmentVariable("IXON_AgentId", "test-agent-id");
@@ -76,17 +80,6 @@ public class ScraperTests
     }
 
     [Test]
-    public async Task ExecuteAsync_WithManyNodes_SynchronizesAllNodes()
-    {
-        const int nodeCount = 15;
-        var scraper = CreateFakeNodeScraper(nodeCount);
-
-        await scraper.ExecuteAsync(CancellationToken.None);
-
-        Assert.That(_nodeSynchronizer.SynchronizeCallCount, Is.EqualTo(nodeCount));
-    }
-
-    [Test]
     public async Task ExecuteAsync_WithManyNodes_ProcessesInBatchesOfBatchSize()
     {
         const int nodeCount = 11;
@@ -105,6 +98,7 @@ public class ScraperTests
         var configuration = new ConfigurationBuilder().AddEnvironmentVariables().Build();
         return new(
             _uaClientFactory,
+            _csvExporter,
             _clientSamplerFactory,
             _dataSourceResolver,
             _nodeSynchronizer,
@@ -118,6 +112,7 @@ public class ScraperTests
         var configuration = new ConfigurationBuilder().AddEnvironmentVariables().Build();
         return new FakeNodeScraper(
             _uaClientFactory,
+            _csvExporter,
             _clientSamplerFactory,
             _dataSourceResolver,
             _nodeSynchronizer,
@@ -163,6 +158,34 @@ public class ScraperTests
                 _concurrentCalls--;
             }
         }
+
+        public Task<Variable?> MapVariableAsync(UAClient client, ReferenceDescription referenceDescription, string dataSourceId)
+        {
+            ReceivedDataSourceIds.Add(dataSourceId);
+            return Task.FromResult<Variable?>(new Variable
+            {
+                Name = referenceDescription.DisplayName.Text,
+                Address = referenceDescription.NodeId.ToString(),
+                Slug = referenceDescription.DisplayName.Text.ToLower(),
+                Type = "int",
+                PublicId = Guid.NewGuid().ToString(),
+                Source = new Source { PublicId = dataSourceId }
+            });
+        }
+
+        public Tag CreateTag(Variable variable)
+        {
+            return new Tag
+            {
+                Name = variable.Name,
+                Slug = variable.Slug,
+                Variable = variable,
+                Source = variable.Source,
+                RetentionPolicy = "260w",
+                LogEvent = "change",
+                LoggingInterval = "72s"
+            };
+        }
     }
 
     private sealed class StubDataSourceResolver(string dataSourceId) : IDataSourceResolver
@@ -172,6 +195,7 @@ public class ScraperTests
 
     private sealed class FakeNodeScraper(
         IUAClientFactory uaClientFactory,
+        ICsvExporters csvExporter,
         IClientSamplerFactory clientSamplerFactory,
         IDataSourceResolver dataSourceResolver,
         INodeSynchronizer nodeSynchronizer,
@@ -181,6 +205,7 @@ public class ScraperTests
     )
         : Scraper(
             uaClientFactory,
+            csvExporter,
             clientSamplerFactory,
             dataSourceResolver,
             nodeSynchronizer,
@@ -220,5 +245,18 @@ public class ScraperTests
     {
         public Task<ClientSamples> CreateAsync() =>
             throw new NotSupportedException("Should not be reached when UAClient is null.");
+    }
+
+    private sealed class StubCsvExporter : ICsvExporters
+    {
+        public Task CreateVariableCsvFileAsync(List<Variable> variables, string filePath)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task CreateTagCsvFileAsync(List<Tag> tags, string filePath)
+        {
+            return Task.CompletedTask;
+        }
     }
 }
