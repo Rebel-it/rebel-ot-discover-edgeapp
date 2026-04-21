@@ -4,11 +4,18 @@ using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Extensions;
 using Rebelit.OT.Discover.EdgeApp.Exporters;
 using Rebelit.OT.Discover.EdgeApp.Mappers;
 using Rebelit.OT.Discover.EdgeApp.Resolvers;
+using Rebelit.OT.Discover.EdgeApp.Services;
 using Rebelit.OT.Discover.EdgeApp.Synchronizers;
 using Serilog;
 using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Configuration.AddJsonFile(
+    Path.Combine(AppContext.BaseDirectory, "settings.json"),
+    optional: true,
+    reloadOnChange: true
+);
 
 var logLevelStr = builder.Configuration["LOG_LEVEL"] ?? "Information";
 var logLevel = Enum.TryParse<LogEventLevel>(logLevelStr, ignoreCase: true, out var parsed)
@@ -25,6 +32,7 @@ builder.Services.AddSwaggerGen();
 var applicationId = builder.Configuration["IXON_ApplicationId"]
     ?? throw new InvalidOperationException("IXON_ApplicationId is not configured.");
 
+builder.Services.AddSingleton<ISettingsManager, SettingsManager>();
 builder.Services.AddSingleton<ICsvExporters, CsvExporters>();
 builder.Services.AddScoped<IScraper, Scraper>();
 builder.Services.AddSingleton<IOpcUaVariableMapper, OpcUaVariableMapper>();
