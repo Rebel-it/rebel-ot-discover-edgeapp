@@ -177,3 +177,25 @@ The application will generate the bearer token itself at startup using the provi
 
 * (+) Improved user experience: users only need to provide their IXON credentials at startup, and the application handles token management automatically.
 * (+) Enhanced security: the bearer token is not stored in environment variables or configuration files, reducing the risk of accidental exposure.
+
+---
+
+=== ADR-08: React Webwizard
+
+*Status:* Accepted +
+*Date:* 2026
+
+*Context:*
+The application currently requires users to set multiple environment variables for configuration, which can be error-prone and may not be user-friendly for all operators. A web-based configuration wizard would provide a more intuitive interface for users to input necessary information and manage settings.
+
+*Decision:*
+Implement a React web wizard that runs on the edge router and allows users to configure the application through a graphical interface. The wizard will guide users through the necessary configuration steps, validate inputs, and save settings in a way that the application can consume at runtime.
+and give the ability to see Variables and the tags that are being scraped and created. And let the user edit them before we push them to IXON.
+
+*Consequences:*
+
+* (+) Improved user experience: a web wizard provides a more intuitive and accessible way for users to configure the application, reducing the likelihood of misconfiguration.
+* (+) Real-time feedback: users can see the variables and tags being scraped and created, allowing them to make informed decisions before pushing data to IXON.
+* (-) Additional development effort: implementing a web wizard requires additional time and resources, including frontend development and ensuring secure access to the configuration interface.
+* (-) API must be created to let the edgeapp and wizard comunicate with each other. This adds complexity to the application architecture and requires careful design to ensure security and reliability.
+
