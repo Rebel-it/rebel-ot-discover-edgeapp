@@ -10,47 +10,35 @@ internal sealed class CsvExporters(
     ILogger<CsvExporters> logger
     ) : ICsvExporters
 {
-    public async Task CreateTagCsvFileAsync(List<Tag> tags, string filePath)
+    public string CreateVariableCsv(List<Variable> variables)
     {
-        logger.LogInformation("Creating tag CSV file at {FilePath} with {Count} tags.", filePath, tags.Count);
+        logger.LogInformation("Building variable CSV in memory with {Count} variables.", variables.Count);
+        return BuildVariableCsv(variables);
+    }
 
-        var csv = new StringBuilder();
-
-        // Write header matching the IXON tag CSV format
-        csv.AppendLine("Identifier,Address,Name,Logging interval,Retention policy,Edge aggregator,On change expiry,Log event,Trigger address,Trigger condition,Trigger threshold");
-
-        // Write data rows
-        foreach (var tag in tags)
-        {
-            var identifier = EscapeCsvField(tag.Slug ?? "");
-            var address = EscapeCsvField(tag.Variable?.Address ?? "");
-            var name = EscapeCsvField(tag.Name ?? "");
-            var loggingInterval = EscapeCsvField(tag.LoggingInterval ?? "");
-            var retentionPolicy = EscapeCsvField(tag.RetentionPolicy ?? "");
-            var edgeAggregator = EscapeCsvField(tag.EdgeAggregator?.ToString() ?? "");
-            var onChangeExpiry = EscapeCsvField(tag.OnChangeExpiry?.ToString() ?? "");
-            var logEvent = EscapeCsvField(tag.LogEvent ?? "");
-
-            // LogTrigger is an object, so we'll need to handle it specially
-            // For now, leaving empty as it's typically null
-            var triggerAddress = "";
-            var triggerCondition = "";
-            var triggerThreshold = "";
-
-            csv.AppendLine($"{identifier},{address},{name},{loggingInterval},{retentionPolicy},{edgeAggregator},{onChangeExpiry},{logEvent},{triggerAddress},{triggerCondition},{triggerThreshold}");
-        }
-
-        await File.WriteAllTextAsync(filePath, csv.ToString());
-
-        logger.LogInformation("Tag CSV file created successfully at {FilePath}.", filePath);
+    public string CreateTagCsv(List<Tag> tags)
+    {
+        logger.LogInformation("Building tag CSV in memory with {Count} tags.", tags.Count);
+        return BuildTagCsv(tags);
     }
 
     public async Task CreateVariableCsvFileAsync(List<Variable> variables, string filePath)
     {
         logger.LogInformation("Creating variable CSV file at {FilePath} with {Count} variables.", filePath, variables.Count);
+        await File.WriteAllTextAsync(filePath, BuildVariableCsv(variables));
+        logger.LogInformation("Variable CSV file created successfully at {FilePath}.", filePath);
+    }
 
+    public async Task CreateTagCsvFileAsync(List<Tag> tags, string filePath)
+    {
+        logger.LogInformation("Creating tag CSV file at {FilePath} with {Count} tags.", filePath, tags.Count);
+        await File.WriteAllTextAsync(filePath, BuildTagCsv(tags));
+        logger.LogInformation("Tag CSV file created successfully at {FilePath}.", filePath);
+    }
+
+    private static string BuildVariableCsv(List<Variable> variables)
+    {
         var csv = new StringBuilder();
-
         csv.AppendLine("Identifier,Name,Address,Type,Width,Signed,Max string length");
 
         foreach (var variable in variables)
@@ -66,9 +54,29 @@ internal sealed class CsvExporters(
             csv.AppendLine($"{identifier},{name},{address},{type},{width},{signed},{maxStringLength}");
         }
 
-        await File.WriteAllTextAsync(filePath, csv.ToString());
+        return csv.ToString();
+    }
 
-        logger.LogInformation("Variable CSV file created successfully at {FilePath}.", filePath);
+    private static string BuildTagCsv(List<Tag> tags)
+    {
+        var csv = new StringBuilder();
+        csv.AppendLine("Identifier,Address,Name,Logging interval,Retention policy,Edge aggregator,On change expiry,Log event,Trigger address,Trigger condition,Trigger threshold");
+
+        foreach (var tag in tags)
+        {
+            var identifier = EscapeCsvField(tag.Slug ?? "");
+            var address = EscapeCsvField(tag.Variable?.Address ?? "");
+            var name = EscapeCsvField(tag.Name ?? "");
+            var loggingInterval = EscapeCsvField(tag.LoggingInterval ?? "");
+            var retentionPolicy = EscapeCsvField(tag.RetentionPolicy ?? "");
+            var edgeAggregator = EscapeCsvField(tag.EdgeAggregator?.ToString() ?? "");
+            var onChangeExpiry = EscapeCsvField(tag.OnChangeExpiry?.ToString() ?? "");
+            var logEvent = EscapeCsvField(tag.LogEvent ?? "");
+
+            csv.AppendLine($"{identifier},{address},{name},{loggingInterval},{retentionPolicy},{edgeAggregator},{onChangeExpiry},{logEvent},,,"); // Trigger fields left empty
+        }
+
+        return csv.ToString();
     }
 
     /// <summary>

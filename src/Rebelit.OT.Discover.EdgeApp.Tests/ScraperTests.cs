@@ -249,14 +249,9 @@ public class ScraperTests
 
     private sealed class StubCsvExporter : ICsvExporters
     {
-        public Task CreateVariableCsvFileAsync(List<Variable> variables, string filePath)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task CreateTagCsvFileAsync(List<Tag> tags, string filePath)
-        {
-            return Task.CompletedTask;
-        }
+        public string CreateVariableCsv(List<Variable> variables) => string.Empty;
+        public string CreateTagCsv(List<Tag> tags) => string.Empty;
+        public Task CreateVariableCsvFileAsync(List<Variable> variables, string filePath) => Task.CompletedTask;
+        public Task CreateTagCsvFileAsync(List<Tag> tags, string filePath) => Task.CompletedTask;
     }
 }

@@ -104,7 +104,7 @@ internal sealed class NodeSynchronizer(
                 CancellationToken.None
             );
 
-            if (response.Results.Count > 0 && response.Results[0].StatusCode == StatusCodes.Good)
+            if (response.Results.Count > 0 && response.Results[0].StatusCode == Opc.Ua.StatusCodes.Good)
             {
                 return response.Results[0].Value as NodeId ?? NodeId.Null;
             }
@@ -113,7 +113,7 @@ internal sealed class NodeSynchronizer(
                 logger.LogError(
                     "Failed to read DataType attribute for node {NodeId}. StatusCode: {StatusCode}",
                     nodeId,
-                    response.Results.Count > 0 ? response.Results[0].StatusCode : StatusCodes.Bad
+                    response.Results.Count > 0 ? response.Results[0].StatusCode : Opc.Ua.StatusCodes.Bad
                 );
                 return null;
             }

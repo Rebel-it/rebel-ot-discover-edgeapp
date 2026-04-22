@@ -39,14 +39,17 @@ public class Scraper(
         ?? throw new InvalidOperationException("OPCUA_Password configuration is not set.");
 
     /// <summary>
-    /// Contains all the variables that are created on runtime
+    /// Contains all the variables that are mapped on runtime
     /// </summary>
-    private List<Variable> _CreatedVariables;
+    private List<Variable> _CreatedVariables = [];
 
     /// <summary>
-    /// Contains all the tags that are created on runtime
+    /// Contains all the tags that are built on runtime
     /// </summary>
     private List<Tag> _CreatedTags = [];
+
+    public IReadOnlyList<Variable> CreatedVariables => _CreatedVariables;
+    public IReadOnlyList<Tag> CreatedTags => _CreatedTags;
 
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
@@ -77,8 +80,6 @@ public class Scraper(
             return true;
         });
 
-        _CreatedVariables = [];
-
         //map all vartiables in a list
         foreach(var batch in filteredNodes.Chunk(BatchSize))
         {
@@ -91,8 +92,6 @@ public class Scraper(
             "Mapped {VariableCount} variables from OPC UA nodes.",
             _CreatedVariables.Count
         );
-
-        _CreatedTags = [];
 
         //Create Tags
         foreach(var variable in _CreatedVariables)
