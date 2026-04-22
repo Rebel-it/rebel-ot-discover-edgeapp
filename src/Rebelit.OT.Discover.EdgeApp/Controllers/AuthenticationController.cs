@@ -28,8 +28,6 @@ public class AuthenticationController(
 
             settingsManager.Save(new Dictionary<string, string?>
             {
-                ["OPCUA_Username"] = model.Username,
-                ["OPCUA_Password"] = model.Password,
                 ["IXON_BearerToken"] = token
             });
 
