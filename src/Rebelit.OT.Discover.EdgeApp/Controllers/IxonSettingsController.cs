@@ -58,6 +58,5 @@ public class IxonSettingsController(
         dataSourceId = configuration["IXON_DataSourceId"] ?? string.Empty,
         opcUaServerAddress = configuration["OPCUA_ServerAddress"] ?? string.Empty,
         opcUaUsername = configuration["OPCUA_Username"] ?? string.Empty,
-        // Password intentionally omitted
     });
 }
