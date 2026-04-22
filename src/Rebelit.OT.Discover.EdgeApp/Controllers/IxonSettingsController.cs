@@ -7,7 +7,7 @@ namespace Rebelit.OT.Discover.EdgeApp.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class IxonSettingsController(
-    ISettingsManager settingsManager,
+    IAppSettingsManager settingsManager,
     IConfiguration configuration
 ) : ControllerBase
 {
@@ -16,33 +16,12 @@ public class IxonSettingsController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public IActionResult SaveIxonSettings([FromBody] IXONSettings settings)
     {
-        var errors = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(settings.ApplicationId))
-            errors.Add("ApplicationId is required.");
-        if (string.IsNullOrWhiteSpace(settings.ComnpanyId))
-            errors.Add("CompanyId is required.");
-        if (string.IsNullOrWhiteSpace(settings.AgentId))
-            errors.Add("AgentId is required.");
-        if (string.IsNullOrWhiteSpace(settings.OpcUaServerAddress))
-            errors.Add("OpcUaServerAddress is required.");
-        if (string.IsNullOrWhiteSpace(settings.OpcUaUsername))
-            errors.Add("OpcUaUsername is required.");
-        if (string.IsNullOrWhiteSpace(settings.OpcUaPassword))
-            errors.Add("OpcUaPassword is required.");
-
-        if (errors.Count > 0)
-            return BadRequest(new { errors });
-
         settingsManager.Save(new Dictionary<string, string?>
         {
             ["IXON_ApplicationId"] = settings.ApplicationId,
-            ["IXON_CompanyId"] = settings.ComnpanyId,
+            ["IXON_CompanyId"] = settings.CompanyId,
             ["IXON_AgentId"] = settings.AgentId,
-            ["IXON_DataSourceId"] = settings.DataSourceID,
-            ["OPCUA_ServerAddress"] = settings.OpcUaServerAddress,
-            ["OPCUA_Username"] = settings.OpcUaUsername,
-            ["OPCUA_Password"] = settings.OpcUaPassword,
+            ["IXON_DataSourceId"] = settings.DataSourceId
         });
 
         return Ok(new { message = "IXON settings saved successfully." });
@@ -55,8 +34,6 @@ public class IxonSettingsController(
         applicationId = configuration["IXON_ApplicationId"] ?? string.Empty,
         companyId = configuration["IXON_CompanyId"] ?? string.Empty,
         agentId = configuration["IXON_AgentId"] ?? string.Empty,
-        dataSourceId = configuration["IXON_DataSourceId"] ?? string.Empty,
-        opcUaServerAddress = configuration["OPCUA_ServerAddress"] ?? string.Empty,
-        opcUaUsername = configuration["OPCUA_Username"] ?? string.Empty,
+        dataSourceId = configuration["IXON_DataSourceId"] ?? string.Empty
     });
 }
