@@ -1,6 +1,7 @@
 .login-wrapper {
   display: flex;
   flex: 1;
+  position: relative;
   align-items: center;
   justify-content: center;
   padding: 32px 20px;
@@ -90,6 +91,45 @@
   &:hover {
     opacity: 0.88;
   }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.6;
+  }
+}
+
+.form-message {
+  margin: 0;
+  font-size: 14px;
+}
+
+.error-message {
+  color: #c0362c;
+}
+
+.success-message {
+  color: #1f7a4c;
+}
+
+.next-btn {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 999px;
+  background: var(--text-h);
+  color: var(--bg);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow);
 
   &:focus-visible {
     outline: 2px solid var(--accent);
