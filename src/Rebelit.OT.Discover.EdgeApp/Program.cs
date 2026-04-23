@@ -29,6 +29,14 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("LocalFrontend", policy =>
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
+
 var applicationId = builder.Configuration["IXON_ApplicationId"]
     ?? throw new InvalidOperationException("IXON_ApplicationId is not configured.");
 
@@ -59,6 +67,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("LocalFrontend");
 app.UseHttpsRedirection();
 app.MapControllers();
 await app.RunAsync();
