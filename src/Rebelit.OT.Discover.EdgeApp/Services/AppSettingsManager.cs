@@ -2,13 +2,13 @@ using System.Text.Json;
 
 namespace Rebelit.OT.Discover.EdgeApp.Services;
 
-public interface ISettingsManager
+public interface IAppSettingsManager
 {
     void Save(Dictionary<string, string?> values);
     Dictionary<string, string?> Load();
 }
 
-internal sealed class SettingsManager(IConfiguration configuration, ILogger<SettingsManager> logger) : ISettingsManager
+internal sealed class AppSettingsManager(IConfiguration configuration, ILogger<AppSettingsManager> logger) : IAppSettingsManager
 {
     private static readonly string SettingsFilePath = Path.Combine(
         AppContext.BaseDirectory, "settings.json"

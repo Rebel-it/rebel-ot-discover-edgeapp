@@ -9,7 +9,7 @@ namespace Rebelit.OT.Discover.EdgeApp.Controllers;
 [Route("api/[controller]")]
 public class AuthenticationController(
     IxonAuthentication ixonAuthentication,
-    ISettingsManager settingsManager
+    IAppSettingsManager settingsManager
 ) : ControllerBase
 {
     [HttpPost("login")]

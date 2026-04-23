@@ -78,7 +78,7 @@ public class IxonAuthentication
     /// </summary>
     /// value must be provided.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains a valid bearer token as a string.</returns>
-    public async Task<string> GetValidTokenAsync(string email, string password, 
+    public async Task<string> GetValidTokenAsync(string email, string password,
         string applicationId, string? otpCode = null)
     {
         if (_cachedToken != null && DateTime.UtcNow < _tokenExpiry)
@@ -96,8 +96,8 @@ public class IxonAuthentication
             }
 
             _cachedToken = await BearerTokenGenerator(email, password, applicationId, otpCode);
-            _tokenExpiry = DateTime.UtcNow.AddSeconds(TokenRefreshBufferSeconds); 
-            
+            _tokenExpiry = DateTime.UtcNow.AddSeconds(TokenRefreshBufferSeconds);
+
             return _cachedToken;
         }
         finally
