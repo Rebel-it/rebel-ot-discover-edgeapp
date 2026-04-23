@@ -3,14 +3,14 @@ import type { AuthObject } from '../models/AuthObject'
 import { login } from '../services/authenticationService.ts'
 import styles from './LoginPage.module.css'
 
-const defaultApplicationId = 'rebelit-ot-discover-edgeapp-webapp'
+
 type LoginFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
 const defaultAuthObject: AuthObject = {
   username: '',
   password: '',
   otpCode: '',
-  applicationID: defaultApplicationId,
+  applicationID: '',
 }
 
 function LoginPage() {
