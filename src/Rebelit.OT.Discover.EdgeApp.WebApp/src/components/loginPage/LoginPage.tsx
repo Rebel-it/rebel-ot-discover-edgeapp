@@ -1,6 +1,6 @@
 import { type ComponentProps, useState } from 'react'
-import type { AuthObject } from '../models/AuthObject'
-import { login } from '../services/authenticationService.ts'
+import type { AuthObject } from '../../models/AuthObject.ts'
+import { login } from '../../services/authenticationService.ts'
 import styles from './LoginPage.module.css'
 
 
