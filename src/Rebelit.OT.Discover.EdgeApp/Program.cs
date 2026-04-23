@@ -40,7 +40,7 @@ builder.Services.AddCors(options =>
 var applicationId = builder.Configuration["IXON_ApplicationId"]
     ?? throw new InvalidOperationException("IXON_ApplicationId is not configured.");
 
-builder.Services.AddSingleton<ISettingsManager, SettingsManager>();
+builder.Services.AddSingleton<IAppSettingsManager, AppSettingsManager>();
 builder.Services.AddSingleton<ICsvExporters, CsvExporters>();
 builder.Services.AddScoped<IScraper, Scraper>();
 builder.Services.AddSingleton<IOpcUaVariableMapper, OpcUaVariableMapper>();
