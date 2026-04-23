@@ -1,11 +1,6 @@
-export interface LoginRequest {
-  username: string
-  password: string
-  otpCode: string
-  applicationID: string
-}
+import type { AuthObject } from '../models/AuthObject'
 
-export async function login(request: LoginRequest): Promise<Response> {
+export async function login(request: AuthObject): Promise<Response> {
   return fetch('https://localhost:61411/api/Authentication/login', {
     method: 'POST',
     headers: {
