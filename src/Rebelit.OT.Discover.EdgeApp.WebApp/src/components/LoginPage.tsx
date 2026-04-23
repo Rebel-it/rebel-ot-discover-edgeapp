@@ -42,10 +42,31 @@ function LoginPage() {
       }
 
       let nextErrorMessage = 'Login failed. Please check your credentials and try again.'
-      const responseText = await response.text()
 
-      if (responseText) {
-        nextErrorMessage = responseText
+      try {
+        const contentType = response.headers.get('content-type') ?? ''
+
+        if (contentType.includes('application/json')) {
+          const responseBody: unknown = await response.json()
+
+          if (
+            typeof responseBody === 'object' &&
+            responseBody !== null &&
+            'message' in responseBody &&
+            typeof responseBody.message === 'string' &&
+            responseBody.message.trim() !== ''
+          ) {
+            nextErrorMessage = responseBody.message
+          }
+        } else {
+          const responseText = await response.text()
+
+          if (responseText.trim() !== '') {
+            nextErrorMessage = responseText
+          }
+        }
+      } catch {
+        // Fall back to the generic error message when the error payload cannot be parsed.
       }
 
       setErrorMessage(nextErrorMessage)
