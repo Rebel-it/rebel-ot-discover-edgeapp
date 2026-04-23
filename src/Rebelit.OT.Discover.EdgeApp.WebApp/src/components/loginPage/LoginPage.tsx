@@ -2,6 +2,7 @@ import { type ComponentProps, useState } from 'react'
 import type { AuthObject } from '../../models/AuthObject.ts'
 import { login } from '../../services/authenticationService.ts'
 import styles from './LoginPage.module.css'
+import { useNavigate } from 'react-router-dom'
 
 
 type LoginFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
@@ -19,6 +20,7 @@ function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [loginSucceeded, setLoginSucceeded] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const navigate = useNavigate()
 
   function setAuthProperty<K extends keyof AuthObject>(property: K, value: AuthObject[K]) {
     setAuthObject((currentAuthObject) => ({
@@ -137,7 +139,7 @@ function LoginPage() {
       </form>
 
       {loginSucceeded && (
-        <button type="button" className={styles.nextButton}>
+        <button type="button" className={styles.nextButton} onClick={() => navigate('/plc')}>
           Next
         </button>
       )}

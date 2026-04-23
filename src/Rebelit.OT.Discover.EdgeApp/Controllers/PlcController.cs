@@ -7,14 +7,12 @@ namespace Rebelit.OT.Discover.EdgeApp.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-
-public class OpcController(
+public class PlcController(
     IAppSettingsManager settingsManager,
-    IConfiguration configuration,
     IUAClientFactory uaClientFactory
 ) : ControllerBase
 {
-    [HttpPost("opc")]
+    [HttpPost("connect")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SaveOpcSettings([FromBody] OpcCredentials settings)
@@ -38,12 +36,4 @@ public class OpcController(
         });
         return Ok(new { message = "OPC UA settings saved successfully." });
     }
-    [HttpGet("opc")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public IActionResult GetOpcSettings() => Ok(new
-    {
-        serverAddress = configuration["OPCUA_ServerAddress"] ?? string.Empty,
-        username = configuration["OPCUA_Username"] ?? string.Empty,
-        password = configuration["OPCUA_Password"] ?? string.Empty
-    });
 }
