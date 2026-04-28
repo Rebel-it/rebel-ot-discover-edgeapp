@@ -133,7 +133,7 @@ function LoginPage() {
           </p>
         )}
 
-        <button type="submit" className={styles.loginButton} disabled={isSubmitting}>
+        <button type="submit" className={styles.loginButton} disabled={isSubmitting || loginSucceeded}>
           {isSubmitting ? 'Signing in...' : 'Sign in'}
         </button>
       </form>

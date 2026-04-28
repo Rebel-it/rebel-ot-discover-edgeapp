@@ -73,9 +73,9 @@ function PlcConnect() {
                 </div>
 
                 <div className={Loginstyles.formField}>
-                    <label htmlFor="userName">PLC User Name</label>
+                    <label htmlFor="OpcUaUsername">PLC User Name</label>
                     <input
-                        id="userName"
+                        id="OpcUaUsername"
                         type="text"
                         autoComplete="off"
                         value={plcObject.OpcUaUsername}
@@ -84,9 +84,9 @@ function PlcConnect() {
                 </div>
 
                 <div className={Loginstyles.formField}>
-                    <label htmlFor="password">PLC Password</label>
+                    <label htmlFor="OpcUaPassword">PLC Password</label>
                     <input
-                        id="password"
+                        id="OpcUaPassword"
                         type="password"
                         autoComplete="off"
                         value={plcObject.OpcUaPassword}
@@ -102,7 +102,7 @@ function PlcConnect() {
                     </p>
                 )}
 
-                <button type="submit" className={Loginstyles.loginButton} disabled={isSubmitting}>
+                <button type="submit" className={Loginstyles.loginButton} disabled={isSubmitting || loginSucceeded}>
                     {isSubmitting ? 'Connecting...' : 'Connect'}
                 </button>
             </form>
