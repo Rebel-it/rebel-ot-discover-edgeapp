@@ -11,9 +11,16 @@ public class UAClientFactory(
     ITelemetryContext telemetryContext
 ) : IUAClientFactory
 {
+    /// <summary>
+    /// Creates and connects a new OPC UA client session using the specified server URI and user credentials.
+    /// </summary>
+    /// <returns>A connected UAClient instance if the connection is successful; otherwise, <see langword="null"/>.</returns>
     public async Task<UAClient?> Create(string uri, string username, string password)
     {
-        var userIdentity = new UserIdentity(username, Encoding.UTF8.GetBytes(password));
+        var userIdentity = string.IsNullOrWhiteSpace(username)
+            ? new UserIdentity()
+            : new UserIdentity(username, Encoding.UTF8.GetBytes(password));
+
         var client = new UAClient(
             applicationInstance.ApplicationConfiguration,
             null,
@@ -26,15 +33,27 @@ public class UAClientFactory(
             UserIdentity = userIdentity,
         };
 
-        var connected = await client.ConnectAsync(uri);
-        if (!connected)
+        try
         {
+            var connected = await client.ConnectAsync(uri);
+            if (!connected)
+            {
+                telemetryContext
+                    .LoggerFactory.CreateLogger("UAClientFactory")
+                    .LogError("Failed to connect to OPC UA server at {Uri}", uri);
+                client.Dispose();
+                return null;
+            }
+
+            return client;
+        }
+        catch (Exception ex)
+        {
+            client.Dispose();
             telemetryContext
                 .LoggerFactory.CreateLogger("UAClientFactory")
-                .LogError("Failed to connect to OPC UA server at {Uri}", uri);
+                .LogError(ex, "Failed to create OPC UA client for {Uri}", uri);
             return null;
         }
-
-        return client;
     }
 }
