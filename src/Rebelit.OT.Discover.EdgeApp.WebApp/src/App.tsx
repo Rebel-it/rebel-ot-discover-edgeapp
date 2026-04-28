@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import StartPage from './components/startPage/StartPage'
 import LoginPage from './components/loginPage/LoginPage'
 import PlcConnect from './components/plcConnect/PlcConnect'
+import SourcePage from './components/sourcePage/SourcePage'
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
         <Route path="/" element={<StartPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/plc" element={<PlcConnect />} />
+        <Route path="/source" element={<SourcePage />} />
       </Routes>
     </BrowserRouter>
   )

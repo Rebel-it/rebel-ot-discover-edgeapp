@@ -98,7 +98,7 @@ function PlcConnect() {
             </form>
 
             {connectionSucceeded && (
-                <button type="button" className={Loginstyles.nextButton} onClick={() => navigate('/plc')}>
+                <button type="button" className={Loginstyles.nextButton} onClick={() => navigate('/source')}>
                     Next
                 </button>
             )}
