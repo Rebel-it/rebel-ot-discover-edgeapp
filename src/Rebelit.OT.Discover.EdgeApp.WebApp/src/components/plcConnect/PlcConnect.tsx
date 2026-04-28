@@ -16,7 +16,7 @@ function PlcConnect() {
     const navigate = useNavigate()
     const [plcObject, setPlcObject] = useState<PlcAuthObject>(defaultPlcObject)
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [loginSucceeded, setLoginSucceeded] = useState(false)
+    const [connectionSucceeded, setConnectionSucceeded] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
 
     function setPlcProperty<K extends keyof PlcAuthObject>(property: K, value: PlcAuthObject[K]) {
@@ -30,13 +30,13 @@ function PlcConnect() {
         event.preventDefault()
         setIsSubmitting(true)
         setErrorMessage('')
-        setLoginSucceeded(false)
+        setConnectionSucceeded(false)
 
         try {
             const response = await connectToPlc(plcObject)
 
             if (response.status === 200) {
-                setLoginSucceeded(true)
+                setConnectionSucceeded(true)
                 return
             }
 
@@ -96,18 +96,18 @@ function PlcConnect() {
 
                 {errorMessage && <p className={`${Loginstyles.formMessage} ${Loginstyles.errorMessage}`}>{errorMessage}</p>}
 
-                {loginSucceeded && (
+                {connectionSucceeded && (
                     <p className={`${Loginstyles.formMessage} ${Loginstyles.successMessage}`}>
                         PLC connection succeeded. Continue to the next step.
                     </p>
                 )}
 
-                <button type="submit" className={Loginstyles.loginButton} disabled={isSubmitting || loginSucceeded}>
+                <button type="submit" className={Loginstyles.loginButton} disabled={isSubmitting || connectionSucceeded}>
                     {isSubmitting ? 'Connecting...' : 'Connect'}
                 </button>
             </form>
 
-            {loginSucceeded && (
+            {connectionSucceeded && (
                 <button type="button" className={Loginstyles.nextButton} onClick={() => navigate('/plc')}>
                     Next
                 </button>
