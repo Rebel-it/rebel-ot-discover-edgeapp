@@ -190,7 +190,7 @@ public class ScraperTests
 
     private sealed class StubDataSourceResolver(string dataSourceId) : IDataSourceResolver
     {
-        public Task<string> ResolveAsync(string agentId) => Task.FromResult(dataSourceId);
+        public Task<string> ResolveAsync(string agentId, string dataSourceName) => Task.FromResult(dataSourceId);
     }
 
     private sealed class FakeNodeScraper(
