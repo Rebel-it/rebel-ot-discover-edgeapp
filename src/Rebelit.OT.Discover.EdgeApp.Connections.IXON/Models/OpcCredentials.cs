@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
+﻿namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 
 public class OpcCredentials
 {
