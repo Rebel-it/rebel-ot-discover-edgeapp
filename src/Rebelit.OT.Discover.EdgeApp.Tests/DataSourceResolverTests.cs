@@ -40,7 +40,7 @@ public class DataSourceResolverTests
             NullLogger<DataSourceResolver>.Instance
         );
 
-        var result = await resolver.ResolveAsync(DefaultAgentId);
+        var result = await resolver.ResolveAsync(DefaultAgentId, "");
 
         Assert.Multiple(() =>
         {
@@ -60,7 +60,7 @@ public class DataSourceResolverTests
             NullLogger<DataSourceResolver>.Instance
         );
 
-        var result = await resolver.ResolveAsync(DefaultAgentId);
+        var result = await resolver.ResolveAsync(DefaultAgentId, "");
 
         Assert.That(result, Is.EqualTo("new-ds-id"));
     }
@@ -87,7 +87,7 @@ public class DataSourceResolverTests
             NullLogger<DataSourceResolver>.Instance
         );
 
-        var result = await resolver.ResolveAsync(DefaultAgentId);
+        var result = await resolver.ResolveAsync(DefaultAgentId, "");
 
         Assert.Multiple(() =>
         {
@@ -118,7 +118,7 @@ public class DataSourceResolverTests
             NullLogger<DataSourceResolver>.Instance
         );
 
-        var result = await resolver.ResolveAsync(DefaultAgentId);
+        var result = await resolver.ResolveAsync(DefaultAgentId, "");
 
         Assert.That(result, Is.EqualTo("new-ds-id"));
     }
@@ -138,7 +138,7 @@ public class DataSourceResolverTests
             NullLogger<DataSourceResolver>.Instance
         );
 
-        await resolver.ResolveAsync(DefaultAgentId);
+        await resolver.ResolveAsync(DefaultAgentId, "");
 
         Assert.That(apiClient.PostedDataSource?.Device?.PublicId, Is.EqualTo("dev-2"));
     }
@@ -158,7 +158,7 @@ public class DataSourceResolverTests
             NullLogger<DataSourceResolver>.Instance
         );
 
-        await resolver.ResolveAsync(DefaultAgentId);
+        await resolver.ResolveAsync(DefaultAgentId, "");
 
         Assert.That(apiClient.PostedDataSource?.Device?.PublicId, Is.EqualTo("dev-first"));
     }

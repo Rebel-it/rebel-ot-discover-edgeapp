@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
+using Rebelit.OT.Discover.EdgeApp.Resolvers;
 using Rebelit.OT.Discover.EdgeApp.Services;
 
 namespace Rebelit.OT.Discover.EdgeApp.Controllers;
@@ -8,6 +9,7 @@ namespace Rebelit.OT.Discover.EdgeApp.Controllers;
 [Route("api/[controller]")]
 public class IxonSettingsController(
     IAppSettingsManager settingsManager,
+    IDataSourceResolver dataSourceResolver,
     IConfiguration configuration
 ) : ControllerBase
 {
@@ -25,6 +27,31 @@ public class IxonSettingsController(
         });
 
         return Ok(new { message = "IXON settings saved successfully." });
+    }
+
+    [HttpPost("datasource")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public IActionResult SaveDataSourceId([FromBody] SaveDataSourceRequest saveDataSourceRequest)
+    {
+        settingsManager.Save(new Dictionary<string, string?>
+        {
+            ["IXON_AgentId"] = saveDataSourceRequest.AgentId,
+        });
+
+        var settings = settingsManager.Load();
+        settings.TryGetValue("IXON_AgentId", out var agentId);
+
+        string result = dataSourceResolver.ResolveAsync(agentId ?? string.Empty, saveDataSourceRequest.DataSourceName)
+            .GetAwaiter()
+            .GetResult();
+
+        if(string.IsNullOrEmpty(result))
+        {
+            return BadRequest(new { message = "Failed to resolve data source ID." });
+        }
+
+        return Ok(new { message = "Data source ID saved successfully." });
     }
 
     [HttpGet("ixon")]

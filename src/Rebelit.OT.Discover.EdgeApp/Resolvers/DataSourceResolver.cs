@@ -7,7 +7,14 @@ namespace Rebelit.OT.Discover.EdgeApp.Resolvers;
 
 public interface IDataSourceResolver
 {
-    Task<string> ResolveAsync(string agentId);
+    /// <summary>
+    /// Asynchronously resolves the unique identifier associated with the specified agent and source.
+    /// </summary>
+    /// <param name="agentId">The identifier of the agent for which to resolve the unique value. Cannot be null or empty.</param>
+    /// <param name="sourceName">The name of the source context in which to resolve the agent. Cannot be null or empty.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the resolved unique identifier as a
+    /// string, or null if no identifier is found.</returns>
+    Task<string> ResolveAsync(string agentId, string sourceName);
 }
 
 internal sealed class DataSourceResolver(
@@ -30,7 +37,7 @@ internal sealed class DataSourceResolver(
 
     private readonly string? _configuredDataSourceId = configuration["IXON_DataSourceId"];
 
-    public async Task<string> ResolveAsync(string agentId)
+    public async Task<string> ResolveAsync(string agentId, string sourceName)
     {
         if (!string.IsNullOrEmpty(_configuredDataSourceId))
         {
@@ -67,7 +74,7 @@ internal sealed class DataSourceResolver(
             return existingDataSource.PublicId!;
         }
 
-        var newDataSource = BuildDataSource(device.PublicId);
+        var newDataSource = BuildDataSource(device.PublicId, sourceName);
         var result = await apiClient.PostDataSourceAsync(agentId, newDataSource);
         var createdId =
             result?.Data.PublicId
@@ -90,13 +97,13 @@ internal sealed class DataSourceResolver(
         );
     }
 
-    private DataSource BuildDataSource(string devicePublicId)
+    private DataSource BuildDataSource(string devicePublicId, string sourceName)
     {
         var authenticationType = string.IsNullOrEmpty(_username) ? "anonymous" : "username";
         return new DataSource
         {
-            Name = "OPC UA",
-            Slug = "opcua",
+            Name = sourceName,
+            Slug = SlugResolver.Resolve(sourceName),
             Disabled = false,
             Device = new Source { PublicId = devicePublicId },
             Protocol = new DataSourceProtocol
