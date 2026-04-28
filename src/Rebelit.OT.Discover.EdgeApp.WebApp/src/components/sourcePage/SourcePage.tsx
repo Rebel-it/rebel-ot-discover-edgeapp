@@ -59,15 +59,15 @@ function SourcePage() {
                 <FormField
                     id="sourceName"
                     label="Source name"
-                    value={sourceObject.sourceName}
-                    onChange={(value) => setSourceProperty('sourceName', value)}
+                    value={sourceObject.dataSourceName}
+                    onChange={(value) => setSourceProperty('dataSourceName', value)}
                 />
 
                 <FormField
                     id="agentId"
                     label="Agent ID"
-                    value={sourceObject.agentId}
-                    onChange={(value) => setSourceProperty('agentId', value)}
+                    value={sourceObject.AgentId}
+                    onChange={(value) => setSourceProperty('AgentId', value)}
                 />
 
                 {errorMessage && <p className={`${Loginstyles.formMessage} ${Loginstyles.errorMessage}`}>{errorMessage}</p>}
