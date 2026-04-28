@@ -1,7 +1,8 @@
 import type { PlcAuthObject } from '../models/PlcAuthObject.ts'
+import { apiBaseUrl } from './apiBaseUrl'
 
 export async function connectToPlc(request: PlcAuthObject): Promise<Response> {
-    return fetch('https://localhost:61411/api/Plc/connect', {
+    return fetch(`${apiBaseUrl}/api/Plc/connect`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

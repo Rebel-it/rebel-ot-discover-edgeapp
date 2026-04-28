@@ -1,7 +1,8 @@
 import type { AuthObject } from '../models/AuthObject'
+import { apiBaseUrl } from './apiBaseUrl'
 
 export async function login(request: AuthObject): Promise<Response> {
-  return fetch('https://localhost:61411/api/Authentication/login', {
+  return fetch(`${apiBaseUrl}/api/Authentication/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
