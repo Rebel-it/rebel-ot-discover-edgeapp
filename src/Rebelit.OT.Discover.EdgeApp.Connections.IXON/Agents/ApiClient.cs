@@ -38,10 +38,10 @@ internal class ApiClient(
         return await Post<Response<Variable>>(uri, newVariable);
     }
 
-    public async Task<Response<Variable[]>?> PostVariablesAsync(string agentId, string csv)
+    public async Task<Response<Variable[]>?> PostVariablesAsync(string agentId, IEnumerable<Variable> variables)
     {
         var uri = $"/api/agents/{agentId}/data-variables";
-        return await Post<Response<Variable[]>>(uri, csv);
+        return await Post<Response<Variable[]>>(uri, variables);
     }
 
     public async Task<Response<Agent>> GetAgentAsync(string agentId)

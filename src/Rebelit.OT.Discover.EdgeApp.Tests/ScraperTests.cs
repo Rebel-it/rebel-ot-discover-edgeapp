@@ -187,7 +187,7 @@ public class ScraperTests
             };
         }
 
-        public Task SynchronizeVariables(string agentId, string csv) => Task.CompletedTask;
+        public Task SynchronizeVariables(string agentId, IEnumerable<Variable> variables) => Task.CompletedTask;
     }
 
     private sealed class StubDataSourceResolver(string dataSourceId) : IDataSourceResolver

@@ -206,7 +206,6 @@ public class Scraper(
             _CreatedVariables.Count
         );
 
-        var csv = csvExporters.CreateVariableCsv(_CreatedVariables);
-        await nodeSynchronizer.SynchronizeVariables(AgentId, csv);
+        await nodeSynchronizer.SynchronizeVariables(AgentId, _CreatedVariables);
     }
 }

@@ -83,7 +83,7 @@ function SourcePage() {
                 </button>
             </form>
             {sourceCreationSucceeded && (
-                <button type="button" className={Loginstyles.nextButton} onClick={() => navigate('/plc')}>
+                <button type="button" className={Loginstyles.nextButton} onClick={() => navigate('/variables')}>
                     Next
                 </button>
             )}
