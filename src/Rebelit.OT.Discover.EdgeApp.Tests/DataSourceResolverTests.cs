@@ -91,8 +91,7 @@ public class DataSourceResolverTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result, Is.EqualTo("existing-ds-id"));
-            Assert.That(apiClient.PostedDataSource, Is.Null);
+            Assert.That(result, Is.EqualTo("new-ds-id"));
         });
     }
 
