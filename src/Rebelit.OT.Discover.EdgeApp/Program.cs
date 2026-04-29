@@ -71,7 +71,6 @@ if (app.Environment.IsDevelopment())
     app.UseCors("LocalFrontend");
 }
 
-app.UseCors("LocalFrontend");
 app.UseHttpsRedirection();
 app.MapControllers();
 await app.RunAsync();

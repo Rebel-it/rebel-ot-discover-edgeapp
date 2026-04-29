@@ -3,6 +3,7 @@ import type { AuthObject } from '../../models/AuthObject.ts'
 import { login } from '../../services/authenticationService.ts'
 import styles from './LoginPage.module.css'
 import { useNavigate } from 'react-router-dom'
+import FormField from '../shared/FormField'
 
 
 type LoginFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
@@ -63,40 +64,29 @@ function LoginPage() {
       <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
         <h1>Sign in</h1>
 
-        <div className={styles.formField}>
-          <label htmlFor="username">Username</label>
-          <input
-            id="username"
-            type="text"
-            autoComplete="username"
-            value={authObject.username}
-            onChange={(e) => setAuthProperty('username', e.target.value)}
-            required
-          />
-        </div>
+        <FormField
+          id="username"
+          label="Username"
+          value={authObject.username}
+          onChange={(value) => setAuthProperty('username', value)}
+          required
+        />
 
-        <div className={styles.formField}>
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            value={authObject.password}
-            onChange={(e) => setAuthProperty('password', e.target.value)}
-            required
-          />
-        </div>
-
-        <div className={styles.formField}>
-          <label htmlFor="application-id">Application ID</label>
-          <input
-            id="application-id"
-            type="text"
-            value={authObject.applicationID}
-            onChange={(e) => setAuthProperty('applicationID', e.target.value)}
-            required
-          />
-        </div>
+        <FormField
+          id="password"
+          label="Password"
+          type="password"
+          value={authObject.password}
+          onChange={(value) => setAuthProperty('password', value)}
+          required
+        />
+        <FormField 
+        id="application-id"
+          label="Application ID"
+          value={authObject.applicationID}
+          onChange={(value) => setAuthProperty('applicationID', value)}
+          required
+        />
 
         <label className={styles.checkboxLabel}>
           <input
@@ -112,15 +102,15 @@ function LoginPage() {
 
         {otpEnabled && (
           <div className={styles.formField}>
-            <label htmlFor="otp">OTP code</label>
-            <input
+
+            <FormField
               id="otp"
-              type="text"
-              inputMode="numeric"
+              label="OTP code"
               autoComplete="one-time-code"
-              value={authObject.otpCode}
-              onChange={(e) => setAuthProperty('otpCode', e.target.value.replaceAll(/\D/gu, ''))}
-              required={otpEnabled}
+              inputMode="numeric"
+              value={authObject.otpCode ?? ''}
+              onChange={(value) => setAuthProperty('otpCode', value.replaceAll(/\D/gu, ''))}
+              required
             />
           </div>
         )}

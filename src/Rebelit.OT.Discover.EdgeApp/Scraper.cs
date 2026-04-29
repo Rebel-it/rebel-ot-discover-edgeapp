@@ -53,7 +53,7 @@ public class Scraper(
 
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        var dataSourceId = await dataSourceResolver.ResolveAsync(AgentId);
+        var dataSourceId = await dataSourceResolver.ResolveAsync(AgentId, "");
 
         var client = await clientFactory.Create(Address, Username, Password);
 
