@@ -8,8 +8,8 @@ import FormField from '../shared/FormField'
 type SourceFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
 const defaultSourceObject: SourceObject = {
-    sourceName: '',
-    agentId: '',
+    DataSourceName: '',
+    AgentId: '',
 }
 
 function SourcePage() {
@@ -59,8 +59,8 @@ function SourcePage() {
                 <FormField
                     id="sourceName"
                     label="Source name"
-                    value={sourceObject.dataSourceName}
-                    onChange={(value) => setSourceProperty('dataSourceName', value)}
+                    value={sourceObject.DataSourceName}
+                    onChange={(value) => setSourceProperty('DataSourceName', value)}
                 />
 
                 <FormField

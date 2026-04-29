@@ -107,6 +107,7 @@ function LoginPage() {
               id="otp"
               label="OTP code"
               autoComplete="one-time-code"
+              inputMode="numeric"
               value={authObject.otpCode ?? ''}
               onChange={(value) => setAuthProperty('otpCode', value.replaceAll(/\D/gu, ''))}
               required

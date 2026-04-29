@@ -1,4 +1,4 @@
 export interface SourceObject {
-    dataSourceName: string
+    DataSourceName: string
     AgentId: string
 }

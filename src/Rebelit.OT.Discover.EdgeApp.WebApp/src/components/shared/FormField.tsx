@@ -9,6 +9,7 @@ type FormFieldProps = {
     type?: ComponentProps<'input'>['type']
     required?: boolean
     autoComplete?: ComponentProps<'input'>['autoComplete']
+    inputMode?: ComponentProps<'input'>['inputMode']
 }
 
 function FormField({ id, label, value, onChange, type = 'text', required, autoComplete = 'off' }: FormFieldProps) {
@@ -19,6 +20,7 @@ function FormField({ id, label, value, onChange, type = 'text', required, autoCo
                 id={id}
                 type={type}
                 value={value}
+                inputMode={type === 'password' ? undefined : 'text'}
                 onChange={(e) => onChange(e.target.value)}
                 required={required}
                 autoComplete={autoComplete}

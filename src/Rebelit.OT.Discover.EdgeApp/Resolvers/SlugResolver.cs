@@ -8,7 +8,7 @@ internal static class SlugResolver
     /// <remarks>The normalization process replaces spaces, underscores, and periods with hyphens, removes all
     /// characters except letters, digits, and hyphens, and trims leading and trailing hyphens. This method is useful
     /// for generating identifiers or URLs from arbitrary strings.</remarks>
-    /// <param name="input">The input string to normalize. Can be null or empty.</param>
+    /// <param name="input">The input string to normalize.</param>
     /// <returns>A normalized slug consisting of lowercase letters, digits, and hyphens. Returns "opcua" if the input is null,
     /// empty, or contains no valid characters.</returns>
     public static string Resolve(string input)

@@ -13,7 +13,7 @@ public interface IDataSourceResolver
     /// <param name="agentId">The identifier of the agent for which to resolve the unique value. Cannot be null or empty.</param>
     /// <param name="sourceName">The name of the source context in which to resolve the agent. Cannot be null or empty.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the resolved unique identifier as a
-    /// string, or null if no identifier is found.</returns>
+    /// string</returns>
     Task<string> ResolveAsync(string agentId, string sourceName);
 }
 
@@ -39,6 +39,9 @@ internal sealed class DataSourceResolver(
 
     public async Task<string> ResolveAsync(string agentId, string sourceName)
     {
+        if (string.IsNullOrWhiteSpace(sourceName))
+            sourceName = "OPC UA";
+
         if (!string.IsNullOrEmpty(_configuredDataSourceId))
         {
             return _configuredDataSourceId;
@@ -62,7 +65,7 @@ internal sealed class DataSourceResolver(
             device.IpAddress
         );
 
-        var existingDataSource = await FindExistingDataSourceAsync(agentId, device.PublicId);
+        var existingDataSource = await FindExistingDataSourceAsync(agentId, device.PublicId, sourceName);
         if (existingDataSource is not null)
         {
             logger.LogInformation(
@@ -86,20 +89,22 @@ internal sealed class DataSourceResolver(
 
     private async Task<DataSource?> FindExistingDataSourceAsync(
         string agentId,
-        string devicePublicId
+        string devicePublicId,
+        string sourceName
     )
     {
         var dataSourcesResponse = await apiClient.GetDataSourcesAsync(agentId);
         var dataSources = dataSourcesResponse.Data ?? [];
         return dataSources.FirstOrDefault(ds =>
             ds.Device?.PublicId == devicePublicId
-            && string.Equals(ds.Slug, "opcua", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(ds.Slug, sourceName, StringComparison.OrdinalIgnoreCase)
         );
     }
 
     private DataSource BuildDataSource(string devicePublicId, string sourceName)
     {
         var authenticationType = string.IsNullOrEmpty(_username) ? "anonymous" : "username";
+        
         return new DataSource
         {
             Name = sourceName,
