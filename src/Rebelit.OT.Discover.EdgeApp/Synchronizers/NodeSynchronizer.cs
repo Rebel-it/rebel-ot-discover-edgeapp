@@ -13,6 +13,8 @@ public interface INodeSynchronizer
     Task InitializeAsync(string agentId);
     Task SynchronizeAsync(UAClient client, ReferenceDescription referenceDescription, string dataSourceId);
 
+    Task SynchronizeVariables(string agentId, string csv);
+
     /// <summary>
     /// Asynchronously maps an OPC UA reference to a Variable object using the specified client and data source
     /// identifier.
@@ -263,5 +265,16 @@ internal sealed class NodeSynchronizer(
             return null;
         }
         return variable;
+    }
+
+    public async Task SynchronizeVariables(string agentId, string csv)
+    {
+        logger.LogInformation("Posting {Length} bytes of variable CSV for agent {AgentId}.", csv.Length, agentId);
+        var result = await apiClient.PostVariablesAsync(agentId, csv);
+        logger.LogInformation(
+            "Successfully posted {Count} variables via CSV for agent {AgentId}.",
+            result?.Data?.Length ?? 0,
+            agentId
+        );
     }
 }

@@ -38,6 +38,12 @@ internal class ApiClient(
         return await Post<Response<Variable>>(uri, newVariable);
     }
 
+    public async Task<Response<Variable[]>?> PostVariablesAsync(string agentId, string csv)
+    {
+        var uri = $"/api/agents/{agentId}/data-variables";
+        return await Post<Response<Variable[]>>(uri, csv);
+    }
+
     public async Task<Response<Agent>> GetAgentAsync(string agentId)
     {
         var uri = $"/api/agents/{agentId}?fields=publicId,name,deviceId";
@@ -66,4 +72,5 @@ internal class ApiClient(
         var uri = $"/api/agents/{agentId}/data-sources";
         return await Post<Response<DataSource>>(uri, newDataSource);
     }
+
 }

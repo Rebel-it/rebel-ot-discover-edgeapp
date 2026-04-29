@@ -165,4 +165,48 @@ public class Scraper(
             .BrowseFullAddressSpaceAsync(client, Objects.RootFolder, ct: cancellationToken)
             .ConfigureAwait(false);
     }
+
+    public async Task ExecuteVariableScraper(CancellationToken cancellationToken)
+    {
+        var dataSourceId = await dataSourceResolver.ResolveAsync(AgentId, "");
+        var client = await clientFactory.Create(Address, Username, Password);
+        var nodes = await FetchReferenceDescriptionsAsync(cancellationToken);
+        if (nodes is null)
+            return;
+
+        logger.LogInformation("Found {NodeCount} nodes in the OPC UA address space.", nodes.Count);
+        foreach (var rd in nodes)
+            logger.LogTrace("Found node {NodeId} ({DisplayName}).", rd.NodeId, rd.DisplayName);
+
+        await nodeSynchronizer.InitializeAsync(AgentId);
+
+        var filteredNodes = nodes.Where(rd =>
+        {
+            if (rd.NodeId.NamespaceIndex == 0)
+            {
+                logger.LogDebug(
+                    "Skipping node {NodeId} in namespace 0.",
+                    rd.NodeId
+                );
+                return false;
+            }
+            return true;
+        });
+
+        //map all vartiables in a list
+        foreach (var batch in filteredNodes.Chunk(BatchSize))
+        {
+            var batchVariables = await Task.WhenAll(
+                batch.Select(rd => nodeSynchronizer.MapVariableAsync(client, rd, dataSourceId)));
+            _CreatedVariables.AddRange(batchVariables.Where(v => v is not null)!);
+        }
+
+        logger.LogInformation(
+            "Mapped {VariableCount} variables from OPC UA nodes.",
+            _CreatedVariables.Count
+        );
+
+        var csv = csvExporters.CreateVariableCsv(_CreatedVariables);
+        await nodeSynchronizer.SynchronizeVariables(AgentId, csv);
+    }
 }

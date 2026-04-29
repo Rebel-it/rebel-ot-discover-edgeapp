@@ -78,6 +78,18 @@ internal abstract class BaseAgent
         await HandleResponseErrors(response);
     }
 
+    protected async Task<T?> PostCsv<T>(string uri, string csv)
+    {
+        var content = new StringContent(csv, System.Text.Encoding.UTF8, "text/csv");
+        var response = await ExecuteRequestAsync(http =>
+            http.PostAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", content)
+        );
+        await HandleResponseErrors(response);
+        return System.Text.Json.JsonSerializer.Deserialize<T>(
+            await response.Content.ReadAsStringAsync()
+        );
+    }
+
     private async Task<HttpResponseMessage> ExecuteRequestAsync(
         Func<HttpClient, Task<HttpResponseMessage>> send
     )
