@@ -104,16 +104,16 @@ internal sealed class DataSourceResolver(
     private DataSource BuildDataSource(string devicePublicId, string sourceName)
     {
         var authenticationType = string.IsNullOrEmpty(_username) ? "anonymous" : "username";
-        
+        var slug = SlugResolver.Resolve(sourceName);
         return new DataSource
         {
             Name = sourceName,
-            Slug = SlugResolver.Resolve(sourceName),
+            Slug = slug,
             Disabled = false,
             Device = new Source { PublicId = devicePublicId },
             Protocol = new DataSourceProtocol
             {
-                PublicId = "opc-ua",
+                PublicId = slug,
                 AuthenticationType = authenticationType,
                 Username = string.IsNullOrEmpty(_username) ? null : _username,
                 Password = string.IsNullOrEmpty(_password) ? null : _password,
