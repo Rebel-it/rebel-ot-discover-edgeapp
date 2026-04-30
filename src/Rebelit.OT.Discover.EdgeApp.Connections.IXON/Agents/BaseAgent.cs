@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
-using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Authentication;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Factories;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 
@@ -10,43 +9,18 @@ namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 internal abstract class BaseAgent
 {
     private readonly IOptionsMonitor<Configuration> _configuration;
-    private readonly IxonAuthentication _ixonAuth;
     private readonly ILogger<BaseAgent> _logger;
     private readonly ResiliencePipeline<HttpResponseMessage> _pipeline;
 
     protected BaseAgent(
         IOptionsMonitor<Configuration> configuration,
-        IxonAuthentication ixonAuth,
         ILogger<BaseAgent> logger,
         TimeProvider timeProvider
     )
     {
         _configuration = configuration;
-        _ixonAuth = ixonAuth;
         _logger = logger;
-        _pipeline = IxonResiliencePipelineFactory.Create(
-            timeProvider,
-            logger,
-            RefreshTokenAsync
-        );
-    }
-
-    private async Task<string> RefreshTokenAsync()
-    {
-        var config = _configuration.CurrentValue;
-        _logger.LogInformation("Refreshing IXON bearer token...");
-
-        var newToken = await _ixonAuth.BearerTokenGenerator(
-            config.Email ?? throw new InvalidOperationException("Email is not configured"),
-            config.Password ?? throw new InvalidOperationException("Password is not configured"),
-            config.ApplicationId,
-            config.OtpCode
-        );
-
-        // Update the configuration with the new token
-        config.BearerToken = newToken;
-        _logger.LogInformation("Bearer token refreshed successfully.");
-        return newToken;
+        _pipeline = IxonResiliencePipelineFactory.Create(timeProvider, logger);
     }
 
     protected async Task<T> Get<T>(string uri)

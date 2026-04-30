@@ -40,9 +40,6 @@ if (builder.Environment.IsDevelopment())
     });
 }
 
-var applicationId = builder.Configuration["IXON_ApplicationId"]
-    ?? throw new InvalidOperationException("IXON_ApplicationId is not configured.");
-
 builder.Services.AddSingleton<IAppSettingsManager, AppSettingsManager>();
 builder.Services.AddSingleton<ICsvExporters, CsvExporters>();
 builder.Services.AddScoped<IScraper, Scraper>();
@@ -50,17 +47,7 @@ builder.Services.AddSingleton<IOpcUaVariableMapper, OpcUaVariableMapper>();
 builder.Services.AddSingleton<IDataSourceResolver, DataSourceResolver>();
 builder.Services.AddSingleton<INodeSynchronizer, NodeSynchronizer>();
 builder.Services.AddOPCUAClient("Rebelit.OT.Scraper");
-builder.Services.AddIXONClient(
-    applicationId,
-    builder.Configuration["IXON_CompanyId"]
-        ?? throw new InvalidOperationException("IXON_CompanyId is not configured."),
-    builder.Configuration["IXON_BearerToken"]
-        ?? throw new InvalidOperationException("IXON_BearerToken is not configured."),
-    builder.Configuration["OPCUA_Username"]
-        ?? throw new InvalidOperationException("OPCUA_Username is not configured."),
-    builder.Configuration["OPCUA_Password"]
-        ?? throw new InvalidOperationException("OPCUA_Password is not configured.")
-);
+builder.Services.AddIXONClient(builder.Configuration);
 
 var app = builder.Build();
 

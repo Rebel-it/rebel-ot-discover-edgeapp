@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Authentication;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 
 namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
@@ -8,10 +7,9 @@ namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 /// <inheritdoc />
 internal class ApiClient(
     IOptionsMonitor<Configuration> configuration,
-    IxonAuthentication ixonAuth,
     ILogger<ApiClient> logger,
     TimeProvider timeProvider
-) : BaseAgent(configuration, ixonAuth, logger, timeProvider), IApiClient
+) : BaseAgent(configuration, logger, timeProvider), IApiClient
 {
     public async Task<Response<Variable[]>> GetDataVariablesAsync(string agentId)
     {

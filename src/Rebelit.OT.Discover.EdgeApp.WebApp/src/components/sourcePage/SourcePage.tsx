@@ -29,6 +29,7 @@ function SourcePage() {
 
     async function handleSubmit(event: SourceFormSubmitEvent) {
         event.preventDefault()
+        if (isSubmitting) return
         setIsSubmitting(true)
         setErrorMessage('')
         setSourceCreationSucceeded(false)

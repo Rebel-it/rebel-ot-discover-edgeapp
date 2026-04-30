@@ -9,39 +9,13 @@ internal static class IxonResiliencePipelineFactory
 {
     internal static ResiliencePipeline<HttpResponseMessage> Create(
         TimeProvider timeProvider,
-        ILogger logger,
-        Func<Task<string>> tokenRefreshFunc
+        ILogger logger
     )
     {
         return new ResiliencePipelineBuilder<HttpResponseMessage> { TimeProvider = timeProvider }
-            .AddRetry(BuildUnauthorizedRetryOptions(logger, tokenRefreshFunc))
             .AddRetry(BuildRateLimitRetryOptions(logger))
             .AddRetry(BuildNoConnectionRetryOptions(logger))
             .Build();
-    }
-
-    private static RetryStrategyOptions<HttpResponseMessage> BuildUnauthorizedRetryOptions(
-        ILogger logger,
-        Func<Task<string>> tokenRefreshFunc
-    )
-    {
-        return new RetryStrategyOptions<HttpResponseMessage>
-        {
-            ShouldHandle = new PredicateBuilder<HttpResponseMessage>().HandleResult(r =>
-                r.StatusCode == HttpStatusCode.Unauthorized
-            ),
-            Delay = TimeSpan.Zero,
-            MaxRetryAttempts = 3,
-            BackoffType = DelayBackoffType.Constant,
-            OnRetry = async args =>
-            {
-                logger.LogWarning(
-                    "IXON API returned 401 Unauthorized. Refreshing token and retrying (attempt {AttemptNumber}).",
-                    args.AttemptNumber + 1
-                );
-                await tokenRefreshFunc();
-            },
-        };
     }
 
     private static RetryStrategyOptions<HttpResponseMessage> BuildRateLimitRetryOptions(
