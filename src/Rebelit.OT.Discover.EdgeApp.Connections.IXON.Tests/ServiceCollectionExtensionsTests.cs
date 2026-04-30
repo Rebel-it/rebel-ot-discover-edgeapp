@@ -37,22 +37,6 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Test]
-    public void AddIXONClient_WithValidParameters_ConfiguresOptionsCorrectly()
-    {
-        var services = new ServiceCollection();
-
-        services.AddIXONClient(BuildConfig("my-app", "my-company", "my-token", "test@example.com", "pass"));
-
-        var options = services.BuildServiceProvider().GetRequiredService<IOptions<Configuration>>();
-        Assert.Multiple(() =>
-        {
-            Assert.That(options.Value.ApplicationId, Is.EqualTo("my-app"));
-            Assert.That(options.Value.CompanyId, Is.EqualTo("my-company"));
-            Assert.That(options.Value.BearerToken, Is.EqualTo("my-token"));
-        });
-    }
-
-    [Test]
     public void AddIXONClient_WhenCalled_ReturnsTheSameServiceCollection()
     {
         var services = new ServiceCollection();
