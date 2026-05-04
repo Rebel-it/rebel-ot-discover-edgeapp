@@ -13,7 +13,7 @@ internal class ApiClient(
 {
     public async Task<Response<Variable[]>> GetDataVariablesAsync(string agentId)
     {
-        var uri = $"/api/agents/{agentId}/data-variables?fields=address,publicId&page-size=4000";
+        var uri = $"/api/agents/{agentId}/data-variables?fields=address,publicId,name,slug,type&page-size=4000";
         return await Get<Response<Variable[]>>(uri);
     }
 
