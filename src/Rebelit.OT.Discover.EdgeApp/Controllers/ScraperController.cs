@@ -11,11 +11,11 @@ public class ScraperController(IScraper scraper, ICsvExporters csvExporters) : C
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> RunAsync(CancellationToken cancellationToken)
     {
-        var result = await scraper.ExecuteAsync(cancellationToken);
+        await scraper.ExecuteAsync(cancellationToken);
         return Ok(new
         {
-            variables = result.Variables.Count,
-            tags = result.Tags.Count
+            variables = scraper.CreatedVariables.Count,
+            tags = scraper.CreatedTags.Count
         });
     }
 
@@ -23,8 +23,8 @@ public class ScraperController(IScraper scraper, ICsvExporters csvExporters) : C
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> DownloadVariablesCsvAsync(CancellationToken cancellationToken)
     {
-        var result = await scraper.ExecuteAsync(cancellationToken);
-        var csv = csvExporters.CreateVariableCsv(result.Variables.ToList());
+        await scraper.ExecuteAsync(cancellationToken);
+        var csv = csvExporters.CreateVariableCsv(scraper.CreatedVariables.ToList());
         var bytes = System.Text.Encoding.UTF8.GetBytes(csv);
         return File(bytes, "text/csv", $"variables_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
     }
@@ -33,8 +33,8 @@ public class ScraperController(IScraper scraper, ICsvExporters csvExporters) : C
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> DownloadTagsCsvAsync(CancellationToken cancellationToken)
     {
-        var result = await scraper.ExecuteAsync(cancellationToken);
-        var csv = csvExporters.CreateTagCsv(result.Tags.ToList());
+        await scraper.ExecuteAsync(cancellationToken);
+        var csv = csvExporters.CreateTagCsv(scraper.CreatedTags.ToList());
         var bytes = System.Text.Encoding.UTF8.GetBytes(csv);
         return File(bytes, "text/csv", $"tags_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
     }
@@ -43,7 +43,10 @@ public class ScraperController(IScraper scraper, ICsvExporters csvExporters) : C
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> RunVariableScrapeAsync(CancellationToken cancellationToken)
     {
-        var variables = await scraper.ExecuteVariableScraperAsync(cancellationToken);
-        return Ok(new { count = variables.Count });
+        await scraper.ExecuteVariableScraperAsync(cancellationToken);
+        return Ok(new
+        {
+            count = scraper.CreatedVariables.Count,
+        });
     }
 }
