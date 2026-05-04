@@ -28,7 +28,16 @@ public class AuthenticationController(
 
             settingsManager.Save(new Dictionary<string, string?>
             {
-                ["IXON_BearerToken"] = token
+                ["IXON_BearerToken"] = token,
+                ["IXON_ApplicationID"] = model.ApplicationID
+            });
+
+            //Get company id and save it to settings
+            var companyId = await ixonAuthentication.CompanyIdAsync(token, model.ApplicationID);
+
+            settingsManager.Save(new Dictionary<string, string?>
+            {
+                ["IXON_CompanyID"] = companyId
             });
 
             return Ok(new { bearerToken = token });

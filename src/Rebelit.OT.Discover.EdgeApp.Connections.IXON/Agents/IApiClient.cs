@@ -15,6 +15,15 @@ public interface IApiClient
     Task<Response<Variable>?> PostVariableAsync(string agentId, Variable newVariable);
 
     /// <summary>
+    /// Posts a collection of variables to the specified agent asynchronously.
+    /// </summary>
+    /// <param name="agentId">The unique identifier of the agent to which the variables will be posted. Cannot be null or empty.</param>
+    /// <param name="variables">An IEnumerable of Variable objects to be posted.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a response with an array of
+    /// variables that were posted. If the operation fails, an exception is thrown.</returns>
+    Task<Response<Variable[]>?> PostVariablesAsync(string agentId, IEnumerable<Variable> variables);
+
+    /// <summary>
     ///     Get all Variables for a given Agent.
     /// </summary>
     /// <param name="agentId"></param>

@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Authentication;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 
 namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
@@ -8,10 +7,9 @@ namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 /// <inheritdoc />
 internal class ApiClient(
     IOptionsMonitor<Configuration> configuration,
-    IxonAuthentication ixonAuth,
     ILogger<ApiClient> logger,
     TimeProvider timeProvider
-) : BaseAgent(configuration, ixonAuth, logger, timeProvider), IApiClient
+) : BaseAgent(configuration, logger, timeProvider), IApiClient
 {
     public async Task<Response<Variable[]>> GetDataVariablesAsync(string agentId)
     {
@@ -36,6 +34,12 @@ internal class ApiClient(
     {
         var uri = $"/api/agents/{agentId}/data-variables";
         return await Post<Response<Variable>>(uri, newVariable);
+    }
+
+    public async Task<Response<Variable[]>?> PostVariablesAsync(string agentId, IEnumerable<Variable> variables)
+    {
+        var uri = $"/api/agents/{agentId}/data-variables";
+        return await Post<Response<Variable[]>>(uri, variables);
     }
 
     public async Task<Response<Agent>> GetAgentAsync(string agentId)
@@ -66,4 +70,5 @@ internal class ApiClient(
         var uri = $"/api/agents/{agentId}/data-sources";
         return await Post<Response<DataSource>>(uri, newDataSource);
     }
+
 }

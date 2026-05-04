@@ -1,19 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Authentication;
 
 public class IxonAuthentication
 {
-    private string? _cachedToken;
-    private DateTime _tokenExpiry = DateTime.MinValue;
-    private readonly SemaphoreSlim _refreshLock = new(1, 1);
     private const int ExpiresIn = 14400; // 4 hours in seconds
-    private const int TokenRefreshBufferSeconds = 14340; // token validity minus 60 seconds buffer
 
     /// <summary>
     /// Asynchronously obtains a bearer token for API authentication using the specified user credentials and
@@ -58,6 +51,35 @@ public class IxonAuthentication
         return token!;
     }
 
+    public async Task<string> CompanyIdAsync(string bearerToken, string applicationId)
+    {
+        using var client = new HttpClient();
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", bearerToken);
+
+        client.DefaultRequestHeaders.Add("Api-Version", "2");
+        client.DefaultRequestHeaders.Add("Api-Application", applicationId);
+
+        var response = await client.GetAsync(
+            "https://portal.ixon.cloud/api/companies?fields=publicId");
+
+        response.EnsureSuccessStatusCode();
+
+        var responseJson = await response.Content.ReadAsStringAsync();
+
+        using var doc = JsonDocument.Parse(responseJson);
+
+        var companyId = doc.RootElement
+            .GetProperty("data")
+            .EnumerateArray()
+            .First()
+            .GetProperty("publicId")
+            .GetString();
+
+        return companyId!;
+    }
+
 
     /// <summary>
     /// Creates a Base64-encoded Basic Authentication credential string using the specified email, password, and
@@ -70,39 +92,5 @@ public class IxonAuthentication
         var raw = otpCode != null ? $"{email}:{otpCode}:{password}" : $"{email}::{password}";
         var bytes = Encoding.UTF8.GetBytes(raw);
         return Convert.ToBase64String(bytes);
-    }
-
-    /// <summary>
-    /// Asynchronously retrieves a valid bearer token for the specified user and application, refreshing the token if
-    /// necessary.
-    /// </summary>
-    /// value must be provided.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a valid bearer token as a string.</returns>
-    public async Task<string> GetValidTokenAsync(string email, string password,
-        string applicationId, string? otpCode = null)
-    {
-        if (_cachedToken != null && DateTime.UtcNow < _tokenExpiry)
-        {
-            return _cachedToken;
-        }
-
-        await _refreshLock.WaitAsync();
-        try
-        {
-            // Double-check after acquiring lock
-            if (_cachedToken != null && DateTime.UtcNow < _tokenExpiry)
-            {
-                return _cachedToken;
-            }
-
-            _cachedToken = await BearerTokenGenerator(email, password, applicationId, otpCode);
-            _tokenExpiry = DateTime.UtcNow.AddSeconds(TokenRefreshBufferSeconds);
-
-            return _cachedToken;
-        }
-        finally
-        {
-            _refreshLock.Release();
-        }
     }
 }

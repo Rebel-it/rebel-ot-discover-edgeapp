@@ -35,19 +35,18 @@ internal sealed class DataSourceResolver(
         configuration["OPCUA_Password"]
         ?? throw new InvalidOperationException("OPCUA_Password configuration is not set.");
 
-    private readonly string? _configuredDataSourceId = configuration["IXON_DataSourceId"];
-
     public async Task<string> ResolveAsync(string agentId, string sourceName)
     {
         if (string.IsNullOrWhiteSpace(sourceName))
             sourceName = "OPC UA";
 
-        if (!string.IsNullOrEmpty(_configuredDataSourceId))
+        var configuredDataSourceId = configuration["IXON_DataSourceId"];
+        if (!string.IsNullOrEmpty(configuredDataSourceId))
         {
-            return _configuredDataSourceId;
+            return configuredDataSourceId;
         }
 
-        logger.LogInformation("No data source ID provided. Creating a new OPC-UA data source...");
+        logger.LogInformation("Creating a new OPC-UA data source...");
 
         var devicesResponse = await apiClient.GetDevicesAsync(agentId);
         var devices = devicesResponse.Data ?? [];
@@ -104,7 +103,6 @@ internal sealed class DataSourceResolver(
     private DataSource BuildDataSource(string devicePublicId, string sourceName)
     {
         var authenticationType = string.IsNullOrEmpty(_username) ? "anonymous" : "username";
-        
         return new DataSource
         {
             Name = sourceName,

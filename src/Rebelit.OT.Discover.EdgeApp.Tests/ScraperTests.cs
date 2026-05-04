@@ -186,6 +186,8 @@ public class ScraperTests
                 LoggingInterval = "72s"
             };
         }
+
+        public Task SynchronizeVariablesAsync(string agentId, IEnumerable<Variable> variables) => Task.CompletedTask;
     }
 
     private sealed class StubDataSourceResolver(string dataSourceId) : IDataSourceResolver

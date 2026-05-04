@@ -38,4 +38,15 @@ public class ScraperController(IScraper scraper, ICsvExporters csvExporters) : C
         var bytes = System.Text.Encoding.UTF8.GetBytes(csv);
         return File(bytes, "text/csv", $"tags_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
     }
+
+    [HttpPost("variables")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> RunVariableScrapeAsync(CancellationToken cancellationToken)
+    {
+        await scraper.ExecuteVariableScraperAsync(cancellationToken);
+        return Ok(new
+        {
+            count = scraper.CreatedVariables.Count,
+        });
+    }
 }
