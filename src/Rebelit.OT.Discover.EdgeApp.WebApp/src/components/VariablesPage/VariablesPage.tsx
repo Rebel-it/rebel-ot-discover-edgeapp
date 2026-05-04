@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { VariableScraper } from '../../services/ScraperService'
+import { synchronizeVariables } from '../../services/ScraperService'
 import sharedStyles from '../loginPage/LoginPage.module.css'
 import styles from './VariablesPage.module.css'
 
-function SynchronizeVariables() {
+function VariablesPage() {
     const navigate = useNavigate()
     const [isSubmitting, setIsSubmitting] = useState(true)
     const [synchronizationSucceeded, setSynchronizationSucceeded] = useState(false)
@@ -19,7 +19,7 @@ function SynchronizeVariables() {
             setSynchronizationSucceeded(false)
 
             try {
-                const response = await VariableScraper()
+                const response = await synchronizeVariables()
 
                 if (!isActive) {
                     return
@@ -92,4 +92,4 @@ function SynchronizeVariables() {
     )
 }
 
-export default SynchronizeVariables
+export default VariablesPage

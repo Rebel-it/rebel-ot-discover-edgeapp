@@ -10,7 +10,7 @@ public interface IScraper
     /// Executes the variable scraping operation asynchronously.
     /// </summary>
     /// <returns>A task that represents the asynchronous variable scraping operation.</returns>
-    Task ExecuteVariableScraper(CancellationToken cancellationToken);
+    Task ExecuteVariableScraperAsync(CancellationToken cancellationToken);
     IReadOnlyList<Variable> CreatedVariables { get; }
     IReadOnlyList<Tag> CreatedTags { get; }
 }

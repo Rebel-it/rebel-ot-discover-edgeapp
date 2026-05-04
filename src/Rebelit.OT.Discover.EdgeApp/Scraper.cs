@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Opc.Ua;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
+using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Clients;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Factory;
 using Rebelit.OT.Discover.EdgeApp.Exporters;
 using Rebelit.OT.Discover.EdgeApp.Resolvers;
@@ -160,17 +161,33 @@ public class Scraper(
             return null;
         }
 
+        return await FetchReferenceDescriptionsAsync(client, cancellationToken);
+    }
+
+    private async Task<ReferenceDescriptionCollection?> FetchReferenceDescriptionsAsync(
+        UAClient client,
+        CancellationToken cancellationToken
+    )
+    {
         var sampler = await clientSamplerFactory.CreateAsync();
         return await sampler
             .BrowseFullAddressSpaceAsync(client, Objects.RootFolder, ct: cancellationToken)
             .ConfigureAwait(false);
     }
 
-    public async Task ExecuteVariableScraper(CancellationToken cancellationToken)
+    public async Task ExecuteVariableScraperAsync(CancellationToken cancellationToken)
     {
+        _CreatedVariables.Clear();
         var dataSourceId = await dataSourceResolver.ResolveAsync(AgentId, "");
+
         var client = await clientFactory.Create(Address, Username, Password);
-        var nodes = await FetchReferenceDescriptionsAsync(cancellationToken);
+        if (client is null)
+        {
+            logger.LogError("Failed to create UAClient. Aborting execution.");
+            return;
+        }
+
+        var nodes = await FetchReferenceDescriptionsAsync(client, cancellationToken);
         if (nodes is null)
             return;
 
@@ -184,28 +201,25 @@ public class Scraper(
         {
             if (rd.NodeId.NamespaceIndex == 0)
             {
-                logger.LogDebug(
-                    "Skipping node {NodeId} in namespace 0.",
-                    rd.NodeId
-                );
+                logger.LogDebug("Skipping node {NodeId} in namespace 0.", rd.NodeId);
                 return false;
             }
             return true;
         });
 
-        //map all vartiables in a list
+        var createdVariables = new List<Variable>();
         foreach (var batch in filteredNodes.Chunk(BatchSize))
         {
             var batchVariables = await Task.WhenAll(
                 batch.Select(rd => nodeSynchronizer.MapVariableAsync(client, rd, dataSourceId)));
-            _CreatedVariables.AddRange(batchVariables.Where(v => v is not null)!);
+            createdVariables.AddRange(batchVariables.Where(v => v is not null)!);
         }
 
         logger.LogInformation(
             "Mapped {VariableCount} variables from OPC UA nodes.",
-            _CreatedVariables.Count
+            createdVariables.Count
         );
 
-        await nodeSynchronizer.SynchronizeVariables(AgentId, _CreatedVariables);
+        await nodeSynchronizer.SynchronizeVariablesAsync(AgentId, createdVariables);
     }
 }

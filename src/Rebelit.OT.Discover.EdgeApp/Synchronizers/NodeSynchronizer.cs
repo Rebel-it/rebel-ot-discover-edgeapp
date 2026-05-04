@@ -13,7 +13,7 @@ public interface INodeSynchronizer
     Task InitializeAsync(string agentId);
     Task SynchronizeAsync(UAClient client, ReferenceDescription referenceDescription, string dataSourceId);
 
-    Task SynchronizeVariables(string agentId, IEnumerable<Variable> variables);
+    Task SynchronizeVariablesAsync(string agentId, IEnumerable<Variable> variables);
 
     /// <summary>
     /// Asynchronously maps an OPC UA reference to a Variable object using the specified client and data source
@@ -267,15 +267,34 @@ internal sealed class NodeSynchronizer(
         return variable;
     }
 
-    public async Task SynchronizeVariables(string agentId, IEnumerable<Variable> variables)
+    public async Task SynchronizeVariablesAsync(string agentId, IEnumerable<Variable> variables)
     {
         var variableList = variables.ToList();
+        if (variableList.Count == 0)
+        {
+            logger.LogInformation(
+                "No variables to post for agent {AgentId}. Skipping synchronization.",
+                agentId
+            );
+            return;
+        }
+
         logger.LogInformation("Posting {Count} variables for agent {AgentId}.", variableList.Count, agentId);
         var result = await apiClient.PostVariablesAsync(agentId, variableList);
-        logger.LogInformation(
-            "Successfully posted {Count} variables for agent {AgentId}.",
-            result?.Data?.Length ?? 0,
-            agentId
-        );
+
+        if (result is not null && result.Data is not null)
+        {
+            logger.LogInformation(
+                "Successfully posted {Count} variables for agent {AgentId}.",
+                result.Data.Length,
+                agentId
+            );
+            return;
+        }
+        logger.LogWarning(
+            "Posting variables for agent {AgentId} returned an unexpected empty response. Attempted to post {Count} variables.",
+            agentId,
+            variableList.Count
+            );
     }
 }
