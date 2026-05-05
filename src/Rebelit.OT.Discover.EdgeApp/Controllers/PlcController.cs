@@ -5,10 +5,9 @@ using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Factory;
 namespace Rebelit.OT.Discover.EdgeApp.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
 public class PlcController(
     IUAClientFactory uaClientFactory
-) : ControllerBase
+) : BaseController
 {
     [HttpPost("connect")]
     [ProducesResponseType(StatusCodes.Status200OK)]

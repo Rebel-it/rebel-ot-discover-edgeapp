@@ -4,12 +4,10 @@ using Rebelit.OT.Discover.EdgeApp.Resolvers;
 
 namespace Rebelit.OT.Discover.EdgeApp.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 public class IxonSettingsController(
     IDataSourceResolver dataSourceResolver,
     IConfiguration configuration
-) : ControllerBase
+) : BaseController
 {
     [HttpPost("ixon")]
     [ProducesResponseType(StatusCodes.Status200OK)]

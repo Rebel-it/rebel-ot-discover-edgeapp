@@ -1,9 +1,11 @@
-﻿using Rebelit.OT.Discover.EdgeApp;
+﻿﻿using Rebelit.OT.Discover.EdgeApp;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Extensions;
 using Rebelit.OT.Discover.EdgeApp.Exporters;
+using Rebelit.OT.Discover.EdgeApp.Filters;
 using Rebelit.OT.Discover.EdgeApp.Mappers;
 using Rebelit.OT.Discover.EdgeApp.Resolvers;
+using Rebelit.OT.Discover.EdgeApp.Services;
 using Rebelit.OT.Discover.EdgeApp.Synchronizers;
 using Serilog;
 using Serilog.Events;
@@ -25,6 +27,8 @@ Log.Logger = new LoggerConfiguration().MinimumLevel.Is(logLevel).WriteTo.Console
 builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
+builder.Services.AddScoped<IAuthenticationContext, AuthenticationContext>();
+builder.Services.AddScoped<AuthenticationFilter>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -33,7 +37,7 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("LocalFrontend", policy =>
-            policy.WithOrigins("http://localhost:5173")
+            policy.WithOrigins("http://localhost:5174")
                   .AllowAnyHeader()
                   .AllowAnyMethod());
     });

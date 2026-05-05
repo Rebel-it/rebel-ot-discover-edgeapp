@@ -1,10 +1,10 @@
-import { type ComponentProps, useState } from 'react'
+import { useState, type ComponentProps } from 'react'
 import type { AuthObject } from '../../models/AuthObject.ts'
-import { login } from '../../services/authenticationService.ts'
 import { saveAuthToSession, loadAuthFromSession } from '../../services/sessionStorageService.ts'
 import styles from './LoginPage.module.css'
 import { useNavigate } from 'react-router-dom'
 import FormField from '../shared/FormField'
+import { validateCredentials } from '../../services/authenticationService.ts'
 
 
 type LoginFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
@@ -15,46 +15,43 @@ const defaultAuthObject: AuthObject = {
 }
 
 function LoginPage() {
-  const [authObject, setAuthObject] = useState<AuthObject>(() => loadAuthFromSession() ?? defaultAuthObject)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [loginSucceeded, setLoginSucceeded] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
-  const navigate = useNavigate()
+  const [authObject, setAuthObject] = useState<AuthObject>(() => loadAuthFromSession() ?? defaultAuthObject);
+  const [loginSucceeded, setLoginSucceeded] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   function setAuthProperty<K extends keyof AuthObject>(property: K, value: AuthObject[K]) {
     setAuthObject((currentAuthObject) => ({
       ...currentAuthObject,
       [property]: value,
-    }))
+    }));
   }
 
   async function handleSubmit(event: LoginFormSubmitEvent) {
-    event.preventDefault()
-    setIsSubmitting(true)
-    setErrorMessage('')
-    setLoginSucceeded(false)
+    event.preventDefault();
 
     try {
-      const response = await login(authObject)
+      const response = await validateCredentials(authObject);
 
       if (response.status === 200) {
-        saveAuthToSession(authObject)
-        setLoginSucceeded(true)
-        return
+        saveAuthToSession(authObject);
+        setLoginSucceeded(true);
+        return;
       }
 
-      let nextErrorMessage = 'Login failed. Please check your credentials and try again.'
-      const responseText = await response.text()
+      let nextErrorMessage = 'Login failed. Please check your credentials and try again.';
+      const responseText = await response.text();
 
       if (responseText) {
-        nextErrorMessage = responseText
+        nextErrorMessage = responseText;
       }
 
-      setErrorMessage(nextErrorMessage)
+      setErrorMessage(nextErrorMessage);
     } catch {
-      setErrorMessage('Unable to reach the login service. Check that the API is running.')
+      setErrorMessage('Unable to reach the login service. Check that the API is running.');
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 
@@ -79,8 +76,9 @@ function LoginPage() {
           onChange={(value) => setAuthProperty('AccessToken', value)}
           required
         />
-
+        
         {errorMessage && <p className={`${styles.formMessage} ${styles.errorMessage}`}>{errorMessage}</p>}
+
 
         {loginSucceeded && (
           <p className={`${styles.formMessage} ${styles.successMessage}`}>
@@ -88,7 +86,7 @@ function LoginPage() {
           </p>
         )}
 
-        <button type="submit" className={styles.loginButton} disabled={isSubmitting || loginSucceeded}>
+        <button type="submit" className={styles.loginButton} disabled={isSubmitting}>
           {isSubmitting ? 'Signing in...' : 'Sign in'}
         </button>
       </form>
@@ -102,4 +100,4 @@ function LoginPage() {
   )
 }
 
-export default LoginPage
+export default LoginPage;
