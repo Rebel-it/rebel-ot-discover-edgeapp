@@ -1,6 +1,5 @@
 export interface AuthObject {
-  username: string
-  password: string
-  otpCode?: string
-  applicationID: string
+  APIapplicationID: string;
+  AccessToken: string;
+  otpCode?: string;
 }

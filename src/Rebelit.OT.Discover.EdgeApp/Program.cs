@@ -4,7 +4,6 @@ using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Extensions;
 using Rebelit.OT.Discover.EdgeApp.Exporters;
 using Rebelit.OT.Discover.EdgeApp.Mappers;
 using Rebelit.OT.Discover.EdgeApp.Resolvers;
-using Rebelit.OT.Discover.EdgeApp.Services;
 using Rebelit.OT.Discover.EdgeApp.Synchronizers;
 using Serilog;
 using Serilog.Events;
@@ -40,7 +39,6 @@ if (builder.Environment.IsDevelopment())
     });
 }
 
-builder.Services.AddSingleton<IAppSettingsManager, AppSettingsManager>();
 builder.Services.AddSingleton<ICsvExporters, CsvExporters>();
 builder.Services.AddScoped<IScraper, Scraper>();
 builder.Services.AddSingleton<IOpcUaVariableMapper, OpcUaVariableMapper>();

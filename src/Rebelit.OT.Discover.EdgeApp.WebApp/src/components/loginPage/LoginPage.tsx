@@ -1,6 +1,7 @@
 import { type ComponentProps, useState } from 'react'
 import type { AuthObject } from '../../models/AuthObject.ts'
 import { login } from '../../services/authenticationService.ts'
+import { saveAuthToSession, loadAuthFromSession } from '../../services/sessionStorageService.ts'
 import styles from './LoginPage.module.css'
 import { useNavigate } from 'react-router-dom'
 import FormField from '../shared/FormField'
@@ -9,15 +10,12 @@ import FormField from '../shared/FormField'
 type LoginFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
 const defaultAuthObject: AuthObject = {
-  username: '',
-  password: '',
-  otpCode: '',
-  applicationID: '',
+  APIapplicationID: '',
+  AccessToken: ''
 }
 
 function LoginPage() {
-  const [authObject, setAuthObject] = useState<AuthObject>(defaultAuthObject)
-  const [otpEnabled, setOtpEnabled] = useState(false)
+  const [authObject, setAuthObject] = useState<AuthObject>(() => loadAuthFromSession() ?? defaultAuthObject)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [loginSucceeded, setLoginSucceeded] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -40,6 +38,7 @@ function LoginPage() {
       const response = await login(authObject)
 
       if (response.status === 200) {
+        saveAuthToSession(authObject)
         setLoginSucceeded(true)
         return
       }
@@ -65,55 +64,21 @@ function LoginPage() {
         <h1>Sign in</h1>
 
         <FormField
-          id="username"
-          label="Username"
-          value={authObject.username}
-          onChange={(value) => setAuthProperty('username', value)}
+          id="applicationid"
+          label="API Application ID"
+          value={authObject.APIapplicationID}
+          onChange={(value) => setAuthProperty('APIapplicationID', value)}
           required
         />
 
         <FormField
-          id="password"
-          label="Password"
+          id="accesstoken"
+          label="Access Token"
           type="password"
-          value={authObject.password}
-          onChange={(value) => setAuthProperty('password', value)}
+          value={authObject.AccessToken}
+          onChange={(value) => setAuthProperty('AccessToken', value)}
           required
         />
-        <FormField 
-        id="application-id"
-          label="Application ID"
-          value={authObject.applicationID}
-          onChange={(value) => setAuthProperty('applicationID', value)}
-          required
-        />
-
-        <label className={styles.checkboxLabel}>
-          <input
-            type="checkbox"
-            checked={otpEnabled}
-            onChange={(e) => {
-              setOtpEnabled(e.target.checked)
-              if (!e.target.checked) setAuthProperty('otpCode', '')
-            }}
-          />{' '}
-          Use one-time password (OTP)
-        </label>
-
-        {otpEnabled && (
-          <div className={styles.formField}>
-
-            <FormField
-              id="otp"
-              label="OTP code"
-              autoComplete="one-time-code"
-              inputMode="numeric"
-              value={authObject.otpCode ?? ''}
-              onChange={(value) => setAuthProperty('otpCode', value.replaceAll(/\D/gu, ''))}
-              required
-            />
-          </div>
-        )}
 
         {errorMessage && <p className={`${styles.formMessage} ${styles.errorMessage}`}>{errorMessage}</p>}
 
