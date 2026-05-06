@@ -1,6 +1,6 @@
 import { useState, type ComponentProps } from 'react'
 import type { AuthObject } from '../../models/AuthObject.ts'
-import { saveAuthToSession, loadAuthFromSession, saveCompanyConfigurationToSession } from '../../services/sessionStorageService.ts'
+import { saveAuthToSession, loadAuthFromSession, saveCompanyConfigurationToSession, clearAuthFromSession } from '../../services/sessionStorageService.ts'
 import styles from './LoginPage.module.css'
 import { useNavigate } from 'react-router-dom'
 import FormField from '../shared/FormField'
@@ -31,15 +31,13 @@ function LoginPage() {
     event.preventDefault();
 
     try {
-      const companyConfiguration = await getCompanyConfiguration(authObject);
-      console.log(companyConfiguration);
-      saveCompanyConfigurationToSession(companyConfiguration);
       saveAuthToSession(authObject);
+      const companyConfiguration = await getCompanyConfiguration();
+      saveCompanyConfigurationToSession(companyConfiguration);
       setLoginSucceeded(true);
-    } catch {
-      let nextErrorMessage = 'Login failed. Please check your credentials and try again.';
-      setErrorMessage(nextErrorMessage);
-
+    } catch (error) {
+      clearAuthFromSession();
+      setErrorMessage(error instanceof Error ? error.message : 'Login failed. Please check your credentials and try again.');
     } finally {
       setIsSubmitting(false);
     }
