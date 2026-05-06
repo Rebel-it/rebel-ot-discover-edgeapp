@@ -16,4 +16,9 @@ public class IxonCredentials
     ///     The Company ID that is linked with the IXON service account.
     /// </summary>
     public string? CompanyId { get; set; } = null!;
+    
+    /// <summary>
+    ///     The Agent ID that represents the IXON device.
+    /// </summary>
+    public string? AgentId { get; set; } = null!;
 }

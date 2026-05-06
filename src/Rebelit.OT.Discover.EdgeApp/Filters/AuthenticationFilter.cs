@@ -8,6 +8,8 @@ public class AuthenticationFilter : IActionFilter
 {
     private const string ApplicationIdHeader = "Api-Application";
     private const string AccessTokenHeader = "Api-Access-Token";
+    private const string CompanyIdHeader = "Api-Company-Id";
+    private const string AgentIdHeader = "Api-Agent-Id";
 
     public void OnActionExecuting(ActionExecutingContext context)
     {
@@ -25,11 +27,16 @@ public class AuthenticationFilter : IActionFilter
             return;
         }
 
+        headers.TryGetValue(CompanyIdHeader, out var companyId);
+        headers.TryGetValue(AgentIdHeader, out var agentId);
+        
         var authContext = context.HttpContext.RequestServices.GetRequiredService<IIxonAuthenticationContext>();
         authContext.IxonCredentials = new IxonCredentials
         {
             ApplicationId = applicationId!,
-            AccessToken = accessToken!
+            AccessToken = accessToken!,
+            CompanyId = companyId,
+            AgentId = agentId
         };
     }
 

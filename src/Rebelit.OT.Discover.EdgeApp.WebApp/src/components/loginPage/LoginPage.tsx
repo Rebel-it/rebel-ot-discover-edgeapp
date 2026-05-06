@@ -36,8 +36,6 @@ function LoginPage() {
       saveCompanyConfigurationToSession(companyConfiguration);
       saveAuthToSession(authObject);
       setLoginSucceeded(true);
-      return;
-
     } catch {
       let nextErrorMessage = 'Login failed. Please check your credentials and try again.';
       setErrorMessage(nextErrorMessage);
