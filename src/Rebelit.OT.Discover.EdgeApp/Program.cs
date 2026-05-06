@@ -6,6 +6,7 @@ using Rebelit.OT.Discover.EdgeApp.Filters;
 using Rebelit.OT.Discover.EdgeApp.Mappers;
 using Rebelit.OT.Discover.EdgeApp.Resolvers;
 using Rebelit.OT.Discover.EdgeApp.Services;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 using Rebelit.OT.Discover.EdgeApp.Synchronizers;
 using Serilog;
 using Serilog.Events;
@@ -27,7 +28,7 @@ Log.Logger = new LoggerConfiguration().MinimumLevel.Is(logLevel).WriteTo.Console
 builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
-builder.Services.AddScoped<IAuthenticationContext, AuthenticationContext>();
+builder.Services.AddScoped<IIxonAuthenticationContext, IxonAuthenticationContext>();
 builder.Services.AddScoped<AuthenticationFilter>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -46,10 +47,11 @@ if (builder.Environment.IsDevelopment())
 builder.Services.AddSingleton<ICsvExporters, CsvExporters>();
 builder.Services.AddScoped<IScraper, Scraper>();
 builder.Services.AddSingleton<IOpcUaVariableMapper, OpcUaVariableMapper>();
-builder.Services.AddSingleton<IDataSourceResolver, DataSourceResolver>();
-builder.Services.AddSingleton<INodeSynchronizer, NodeSynchronizer>();
+builder.Services.AddScoped<IDataSourceResolver, DataSourceResolver>();
+builder.Services.AddScoped<INodeSynchronizer, NodeSynchronizer>();
+builder.Services.AddScoped<ICompanyConfigurationService, CompanyConfigurationService>();
 builder.Services.AddOPCUAClient("Rebelit.OT.Scraper");
-builder.Services.AddIXONClient(builder.Configuration);
+builder.Services.AddIXONClient();
 
 var app = builder.Build();
 

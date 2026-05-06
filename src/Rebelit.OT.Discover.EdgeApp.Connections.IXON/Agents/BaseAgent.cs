@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Polly;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Factories;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 
@@ -11,16 +12,19 @@ internal abstract class BaseAgent
     private readonly IOptionsMonitor<Configuration> _configuration;
     private readonly ILogger<BaseAgent> _logger;
     private readonly ResiliencePipeline<HttpResponseMessage> _pipeline;
+    private readonly IIxonAuthenticationContext _ixonAuthenticationContext;
 
     protected BaseAgent(
         IOptionsMonitor<Configuration> configuration,
         ILogger<BaseAgent> logger,
-        TimeProvider timeProvider
+        TimeProvider timeProvider,
+        IIxonAuthenticationContext ixonAuthenticationContext
     )
     {
         _configuration = configuration;
         _logger = logger;
         _pipeline = IxonResiliencePipelineFactory.Create(timeProvider, logger);
+        _ixonAuthenticationContext = ixonAuthenticationContext;
     }
 
     protected async Task<T> Get<T>(string uri)
@@ -79,17 +83,24 @@ internal abstract class BaseAgent
 
     private HttpClient CreateHttpClient()
     {
+        var credentials = _ixonAuthenticationContext.IxonCredentials;
+
         var httpClient = GetHttpMessageHandler() is { } handler
             ? new HttpClient(handler)
             : new HttpClient();
         httpClient.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue(
                 "Bearer",
-                _configuration.CurrentValue.BearerToken
+                credentials.AccessToken
             );
-        httpClient.DefaultRequestHeaders.Add("Api-Application", _configuration.CurrentValue.ApplicationId);
-        httpClient.DefaultRequestHeaders.Add("Api-Company", _configuration.CurrentValue.CompanyId);
+        httpClient.DefaultRequestHeaders.Add("Api-Application", credentials.ApplicationId);
         httpClient.DefaultRequestHeaders.Add("Api-Version", _configuration.CurrentValue.Version.ToString());
+
+        if (!string.IsNullOrEmpty(credentials.CompanyId))
+        {
+            httpClient.DefaultRequestHeaders.Add("Api-Company", credentials.CompanyId);
+        }
+        
         return httpClient;
     }
 

@@ -69,4 +69,17 @@ public interface IApiClient
     /// <param name="agentId">The public ID of the agent.</param>
     /// <param name="newDataSource">The data source to create.</param>
     Task<Response<DataSource>?> PostDataSourceAsync(string agentId, DataSource newDataSource);
+    
+    /// <summary>
+    ///     Get company associated with service account.
+    ///     A service account can be associated with only one company.
+    /// </summary>
+    /// <returns></returns>
+    Task<Response<Company?>?> GetAssociatedCompanyAsync();
+    
+    /// <summary>
+    ///     Gets a list of agents associated with the companyId.
+    /// </summary>
+    /// <returns></returns>
+    Task<Response<Agent[]>> GetAgentsAsync();
 }

@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rebelit.OT.Discover.EdgeApp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Tests", "Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Tests\Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Tests.csproj", "{ED36DB88-A339-4B87-94E1-5F63AF6E136A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rebelit.OT.Discover.EdgeApp.SharedKernel", "Rebelit.OT.Discover.EdgeApp.SharedKernel\Rebelit.OT.Discover.EdgeApp.SharedKernel.csproj", "{5E4BFB3E-FF2E-44BF-B763-3B06AA588AAB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +101,18 @@ Global
 		{ED36DB88-A339-4B87-94E1-5F63AF6E136A}.Release|x64.Build.0 = Release|Any CPU
 		{ED36DB88-A339-4B87-94E1-5F63AF6E136A}.Release|x86.ActiveCfg = Release|Any CPU
 		{ED36DB88-A339-4B87-94E1-5F63AF6E136A}.Release|x86.Build.0 = Release|Any CPU
+		{5E4BFB3E-FF2E-44BF-B763-3B06AA588AAB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E4BFB3E-FF2E-44BF-B763-3B06AA588AAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E4BFB3E-FF2E-44BF-B763-3B06AA588AAB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5E4BFB3E-FF2E-44BF-B763-3B06AA588AAB}.Debug|x64.Build.0 = Debug|Any CPU
+		{5E4BFB3E-FF2E-44BF-B763-3B06AA588AAB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5E4BFB3E-FF2E-44BF-B763-3B06AA588AAB}.Debug|x86.Build.0 = Debug|Any CPU
+		{5E4BFB3E-FF2E-44BF-B763-3B06AA588AAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E4BFB3E-FF2E-44BF-B763-3B06AA588AAB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E4BFB3E-FF2E-44BF-B763-3B06AA588AAB}.Release|x64.ActiveCfg = Release|Any CPU
+		{5E4BFB3E-FF2E-44BF-B763-3B06AA588AAB}.Release|x64.Build.0 = Release|Any CPU
+		{5E4BFB3E-FF2E-44BF-B763-3B06AA588AAB}.Release|x86.ActiveCfg = Release|Any CPU
+		{5E4BFB3E-FF2E-44BF-B763-3B06AA588AAB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
-using Rebelit.OT.Discover.EdgeApp.Services;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.Filters;
 
@@ -26,8 +25,8 @@ public class AuthenticationFilter : IActionFilter
             return;
         }
 
-        var authContext = context.HttpContext.RequestServices.GetRequiredService<IAuthenticationContext>();
-        authContext.Authentication = new Authentication
+        var authContext = context.HttpContext.RequestServices.GetRequiredService<IIxonAuthenticationContext>();
+        authContext.IxonCredentials = new IxonCredentials
         {
             ApplicationId = applicationId!,
             AccessToken = accessToken!

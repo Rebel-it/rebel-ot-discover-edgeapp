@@ -1,11 +1,10 @@
 import { useState, type ComponentProps } from 'react'
 import type { AuthObject } from '../../models/AuthObject.ts'
-import { saveAuthToSession, loadAuthFromSession } from '../../services/sessionStorageService.ts'
+import { saveAuthToSession, loadAuthFromSession, saveCompanyConfigurationToSession } from '../../services/sessionStorageService.ts'
 import styles from './LoginPage.module.css'
 import { useNavigate } from 'react-router-dom'
 import FormField from '../shared/FormField'
-import { validateCredentials } from '../../services/authenticationService.ts'
-
+import { getCompanyConfiguration } from '../../services/companyConfigurationService.ts'
 
 type LoginFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
@@ -32,24 +31,17 @@ function LoginPage() {
     event.preventDefault();
 
     try {
-      const response = await validateCredentials(authObject);
+      const companyConfiguration = await getCompanyConfiguration(authObject);
+      console.log(companyConfiguration);
+      saveCompanyConfigurationToSession(companyConfiguration);
+      saveAuthToSession(authObject);
+      setLoginSucceeded(true);
+      return;
 
-      if (response.status === 200) {
-        saveAuthToSession(authObject);
-        setLoginSucceeded(true);
-        return;
-      }
-
-      let nextErrorMessage = 'Login failed. Please check your credentials and try again.';
-      const responseText = await response.text();
-
-      if (responseText) {
-        nextErrorMessage = responseText;
-      }
-
-      setErrorMessage(nextErrorMessage);
     } catch {
-      setErrorMessage('Unable to reach the login service. Check that the API is running.');
+      let nextErrorMessage = 'Login failed. Please check your credentials and try again.';
+      setErrorMessage(nextErrorMessage);
+
     } finally {
       setIsSubmitting(false);
     }
