@@ -1,15 +1,25 @@
 import { apiBaseUrl } from './apiBaseUrl'
-import { loadAuthFromSession } from './sessionStorageService'
+import { loadIxonAuthenticationHeaders } from './sessionStorageService'
 
 function buildHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   }
 
-  const auth = loadAuthFromSession()
+  const auth = loadIxonAuthenticationHeaders();
+  
   if (auth) {
-    headers['Api-application'] = auth.APIapplicationID
-    headers['Api-Access-Token'] = auth.AccessToken
+    console.log('Adding authentication headers:', auth);
+    headers['Api-Application'] = auth.ApplicationId;
+    headers['Api-Access-Token'] = auth.AccessToken;
+
+    if (auth.CompanyId) {
+      headers['Api-Company-Id'] = auth.CompanyId;
+    }
+
+    if (auth.AgentId) {
+      headers['Api-Agent-Id'] = auth.AgentId;
+    }
   }
 
   return headers

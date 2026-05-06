@@ -1,4 +1,4 @@
 export interface CompanyConfiguration {
-  CompanyId: string;
-  AgentId: string;
+  CompanyId: string | null;
+  AgentId: string | null;
 }

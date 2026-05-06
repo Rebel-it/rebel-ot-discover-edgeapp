@@ -1,6 +1,22 @@
 import type { CompanyConfiguration } from '../models/CompanyConfiguration'
-import { httpClient } from './httpClient'
+import type { ServiceAccountObject } from '../models/ServiceAccountObject';
+import { apiBaseUrl } from './apiBaseUrl'
 
-export function getCompanyConfiguration(): Promise<CompanyConfiguration> {
-  return httpClient.get<CompanyConfiguration>('/CompanyConfiguration')
+export async function getCompanyConfiguration(serviceAccount: ServiceAccountObject): Promise<CompanyConfiguration> {
+
+   const response = await fetch(`${apiBaseUrl}/CompanyConfiguration`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Api-application': serviceAccount.APIapplicationID,
+      'Api-Access-Token': serviceAccount.AccessToken
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error fetching company configuration: ${response.statusText}`);
+  }
+
+  const data: CompanyConfiguration = await response.json();
+  return data;
 }

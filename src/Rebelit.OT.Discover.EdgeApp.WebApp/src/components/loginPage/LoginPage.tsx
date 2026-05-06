@@ -1,28 +1,28 @@
 import { useState, type ComponentProps } from 'react'
-import type { AuthObject } from '../../models/AuthObject.ts'
-import { saveAuthToSession, loadAuthFromSession, saveCompanyConfigurationToSession, clearAuthFromSession } from '../../services/sessionStorageService.ts'
+import { SaveIxonAuthenticationHeaders, clearIxonAuthenticationHeaders } from '../../services/sessionStorageService.ts'
 import styles from './LoginPage.module.css'
 import { useNavigate } from 'react-router-dom'
 import FormField from '../shared/FormField'
 import { getCompanyConfiguration } from '../../services/companyConfigurationService.ts'
+import type { ServiceAccountObject } from '../../models/ServiceAccountObject.ts'
 
 type LoginFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
-const defaultAuthObject: AuthObject = {
+const defaultAuthObject: ServiceAccountObject = {
   APIapplicationID: '',
   AccessToken: ''
 }
 
 function LoginPage() {
-  const [authObject, setAuthObject] = useState<AuthObject>(() => loadAuthFromSession() ?? defaultAuthObject);
+  const [serviceAccount, setServiceAccount] = useState<ServiceAccountObject>(defaultAuthObject);
   const [loginSucceeded, setLoginSucceeded] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  function setAuthProperty<K extends keyof AuthObject>(property: K, value: AuthObject[K]) {
-    setAuthObject((currentAuthObject) => ({
-      ...currentAuthObject,
+  function setAuthProperty<K extends keyof ServiceAccountObject>(property: K, value: ServiceAccountObject[K]) {
+    setServiceAccount((currentServiceAccount) => ({
+      ...currentServiceAccount,
       [property]: value,
     }));
   }
@@ -31,12 +31,11 @@ function LoginPage() {
     event.preventDefault();
 
     try {
-      saveAuthToSession(authObject);
-      const companyConfiguration = await getCompanyConfiguration();
-      saveCompanyConfigurationToSession(companyConfiguration);
+      const companyConfiguration = await getCompanyConfiguration(serviceAccount);
+      SaveIxonAuthenticationHeaders(serviceAccount, companyConfiguration);
       setLoginSucceeded(true);
     } catch (error) {
-      clearAuthFromSession();
+      clearIxonAuthenticationHeaders();
       setErrorMessage(error instanceof Error ? error.message : 'Login failed. Please check your credentials and try again.');
     } finally {
       setIsSubmitting(false);
@@ -51,7 +50,7 @@ function LoginPage() {
         <FormField
           id="applicationid"
           label="API Application ID"
-          value={authObject.APIapplicationID}
+          value={serviceAccount.APIapplicationID}
           onChange={(value) => setAuthProperty('APIapplicationID', value)}
           required
         />
@@ -60,7 +59,7 @@ function LoginPage() {
           id="accesstoken"
           label="Access Token"
           type="password"
-          value={authObject.AccessToken}
+          value={serviceAccount.AccessToken}
           onChange={(value) => setAuthProperty('AccessToken', value)}
           required
         />

@@ -1,4 +1,4 @@
-export interface AuthObject {
+export interface ServiceAccountObject {
   APIapplicationID: string;
   AccessToken: string;
 }
