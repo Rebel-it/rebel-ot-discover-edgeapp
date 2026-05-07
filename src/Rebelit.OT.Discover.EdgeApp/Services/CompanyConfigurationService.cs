@@ -6,7 +6,7 @@ namespace Rebelit.OT.Discover.EdgeApp.Services;
 
 public class CompanyConfigurationService(IApiClient apiClient, IIxonAuthenticationContext authenticationContext) : ICompanyConfigurationService
 {
-    public async Task<CompanyConfiguration?> GetConfigurationAsync(ServiceAccountDto serviceAccount)
+    public async Task<CompanyConfigurationDto?> GetConfigurationAsync()
     {
         try
         {
@@ -16,7 +16,7 @@ public class CompanyConfigurationService(IApiClient apiClient, IIxonAuthenticati
                 return null;
             }
 
-            authenticationContext.IxonCredentials.CompanyId = company.PublicId;
+            authenticationContext.IxonHeaders.CompanyId = company.PublicId;
 
             var agents = (await apiClient.GetAgentsAsync()).Data;
             if(agents.Length == 0)
@@ -26,7 +26,7 @@ public class CompanyConfigurationService(IApiClient apiClient, IIxonAuthenticati
 
             var agent = agents[0];
 
-            return new CompanyConfiguration
+            return new CompanyConfigurationDto
             {
                 AgentId = agent.PublicId,
                 CompanyId = company.PublicId

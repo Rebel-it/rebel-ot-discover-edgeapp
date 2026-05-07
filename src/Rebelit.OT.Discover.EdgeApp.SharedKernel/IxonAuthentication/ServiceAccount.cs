@@ -1,6 +1,6 @@
-namespace Rebelit.OT.Discover.EdgeApp.Dto;
+namespace Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
-public record ServiceAccountDto
+public record ServiceAccount
 {
     public required string ApiApplicationId { get; set; }
     public required string AccessToken { get; set; }

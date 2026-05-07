@@ -31,10 +31,13 @@ public class AuthenticationFilter : IActionFilter
         headers.TryGetValue(AgentIdHeader, out var agentId);
         
         var authContext = context.HttpContext.RequestServices.GetRequiredService<IIxonAuthenticationContext>();
-        authContext.IxonCredentials = new IxonCredentials
+        authContext.IxonHeaders = new IxonHeaders
         {
-            ApplicationId = applicationId!,
-            AccessToken = accessToken!,
+            ServiceAccount = new ServiceAccount
+            {
+                AccessToken =  accessToken!,
+                ApiApplicationId = applicationId!
+            },
             CompanyId = companyId,
             AgentId = agentId
         };

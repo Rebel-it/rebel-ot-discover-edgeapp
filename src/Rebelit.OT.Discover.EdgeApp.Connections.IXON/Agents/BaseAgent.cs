@@ -83,7 +83,7 @@ internal abstract class BaseAgent
 
     private HttpClient CreateHttpClient()
     {
-        var credentials = _ixonAuthenticationContext.IxonCredentials;
+        var headers = _ixonAuthenticationContext.IxonHeaders;
 
         var httpClient = GetHttpMessageHandler() is { } handler
             ? new HttpClient(handler)
@@ -91,14 +91,14 @@ internal abstract class BaseAgent
         httpClient.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue(
                 "Bearer",
-                credentials.AccessToken
+                headers.ServiceAccount.AccessToken
             );
-        httpClient.DefaultRequestHeaders.Add("Api-Application", credentials.ApplicationId);
+        httpClient.DefaultRequestHeaders.Add("Api-Application", headers.ServiceAccount.ApiApplicationId);
         httpClient.DefaultRequestHeaders.Add("Api-Version", _configuration.CurrentValue.Version.ToString());
 
-        if (!string.IsNullOrEmpty(credentials.CompanyId))
+        if (!string.IsNullOrEmpty(headers.CompanyId))
         {
-            httpClient.DefaultRequestHeaders.Add("Api-Company", credentials.CompanyId);
+            httpClient.DefaultRequestHeaders.Add("Api-Company", headers.CompanyId);
         }
         
         return httpClient;
