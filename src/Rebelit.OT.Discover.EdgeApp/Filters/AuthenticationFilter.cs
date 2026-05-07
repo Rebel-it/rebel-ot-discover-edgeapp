@@ -22,7 +22,7 @@ public class AuthenticationFilter : IActionFilter
             {
                 ErrorMessage = "The required application id is not provided."
             };
-            context.Result = new OkObjectResult(errorResponse);
+            context.Result = new UnauthorizedObjectResult(errorResponse);
             return;
         }
 
@@ -32,7 +32,7 @@ public class AuthenticationFilter : IActionFilter
             {
                 ErrorMessage = "The required access token is not provided."
             };
-            context.Result = new OkObjectResult(errorResponse);
+            context.Result = new UnauthorizedObjectResult(errorResponse);
             return;
         }
 

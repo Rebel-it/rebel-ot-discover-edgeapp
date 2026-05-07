@@ -3,7 +3,6 @@ using Rebelit.OT.Discover.EdgeApp.Services;
 
 namespace Rebelit.OT.Discover.EdgeApp.Controllers;
 
-[Route("api/[controller]")]
 public class CompanyConfigurationController(
     ICompanyConfigurationService service
 ) : BaseController

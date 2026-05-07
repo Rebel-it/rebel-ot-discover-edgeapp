@@ -35,10 +35,12 @@ function LoginPage() {
     event.preventDefault();
 
     try {
+      setIsSubmitting(true);
       const result = await getCompanyConfiguration(serviceAccount);
 
       if(!result.success || !result.data) {
         setErrorMessage(result.errorMessage || 'Failed to retrieve company configuration. Please check your credentials and try again.');
+        setIsSubmitting(false);
         return;
       }
 

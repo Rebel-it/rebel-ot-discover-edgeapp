@@ -6,6 +6,6 @@ namespace Rebelit.OT.Discover.EdgeApp.Controllers;
 [ApiController]
 [ServiceFilter(typeof(AuthenticationFilter))]
 [Route("api/[controller]")]
-public class BaseController : ControllerBase
+public abstract class BaseController : ControllerBase
 {
 }

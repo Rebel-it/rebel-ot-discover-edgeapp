@@ -14,7 +14,7 @@ public class Response<T>
     ///     Use <see cref="Data"/> or <see cref="Error"/> to access the parsed value.
     /// </summary>
     [JsonPropertyName("data")]
-    public JsonElement? RawData { get; set; }
+    public JsonElement? RawData { private get; set; }
     
     /// <summary>
     ///     Indicates whether there are more results available after the current response. This is typically used for paginated

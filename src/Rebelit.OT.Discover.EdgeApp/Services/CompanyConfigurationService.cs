@@ -17,7 +17,7 @@ public class CompanyConfigurationService(IApiClient apiClient, IIxonAuthenticati
         
         if (companyResult.HasError)
         {
-            response.ErrorMessage = companyResult.ErrorMessage;
+            response.ErrorMessage = companyResult.ErrorMessage ?? "The company could not be retrieved from IXON.";
             return response;
         }
         
@@ -36,18 +36,18 @@ public class CompanyConfigurationService(IApiClient apiClient, IIxonAuthenticati
         
         if (agentResult.HasError)
         {
-            response.ErrorMessage = agentResult.ErrorMessage;
+            response.ErrorMessage = agentResult.ErrorMessage ?? "The agent could not be retrieved from IXON.";
             return response;
         }
         var agents = agentResult.Data?.ToArray();
         
-        if (agents is { Length: 0 })
+        if (agents is not { Length: > 0 })
         {
             response.ErrorMessage = "It seems there are no agents in the company.";
             return response;
         }
 
-        var agent = agents![0];
+        var agent = agents[0];
         response.Data.AgentId = agent.PublicId;
         
         return response;

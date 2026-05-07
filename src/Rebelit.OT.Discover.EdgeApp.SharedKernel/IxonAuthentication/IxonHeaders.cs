@@ -10,10 +10,10 @@ public class IxonHeaders
     /// <summary>
     ///     The Company ID that is linked with the IXON service account.
     /// </summary>
-    public string? CompanyId { get; set; } = null!;
+    public string? CompanyId { get; set; }
     
     /// <summary>
     ///     The Agent ID that represents the IXON device.
     /// </summary>
-    public string? AgentId { get; set; } = null!;
+    public string? AgentId { get; set; }
 }

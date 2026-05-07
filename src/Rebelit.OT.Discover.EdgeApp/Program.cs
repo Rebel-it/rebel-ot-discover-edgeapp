@@ -28,7 +28,6 @@ Log.Logger = new LoggerConfiguration().MinimumLevel.Is(logLevel).WriteTo.Console
 builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
-builder.Services.AddScoped<IIxonAuthenticationContext, IxonAuthenticationContext>();
 builder.Services.AddScoped<AuthenticationFilter>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
