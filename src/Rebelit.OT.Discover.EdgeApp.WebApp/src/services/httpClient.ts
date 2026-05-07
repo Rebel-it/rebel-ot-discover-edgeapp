@@ -9,7 +9,6 @@ function buildHeaders(): Record<string, string> {
   const auth = loadIxonAuthenticationHeaders();
   
   if (auth) {
-    console.log('Adding authentication headers:', auth);
     headers['Api-Application'] = auth.ApplicationId;
     headers['Api-Access-Token'] = auth.AccessToken;
 
