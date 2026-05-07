@@ -24,10 +24,10 @@ internal class ApiClient(
         return await Get<Response<Tag[]>>(uri);
     }
 
-    public async Task<Response<Tag>?> PostTagAsync(string agentId, Tag newTag)
+    public async Task<Response<Tag>?> PostTagAsync(string agentId, Tag tag)
     {
         var uri = $"/api/agents/{agentId}/data-tags";
-        return await Post<Response<Tag>>(uri, newTag);
+        return await Post<Response<Tag>>(uri, tag);
     }
 
     public async Task<Response<Variable>?> PostVariableAsync(string agentId, Variable newVariable)

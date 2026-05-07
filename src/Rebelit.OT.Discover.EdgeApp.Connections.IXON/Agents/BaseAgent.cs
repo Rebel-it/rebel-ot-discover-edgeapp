@@ -39,9 +39,9 @@ internal abstract class BaseAgent
             http.PostAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
         );
         await HandleResponseErrors(response);
-        return System.Text.Json.JsonSerializer.Deserialize<T>(
-            await response.Content.ReadAsStringAsync()
-        );
+        var content = await response.Content.ReadAsStringAsync();
+        var result = System.Text.Json.JsonSerializer.Deserialize<T>(content);
+        return result;
     }
 
     protected async Task Post(string uri, object body)

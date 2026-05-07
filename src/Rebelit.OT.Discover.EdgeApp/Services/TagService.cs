@@ -1,5 +1,6 @@
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
+using Rebelit.OT.Discover.EdgeApp.Models;
 
 namespace Rebelit.OT.Discover.EdgeApp.Services;
 
@@ -21,18 +22,9 @@ internal sealed class TagService(
         return tags;
     }
 
-    public async Task<Tag?> CreateTagAsync(Tag tag, CancellationToken cancellationToken = default)
+    public async Task<Tag?> UploadTagAsync(Tag tag, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(tag);
-
-        if (string.IsNullOrWhiteSpace(tag.Name))
-            throw new ArgumentException("Tag name is required.", nameof(tag));
-
-        if (tag.Variable is null || string.IsNullOrWhiteSpace(tag.Variable.PublicId))
-            throw new ArgumentException("Tag variable public id is required.", nameof(tag));
-
-        if (tag.Source is null || string.IsNullOrWhiteSpace(tag.Source.PublicId))
-            throw new ArgumentException("Tag source public id is required.", nameof(tag));
 
         var response = await apiClient.PostTagAsync(_agentId, tag);
         var createdTag = response?.Data;
@@ -44,4 +36,24 @@ internal sealed class TagService(
 
         return createdTag;
     }
+
+    public async Task<Tag?> CreateTagAsync(CreateTagRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var tag = MapToTag2(request);
+        return await UploadTagAsync(tag, cancellationToken);
+    }
+
+    private static Tag MapToTag2(CreateTagRequest request) => new()
+    {
+        Name = request.Name,
+        Slug = request.Slug,
+        LogEvent = request.LogEvent,
+        LoggingInterval = request.LoggingInterval,
+        OnChangeExpiry = request.OnChangeExpiry,
+        RetentionPolicy = request.RetentionPolicy,
+        EdgeAggregator = request.EdgeAggregator,
+        Variable = new TagVariable { PublicId = request.Variable },
+    };
 }

@@ -3,7 +3,8 @@ import StartPage from './components/startPage/StartPage'
 import LoginPage from './components/loginPage/LoginPage'
 import PlcConnect from './components/plcConnect/PlcConnect'
 import SourcePage from './components/sourcePage/SourcePage'
-import VariablesPage from './components/VariablesPage/VariablesPage'
+import VariablesPage from './components/variablesPage/VariablesPage'
+import TagPage from './components/tagPage/TagPage'
 
 function App() {
   return (
@@ -14,6 +15,8 @@ function App() {
         <Route path="/plc" element={<PlcConnect />} />
         <Route path="/source" element={<SourcePage />} />
         <Route path="/variables" element={<VariablesPage />} />
+        <Route path="/tags" element={<TagPage />} />
+
       </Routes>
     </BrowserRouter>
   )

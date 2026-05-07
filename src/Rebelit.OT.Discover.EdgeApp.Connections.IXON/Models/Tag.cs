@@ -1,51 +1,104 @@
+﻿using System;
 using System.Text.Json.Serialization;
 
 namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 
 /// <summary>
-///     Represents a Tag in the IXON API, containing properties that define the tag's source, associated variable, identifiers, logging settings, and other metadata. This class is used to model the data structure of tags as returned by the IXON API and to facilitate interactions with tags when using the API client.
+/// Represents the request body for creating a new tag in the IXON API.
 /// </summary>
-/// <remarks>
-///     Tags define what data is collected and how it is processed in the IXON system. They can be associated with variables, have specific logging settings, and can be used to trigger events or define retention policies. Understanding the properties of the Tag class is essential for effectively managing data collection and processing in IXON.
-/// </remarks>
 public class Tag
 {
-    [JsonPropertyName("source")]
-    public Source Source { get; set; }
-
-    [JsonPropertyName("variable")]
-    public Variable Variable { get; set; }
-
-    [JsonPropertyName("publicId")]
-    public string PublicId { get; set; }
-
-    [JsonPropertyName("tagId")]
-    public int TagId { get; set; }
-
-    [JsonPropertyName("slug")]
-    public string Slug { get; set; }
-
-    [JsonPropertyName("aggregators")]
-    public List<object> Aggregators { get; set; } = new List<object>();
-
-    [JsonPropertyName("edgeAggregator")]
-    public object EdgeAggregator { get; set; }
-
+    /// <summary>
+    /// Defines the type of event that triggers data logging for this tag.
+    /// </summary>
+    /// <remarks>
+    /// Supported values:
+    /// <list type="bullet">
+    ///   <item><description><c>interval</c> — logs data at a fixed time interval defined by <see cref="LoggingInterval"/>.</description></item>
+    ///   <item><description><c>change</c> — logs data only when the value changes. Use <see cref="OnChangeExpiry"/> to also log at a fixed interval when the value remains unchanged.</description></item>
+    /// </list>
+    /// </remarks>
     [JsonPropertyName("logEvent")]
-    public string LogEvent { get; set; }
+    public required string LogEvent { get; set; }
 
-    [JsonPropertyName("logTrigger")]
-    public object LogTrigger { get; set; }
-
+    /// <summary>
+    /// The interval at which data is logged, expressed as a duration string.
+    /// </summary>
+    /// <remarks>
+    /// Format: a numeric value followed by a unit suffix.
+    /// <list type="bullet">
+    ///   <item><description><c>ms</c> — milliseconds (e.g. <c>180ms</c>)</description></item>
+    ///   <item><description><c>s</c> — seconds (e.g. <c>30s</c>)</description></item>
+    ///   <item><description><c>m</c> — minutes (e.g. <c>5m</c>)</description></item>
+    ///   <item><description><c>h</c> — hours (e.g. <c>1h</c>)</description></item>
+    /// </list>
+    /// </remarks>
     [JsonPropertyName("loggingInterval")]
-    public string LoggingInterval { get; set; }
+    public required string LoggingInterval { get; set; }
 
-    [JsonPropertyName("retentionPolicy")]
-    public string RetentionPolicy { get; set; }
-
-    [JsonPropertyName("onChangeExpiry")]
-    public object OnChangeExpiry { get; set; }
-
+    /// <summary>
+    /// The display name of the tag.
+    /// </summary>
     [JsonPropertyName("name")]
-    public string Name { get; set; }
+    public required string Name { get; set; }
+
+    /// <summary>
+    /// Specifies how long to wait before logging an unchanged value when <see cref="LogEvent"/> is set to <c>change</c>.
+    /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    ///   <item><description><see langword="null"/> — only logs on value changes (default).</description></item>
+    ///   <item><description>Duration string (e.g. <c>1h</c>) — also logs at the given interval when the value has not changed.</description></item>
+    /// </list>
+    /// Only applies when <see cref="LogEvent"/> is <c>change</c>.
+    /// </remarks>
+    [JsonPropertyName("onChangeExpiry")]
+    public object? OnChangeExpiry { get; set; }
+
+    /// <summary>
+    /// How long the logged data is retained in IXON, expressed as a duration string (e.g. <c>104w</c> for 2 years).
+    /// </summary>
+    [JsonPropertyName("retentionPolicy")]
+    public required string RetentionPolicy { get; set; }
+
+    /// <summary>
+    /// A unique URL-friendly identifier for the tag. Must not contain spaces.
+    /// </summary>
+    [JsonPropertyName("slug")]
+    public required string Slug { get; set; }
+
+    /// <summary>
+    /// A reference to the data variable this tag is linked to.
+    /// </summary>
+    [JsonPropertyName("variable")]
+    public required TagVariable Variable { get; set; }
+
+    /// <summary>
+    /// The aggregation formula applied to the tag value at the edge before it is sent to the cloud.
+    /// </summary>
+    /// <remarks>
+    /// Supported values:
+    /// <list type="bullet">
+    ///   <item><description><c>Mean</c> — average of values in the interval.</description></item>
+    ///   <item><description><c>Min</c> — minimum value in the interval.</description></item>
+    ///   <item><description><c>Max</c> — maximum value in the interval.</description></item>
+    ///   <item><description><c>Last</c> — last recorded value in the interval (default).</description></item>
+    ///   <item><description><c>Increase</c> — total increase of the value in the interval.</description></item>
+    /// </list>
+    /// Set to <see langword="null"/> to use the default (<c>Last</c>).
+    /// </remarks>
+    [JsonPropertyName("edgeAggregator")]
+    public object? EdgeAggregator { get; set; }
+}
+
+/// <summary>
+/// A lightweight reference to an IXON data variable, identified by its public ID.
+/// </summary>
+public class TagVariable
+{
+    /// <summary>
+    /// The public identifier of the data variable in IXON.
+    /// </summary>
+    [JsonPropertyName("publicId")]
+    public required string PublicId { get; set; }
 }

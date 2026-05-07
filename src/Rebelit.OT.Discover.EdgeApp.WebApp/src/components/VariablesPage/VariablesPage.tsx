@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { synchronizeVariables } from '../../services/ScraperService'
+import { synchronizeVariables as synchronizeVariablesRequest } from '../../services/ScraperService'
 import sharedStyles from '../loginPage/LoginPage.module.css'
 import styles from './VariablesPage.module.css'
 
@@ -13,13 +13,13 @@ function VariablesPage() {
     useEffect(() => {
         let isActive = true
 
-        async function synchronizeVariables() {
+        async function runSynchronization() {
             setIsSubmitting(true)
             setErrorMessage('')
             setSynchronizationSucceeded(false)
 
             try {
-                const response = await synchronizeVariables()
+                const response = await synchronizeVariablesRequest()
 
                 if (!isActive) {
                     return
@@ -55,7 +55,7 @@ function VariablesPage() {
             }
         }
 
-        void synchronizeVariables()
+        void runSynchronization()
 
         return () => {
             isActive = false
