@@ -4,7 +4,6 @@ using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Factory;
 
 namespace Rebelit.OT.Discover.EdgeApp.Controllers;
 
-[ApiController]
 public class PlcController(
     IUAClientFactory uaClientFactory
 ) : BaseController

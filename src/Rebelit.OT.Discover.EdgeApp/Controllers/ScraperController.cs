@@ -3,7 +3,6 @@ using Rebelit.OT.Discover.EdgeApp.Exporters;
 
 namespace Rebelit.OT.Discover.EdgeApp.Controllers;
 
-[ApiController]
 public class ScraperController(IScraper scraper, ICsvExporters csvExporters) : BaseController
 {
     [HttpPost("run")]
