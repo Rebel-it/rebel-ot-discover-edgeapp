@@ -9,8 +9,8 @@ import type { ServiceAccountObject } from '../../models/ServiceAccountObject.ts'
 type LoginFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
 const defaultAuthObject: ServiceAccountObject = {
-  APIapplicationID: '',
-  AccessToken: ''
+  apiApplicationID: '',
+  accessToken: ''
 }
 
 function LoginPage() {
@@ -32,6 +32,7 @@ function LoginPage() {
 
     try {
       const companyConfiguration = await getCompanyConfiguration(serviceAccount);
+      console.log(companyConfiguration);
       SaveIxonAuthenticationHeaders(serviceAccount, companyConfiguration);
       setLoginSucceeded(true);
     } catch (error) {
@@ -50,8 +51,8 @@ function LoginPage() {
         <FormField
           id="applicationid"
           label="API Application ID"
-          value={serviceAccount.APIapplicationID}
-          onChange={(value) => setAuthProperty('APIapplicationID', value)}
+          value={serviceAccount.apiApplicationID}
+          onChange={(value) => setAuthProperty('apiApplicationID', value)}
           required
         />
 
@@ -59,8 +60,8 @@ function LoginPage() {
           id="accesstoken"
           label="Access Token"
           type="password"
-          value={serviceAccount.AccessToken}
-          onChange={(value) => setAuthProperty('AccessToken', value)}
+          value={serviceAccount.accessToken}
+          onChange={(value) => setAuthProperty('accessToken', value)}
           required
         />
         

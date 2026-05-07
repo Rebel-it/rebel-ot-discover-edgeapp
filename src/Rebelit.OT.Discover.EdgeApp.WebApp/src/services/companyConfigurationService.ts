@@ -8,8 +8,8 @@ export async function getCompanyConfiguration(serviceAccount: ServiceAccountObje
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      'Api-application': serviceAccount.APIapplicationID,
-      'Api-Access-Token': serviceAccount.AccessToken
+      'Api-application': serviceAccount.apiApplicationID,
+      'Api-Access-Token': serviceAccount.accessToken
     }
   });
 

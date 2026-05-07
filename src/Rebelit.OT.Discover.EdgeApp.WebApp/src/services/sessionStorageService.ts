@@ -8,10 +8,10 @@ const COMPANY_ID = 'companyId';
 const AGENT_ID = 'agentId';
 
 export function SaveIxonAuthenticationHeaders(auth: ServiceAccountObject, config: CompanyConfiguration | null): void {
-  sessionStorage.setItem(COMPANY_ID, config?.CompanyId ?? '');
-  sessionStorage.setItem(AGENT_ID, config?.AgentId ?? '');
-  sessionStorage.setItem(API_APPLICATION_ID_KEY, auth.APIapplicationID);
-  sessionStorage.setItem(ACCESS_TOKEN_KEY, auth.AccessToken);
+  sessionStorage.setItem(COMPANY_ID, config?.companyId ?? '');
+  sessionStorage.setItem(AGENT_ID, config?.agentId ?? '');
+  sessionStorage.setItem(API_APPLICATION_ID_KEY, auth.apiApplicationID);
+  sessionStorage.setItem(ACCESS_TOKEN_KEY, auth.accessToken);
 }
 
 export function loadIxonAuthenticationHeaders(): IxonAuthenticationHeaders | null {
@@ -19,7 +19,7 @@ export function loadIxonAuthenticationHeaders(): IxonAuthenticationHeaders | nul
   const accessToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
   const companyId = sessionStorage.getItem(COMPANY_ID);
   const agentId = sessionStorage.getItem(AGENT_ID);
-
+ 
   if (!apiApplicationId || !accessToken) {
     return null;
   }
