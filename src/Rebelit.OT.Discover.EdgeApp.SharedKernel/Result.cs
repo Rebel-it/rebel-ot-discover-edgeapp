@@ -1,6 +1,6 @@
-namespace Rebelit.OT.Discover.EdgeApp.Dto;
+namespace Rebelit.OT.Discover.EdgeApp.SharedKernel;
 
-public class ResponseDto<T>
+public class Result<T>
 {
     public T? Data { get; set; }
     public bool Success => string.IsNullOrEmpty(ErrorMessage);

@@ -18,21 +18,13 @@ public class AuthenticationFilter : IActionFilter
 
         if (!headers.TryGetValue(ApplicationIdHeader, out var applicationId) || string.IsNullOrWhiteSpace(applicationId))
         {
-            var errorResponse = new ResponseDto<dynamic>
-            {
-                ErrorMessage = "The required application id is not provided."
-            };
-            context.Result = new UnauthorizedObjectResult(errorResponse);
+            context.Result = new UnauthorizedObjectResult("The required application id is not provided.");
             return;
         }
 
         if (!headers.TryGetValue(AccessTokenHeader, out var accessToken) || string.IsNullOrWhiteSpace(accessToken))
         {
-            var errorResponse = new ResponseDto<dynamic>
-            {
-                ErrorMessage = "The required access token is not provided."
-            };
-            context.Result = new UnauthorizedObjectResult(errorResponse);
+            context.Result = new UnauthorizedObjectResult("The required access token is not provided.");
             return;
         }
 

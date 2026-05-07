@@ -1,14 +1,15 @@
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Dto;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel;
 using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.Services;
 
 public class CompanyConfigurationService(IApiClient apiClient, IIxonAuthenticationContext authenticationContext) : ICompanyConfigurationService
 {
-    public async Task<ResponseDto<CompanyConfigurationDto>> GetConfigurationAsync()
+    public async Task<Result<CompanyConfigurationDto>> GetConfigurationAsync()
     {
-        var response = new ResponseDto<CompanyConfigurationDto>
+        var response = new Result<CompanyConfigurationDto>
         {
             Data = new CompanyConfigurationDto()
         };
