@@ -20,7 +20,7 @@ export function loadIxonAuthenticationHeaders(): IxonAuthenticationHeaders | nul
   const companyId = sessionStorage.getItem(COMPANY_ID);
   const agentId = sessionStorage.getItem(AGENT_ID);
  
-  if (!apiApplicationId || !accessToken) {
+  if (!apiApplicationId || !accessToken || !companyId || !agentId) {
     return null;
   }
 

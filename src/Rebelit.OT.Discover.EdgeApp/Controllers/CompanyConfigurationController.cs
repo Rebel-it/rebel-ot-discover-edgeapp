@@ -11,6 +11,10 @@ public class CompanyConfigurationController(
     public async Task<IActionResult> GetConfiguration()
     {
         var result = await service.GetConfigurationAsync();
-        return Ok(result);
+        if (result.Success)
+        {
+            return Ok(result.Data);
+        }
+        return BadRequest(result.ErrorMessage);
     }
 }
