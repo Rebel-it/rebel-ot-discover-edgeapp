@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 
@@ -8,8 +9,9 @@ namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 internal class ApiClient(
     IOptionsMonitor<Configuration> configuration,
     ILogger<ApiClient> logger,
-    TimeProvider timeProvider
-) : BaseAgent(configuration, logger, timeProvider), IApiClient
+    TimeProvider timeProvider,
+    IIxonAuthenticationContext ixonAuthenticationContext
+) : BaseAgent(configuration, logger, timeProvider, ixonAuthenticationContext), IApiClient
 {
     public async Task<Response<Variable[]>> GetDataVariablesAsync(string agentId)
     {
@@ -71,4 +73,15 @@ internal class ApiClient(
         return await Post<Response<DataSource>>(uri, newDataSource);
     }
 
+    public async Task<Response<Company[]>> GetAssociatedCompanyAsync()
+    {
+        const string uri = "/api/companies?fields=publicId,name";
+        return await Get<Response<Company[]>>(uri);
+    }
+
+    public async Task<Response<Agent[]>> GetAgentsAsync()
+    {
+        const string uri = "/api/agents?fields=publicId,name,deviceId";
+        return await Get<Response<Agent[]>>(uri);
+    }
 }

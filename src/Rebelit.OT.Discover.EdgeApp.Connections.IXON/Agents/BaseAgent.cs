@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Polly;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Factories;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 
@@ -11,16 +12,19 @@ internal abstract class BaseAgent
     private readonly IOptionsMonitor<Configuration> _configuration;
     private readonly ILogger<BaseAgent> _logger;
     private readonly ResiliencePipeline<HttpResponseMessage> _pipeline;
+    private readonly IIxonAuthenticationContext _ixonAuthenticationContext;
 
     protected BaseAgent(
         IOptionsMonitor<Configuration> configuration,
         ILogger<BaseAgent> logger,
-        TimeProvider timeProvider
+        TimeProvider timeProvider,
+        IIxonAuthenticationContext ixonAuthenticationContext
     )
     {
         _configuration = configuration;
         _logger = logger;
         _pipeline = IxonResiliencePipelineFactory.Create(timeProvider, logger);
+        _ixonAuthenticationContext = ixonAuthenticationContext;
     }
 
     protected async Task<T> Get<T>(string uri)
@@ -28,7 +32,6 @@ internal abstract class BaseAgent
         var response = await ExecuteRequestAsync(http =>
             http.GetAsync($"{_configuration.CurrentValue.BaseUrl}{uri}")
         );
-        await HandleResponseErrors(response);
         var content = await response.Content.ReadAsStringAsync();
         return System.Text.Json.JsonSerializer.Deserialize<T>(content)!;
     }
@@ -38,18 +41,16 @@ internal abstract class BaseAgent
         var response = await ExecuteRequestAsync(http =>
             http.PostAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
         );
-        await HandleResponseErrors(response);
-        var content = await response.Content.ReadAsStringAsync();
-        var result = System.Text.Json.JsonSerializer.Deserialize<T>(content);
-        return result;
+        return System.Text.Json.JsonSerializer.Deserialize<T>(
+            await response.Content.ReadAsStringAsync()
+        );
     }
 
     protected async Task Post(string uri, object body)
     {
-        var response = await ExecuteRequestAsync(http =>
+        await ExecuteRequestAsync(http =>
             http.PostAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
         );
-        await HandleResponseErrors(response);
     }
 
     protected async Task<T?> PostCsv<T>(string uri, string csv)
@@ -58,7 +59,6 @@ internal abstract class BaseAgent
         var response = await ExecuteRequestAsync(http =>
             http.PostAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", content)
         );
-        await HandleResponseErrors(response);
         return System.Text.Json.JsonSerializer.Deserialize<T>(
             await response.Content.ReadAsStringAsync()
         );
@@ -79,32 +79,25 @@ internal abstract class BaseAgent
 
     private HttpClient CreateHttpClient()
     {
+        var headers = _ixonAuthenticationContext.IxonHeaders;
+
         var httpClient = GetHttpMessageHandler() is { } handler
             ? new HttpClient(handler)
             : new HttpClient();
         httpClient.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue(
                 "Bearer",
-                _configuration.CurrentValue.BearerToken
+                headers.ServiceAccount.AccessToken
             );
-        httpClient.DefaultRequestHeaders.Add("Api-Application", _configuration.CurrentValue.ApplicationId);
-        httpClient.DefaultRequestHeaders.Add("Api-Company", _configuration.CurrentValue.CompanyId);
+        httpClient.DefaultRequestHeaders.Add("Api-Application", headers.ServiceAccount.ApiApplicationId);
         httpClient.DefaultRequestHeaders.Add("Api-Version", _configuration.CurrentValue.Version.ToString());
-        return httpClient;
-    }
 
-    private async Task HandleResponseErrors(HttpResponseMessage response)
-    {
-        if (!response.IsSuccessStatusCode)
+        if (!string.IsNullOrEmpty(headers.CompanyId))
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            _logger.LogError(
-                "Request failed with status code {StatusCode}: {ErrorContent}",
-                response.StatusCode,
-                errorContent
-            );
+            httpClient.DefaultRequestHeaders.Add("Api-Company", headers.CompanyId);
         }
-        response.EnsureSuccessStatusCode();
+        
+        return httpClient;
     }
 
     private static StringContent CreateJsonContent(object body)

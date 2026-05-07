@@ -1,61 +1,50 @@
-import { type ComponentProps, useState } from 'react'
-import type { AuthObject } from '../../models/AuthObject.ts'
-import { login } from '../../services/authenticationService.ts'
+import { useEffect, useState, type ComponentProps } from 'react'
+import { SaveIxonAuthenticationHeaders, clearIxonAuthenticationHeaders } from '../../services/sessionStorageService.ts'
 import styles from './LoginPage.module.css'
 import { useNavigate } from 'react-router-dom'
 import FormField from '../shared/FormField'
-
+import { getCompanyConfiguration } from '../../services/companyConfigurationService.ts'
+import type { ServiceAccountObject } from '../../models/ServiceAccountObject.ts'
 
 type LoginFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
-const defaultAuthObject: AuthObject = {
-  username: '',
-  password: '',
-  otpCode: '',
-  applicationID: '',
+const defaultAuthObject: ServiceAccountObject = {
+  apiApplicationID: '',
+  accessToken: ''
 }
 
 function LoginPage() {
-  const [authObject, setAuthObject] = useState<AuthObject>(defaultAuthObject)
-  const [otpEnabled, setOtpEnabled] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [loginSucceeded, setLoginSucceeded] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
-  const navigate = useNavigate()
+  const [serviceAccount, setServiceAccount] = useState<ServiceAccountObject>(defaultAuthObject);
+  const [loginSucceeded, setLoginSucceeded] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
-  function setAuthProperty<K extends keyof AuthObject>(property: K, value: AuthObject[K]) {
-    setAuthObject((currentAuthObject) => ({
-      ...currentAuthObject,
+  useEffect(() => {
+    clearIxonAuthenticationHeaders();
+  }, []);
+
+  function setAuthProperty<K extends keyof ServiceAccountObject>(property: K, value: ServiceAccountObject[K]) {
+    setServiceAccount((currentServiceAccount) => ({
+      ...currentServiceAccount,
       [property]: value,
-    }))
+    }));
   }
 
   async function handleSubmit(event: LoginFormSubmitEvent) {
-    event.preventDefault()
-    setIsSubmitting(true)
-    setErrorMessage('')
-    setLoginSucceeded(false)
+    event.preventDefault();
 
     try {
-      const response = await login(authObject)
-
-      if (response.status === 200) {
-        setLoginSucceeded(true)
-        return
-      }
-
-      let nextErrorMessage = 'Login failed. Please check your credentials and try again.'
-      const responseText = await response.text()
-
-      if (responseText) {
-        nextErrorMessage = responseText
-      }
-
-      setErrorMessage(nextErrorMessage)
-    } catch {
-      setErrorMessage('Unable to reach the login service. Check that the API is running.')
+      setIsSubmitting(true);
+      const result = await getCompanyConfiguration(serviceAccount);
+      SaveIxonAuthenticationHeaders(serviceAccount, result);
+      setLoginSucceeded(true);
+      setErrorMessage("");
+    } catch (error) {
+      clearIxonAuthenticationHeaders();
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to login. Please check your credentials and try again.');
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 
@@ -65,57 +54,24 @@ function LoginPage() {
         <h1>Sign in</h1>
 
         <FormField
-          id="username"
-          label="Username"
-          value={authObject.username}
-          onChange={(value) => setAuthProperty('username', value)}
+          id="applicationid"
+          label="API Application ID"
+          value={serviceAccount.apiApplicationID}
+          onChange={(value) => setAuthProperty('apiApplicationID', value)}
           required
         />
 
         <FormField
-          id="password"
-          label="Password"
+          id="accesstoken"
+          label="Access Token"
           type="password"
-          value={authObject.password}
-          onChange={(value) => setAuthProperty('password', value)}
+          value={serviceAccount.accessToken}
+          onChange={(value) => setAuthProperty('accessToken', value)}
           required
         />
-        <FormField 
-        id="application-id"
-          label="Application ID"
-          value={authObject.applicationID}
-          onChange={(value) => setAuthProperty('applicationID', value)}
-          required
-        />
-
-        <label className={styles.checkboxLabel}>
-          <input
-            type="checkbox"
-            checked={otpEnabled}
-            onChange={(e) => {
-              setOtpEnabled(e.target.checked)
-              if (!e.target.checked) setAuthProperty('otpCode', '')
-            }}
-          />{' '}
-          Use one-time password (OTP)
-        </label>
-
-        {otpEnabled && (
-          <div className={styles.formField}>
-
-            <FormField
-              id="otp"
-              label="OTP code"
-              autoComplete="one-time-code"
-              inputMode="numeric"
-              value={authObject.otpCode ?? ''}
-              onChange={(value) => setAuthProperty('otpCode', value.replaceAll(/\D/gu, ''))}
-              required
-            />
-          </div>
-        )}
-
+        
         {errorMessage && <p className={`${styles.formMessage} ${styles.errorMessage}`}>{errorMessage}</p>}
+
 
         {loginSucceeded && (
           <p className={`${styles.formMessage} ${styles.successMessage}`}>
@@ -123,7 +79,7 @@ function LoginPage() {
           </p>
         )}
 
-        <button type="submit" className={styles.loginButton} disabled={isSubmitting || loginSucceeded}>
+        <button type="submit" className={styles.loginButton} disabled={isSubmitting}>
           {isSubmitting ? 'Signing in...' : 'Sign in'}
         </button>
       </form>
@@ -137,4 +93,4 @@ function LoginPage() {
   )
 }
 
-export default LoginPage
+export default LoginPage;

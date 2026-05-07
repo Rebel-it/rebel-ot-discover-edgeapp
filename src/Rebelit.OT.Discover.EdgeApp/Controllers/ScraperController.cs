@@ -3,9 +3,7 @@ using Rebelit.OT.Discover.EdgeApp.Exporters;
 
 namespace Rebelit.OT.Discover.EdgeApp.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-public class ScraperController(IScraper scraper, ICsvExporters csvExporters) : ControllerBase
+public class ScraperController(IScraper scraper, ICsvExporters csvExporters) : BaseController
 {
     [HttpPost("variables")]
     [ProducesResponseType(StatusCodes.Status200OK)]

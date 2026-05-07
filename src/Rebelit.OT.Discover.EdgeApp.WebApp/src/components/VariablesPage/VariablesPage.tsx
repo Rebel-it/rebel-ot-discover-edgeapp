@@ -21,33 +21,13 @@ function VariablesPage() {
             try {
                 const response = await synchronizeVariablesRequest()
 
-                if (!isActive) {
-                    return
-                }
+                if (!isActive) return
 
-                if (response.status === 200) {
-                    setSynchronizationSucceeded(true)
-                    return
-                }
+                setSynchronizationSucceeded(true)
+            } catch (error) {
+                if (!isActive) return
 
-                let nextErrorMessage = 'Variable synchronization failed. Please try again.'
-                const responseText = await response.text()
-
-                if (!isActive) {
-                    return
-                }
-
-                if (responseText) {
-                    nextErrorMessage = responseText
-                }
-
-                setErrorMessage(nextErrorMessage)
-            } catch {
-                if (!isActive) {
-                    return
-                }
-
-                setErrorMessage('Unable to reach the variable synchronization service. Check that the API is running.')
+                setErrorMessage(error instanceof Error ? error.message : 'Variable synchronization failed. Please try again.')
             } finally {
                 if (isActive) {
                     setIsSubmitting(false)
