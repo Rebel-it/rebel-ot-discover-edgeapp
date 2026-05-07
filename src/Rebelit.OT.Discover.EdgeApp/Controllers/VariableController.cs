@@ -5,7 +5,7 @@ namespace Rebelit.OT.Discover.EdgeApp.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class VariableController(IVariableService variableService) : ControllerBase
+public class VariableController(IVariableService variableService) : BaseController
 {
     private readonly IVariableService _variableService = variableService;
 

@@ -6,7 +6,7 @@ namespace Rebelit.OT.Discover.EdgeApp.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TagsController(ITagService tagService) : ControllerBase
+public class TagsController(ITagService tagService) : BaseController
 {
     private readonly ITagService _tagService = tagService;
 
