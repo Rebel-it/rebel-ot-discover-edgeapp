@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Rebelit.OT.Discover.EdgeApp.Dto;
 using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.Filters;
@@ -17,13 +18,21 @@ public class AuthenticationFilter : IActionFilter
 
         if (!headers.TryGetValue(ApplicationIdHeader, out var applicationId) || string.IsNullOrWhiteSpace(applicationId))
         {
-            context.Result = new BadRequestObjectResult(new { message = $"Missing required header: {ApplicationIdHeader}" });
+            var errorResponse = new ResponseDto<dynamic>
+            {
+                ErrorMessage = "The required application id is not provided."
+            };
+            context.Result = new OkObjectResult(errorResponse);
             return;
         }
 
         if (!headers.TryGetValue(AccessTokenHeader, out var accessToken) || string.IsNullOrWhiteSpace(accessToken))
         {
-            context.Result = new BadRequestObjectResult(new { message = $"Missing required header: {AccessTokenHeader}" });
+            var errorResponse = new ResponseDto<dynamic>
+            {
+                ErrorMessage = "The required access token is not provided."
+            };
+            context.Result = new OkObjectResult(errorResponse);
             return;
         }
 

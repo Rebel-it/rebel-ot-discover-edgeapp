@@ -16,7 +16,7 @@ const defaultAuthObject: ServiceAccountObject = {
 function LoginPage() {
   const [serviceAccount, setServiceAccount] = useState<ServiceAccountObject>(defaultAuthObject);
   const [loginSucceeded, setLoginSucceeded] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
@@ -35,13 +35,19 @@ function LoginPage() {
     event.preventDefault();
 
     try {
-      const companyConfiguration = await getCompanyConfiguration(serviceAccount);
-      console.log(companyConfiguration);
-      SaveIxonAuthenticationHeaders(serviceAccount, companyConfiguration);
+      const result = await getCompanyConfiguration(serviceAccount);
+
+      if(!result.success || !result.data) {
+        setErrorMessage(result.errorMessage || 'Failed to retrieve company configuration. Please check your credentials and try again.');
+        return;
+      }
+
+      SaveIxonAuthenticationHeaders(serviceAccount, result.data);
       setLoginSucceeded(true);
+      setErrorMessage("");
     } catch (error) {
       clearIxonAuthenticationHeaders();
-      setErrorMessage(error instanceof Error ? error.message : 'Login failed. Please check your credentials and try again.');
+      setErrorMessage(error instanceof Error ? error.message : 'Login failed. Please try again later.');
     } finally {
       setIsSubmitting(false);
     }

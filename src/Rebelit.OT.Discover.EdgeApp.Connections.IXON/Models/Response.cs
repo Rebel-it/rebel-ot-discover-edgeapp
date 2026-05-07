@@ -51,12 +51,9 @@ public class Response<T>
     private bool TryGetData(out T? value)
     {
         value = default;
-        if (RawData is not { } element || element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
-        {
-            return false;
-        }
-
-        if (TryGetError(out _))
+        
+        if (HasError || RawData is not { } element 
+            || element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
         {
             return false;
         }
@@ -75,7 +72,7 @@ public class Response<T>
     private bool TryGetError(out ErrorResponse[]? error)
     {
         error = null;
-        if (RawData is not { ValueKind: JsonValueKind.Array } element)
+        if (!HasError || RawData is not { ValueKind: JsonValueKind.Array } element)
         {
             return false;
         }

@@ -1,8 +1,9 @@
+import type { ApiResponseObject } from '../models/ApiResponseObject';
 import type { CompanyConfiguration } from '../models/CompanyConfiguration'
 import type { ServiceAccountObject } from '../models/ServiceAccountObject';
 import { apiBaseUrl } from './apiBaseUrl'
 
-export async function getCompanyConfiguration(serviceAccount: ServiceAccountObject): Promise<CompanyConfiguration> {
+export async function getCompanyConfiguration(serviceAccount: ServiceAccountObject): Promise<ApiResponseObject<CompanyConfiguration>> {
 
    const response = await fetch(`${apiBaseUrl}/CompanyConfiguration`, {
     method: 'GET',
@@ -17,6 +18,6 @@ export async function getCompanyConfiguration(serviceAccount: ServiceAccountObje
     throw new Error(`Error fetching company configuration: ${response.statusText}`);
   }
 
-  const data: CompanyConfiguration = await response.json();
+  const data: ApiResponseObject<CompanyConfiguration> = await response.json();
   return data;
 }

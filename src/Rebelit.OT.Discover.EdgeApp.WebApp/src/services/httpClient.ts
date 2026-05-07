@@ -1,3 +1,4 @@
+import type { ApiResponseObject } from '../models/ApiResponseObject';
 import { apiBaseUrl } from './apiBaseUrl'
 import { loadIxonAuthenticationHeaders } from './sessionStorageService'
 
@@ -25,7 +26,7 @@ function buildHeaders(): Record<string, string> {
   return headers
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
+async function handleResponse<T>(response: Response): Promise<ApiResponseObject<T | undefined>> {
   if (!response.ok) {
     const text = await response.text()
     throw new Error(text || `${response.status} ${response.statusText}`)
@@ -33,21 +34,21 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
   const contentType = response.headers.get('content-type')
   if (contentType?.includes('application/json')) {
-    return response.json() as Promise<T>
+    return response.json() as Promise<ApiResponseObject<T | undefined>>
   }
 
-  return undefined as T
+  return undefined as unknown as ApiResponseObject<undefined>
 }
 
 export const httpClient = {
-  get<T>(path: string): Promise<T> {
+  get<T>(path: string): Promise<ApiResponseObject<T | undefined>> {
     return fetch(`${apiBaseUrl}${path}`, {
       method: 'GET',
       headers: buildHeaders(),
     }).then(handleResponse<T>)
   },
 
-  post<TResponse = void, TBody = unknown>(path: string, body?: TBody): Promise<TResponse> {
+  post<TResponse = void, TBody = unknown>(path: string, body?: TBody): Promise<ApiResponseObject<TResponse | undefined>> {
     return fetch(`${apiBaseUrl}${path}`, {
       method: 'POST',
       headers: buildHeaders(),
