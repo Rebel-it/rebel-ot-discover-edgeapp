@@ -183,11 +183,7 @@ function TagPage() {
         setErrorMessage('')
 
         try {
-            const response = await createTag(request)
-            if (!response.ok) {
-                setErrorMessage('Unable to save tag. Check the values and try again.')
-                return
-            }
+            await createTag(request)
 
             setTags((prev) => [...prev, draft])
             setIsModalOpen(false)

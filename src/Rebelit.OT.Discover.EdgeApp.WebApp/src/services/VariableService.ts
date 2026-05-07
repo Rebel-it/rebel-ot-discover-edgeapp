@@ -1,4 +1,4 @@
-import { apiBaseUrl } from './apiBaseUrl'
+import { httpClient } from './httpClient'
 
 export type VariableOption = {
     label: string
@@ -48,15 +48,14 @@ function toVariableOption(value: unknown): VariableOption | null {
 }
 
 export async function getVariables(): Promise<VariableOption[]> {
-    const response = await fetch(`${apiBaseUrl}/api/Variable`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
-    if (!response.ok) return []
+    let payload: unknown
 
-    const payload: unknown = await response.json()
+    try {
+        payload = await httpClient.get<unknown>('/Variable')
+    } catch {
+        return []
+    }
+
     if (!Array.isArray(payload)) return []
 
     return payload.map(toVariableOption).filter((value): value is VariableOption => Boolean(value))

@@ -1,4 +1,5 @@
-import { apiBaseUrl } from './apiBaseUrl'
+import { httpClient } from './httpClient'
+
 
 export type CreateTagRequest = {
     logEvent: 'interval' | 'change' | 'trigger'
@@ -18,12 +19,6 @@ export type Tag = {
     identifier: string
 }
 
-export async function createTag(request: CreateTagRequest): Promise<Response> {
-    return fetch(`${apiBaseUrl}/api/tags`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(request),
-    })
+export function createTag(request: CreateTagRequest): Promise<void> {
+    return httpClient.post('/tags', request)
 }

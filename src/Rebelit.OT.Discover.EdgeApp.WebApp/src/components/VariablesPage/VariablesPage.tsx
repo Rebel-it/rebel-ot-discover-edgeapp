@@ -19,7 +19,7 @@ function VariablesPage() {
             setSynchronizationSucceeded(false)
 
             try {
-                const response = await synchronizeVariablesRequest()
+                await synchronizeVariablesRequest()
 
                 if (!isActive) return
 
