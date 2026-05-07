@@ -35,27 +35,28 @@ public class Response<T>
     /// </summary>
     [JsonIgnore]
     public T? Data => TryGetData(out var value) ? value : default;
-
-    /// <summary>
-    ///     The error response, populated when the API returns an error object in the "data" field.
-    ///     Check <see cref="IsError"/> before accessing this property.
-    /// </summary>
+    
     [JsonIgnore]
-    public ErrorResponse[]? Error => TryGetError(out var error) ? error : null;
-
-    /// <summary>
-    ///     Returns <c>true</c> when the "data" field contains an error response instead of the expected payload.
-    /// </summary>
-    [JsonIgnore]
-    public bool IsError => Status is "error" || TryGetError(out _);
+    public bool HasError => Status == "error";
     
     [JsonIgnore]
     public string? ErrorMessage => TryGetErrorMessage();
+
+    /// <summary>
+    ///     The error response, populated when the API returns an error object in the "data" field.
+    /// </summary>
+    [JsonIgnore]
+    private ErrorResponse[]? Error => TryGetError(out var error) ? error : null;
 
     private bool TryGetData(out T? value)
     {
         value = default;
         if (RawData is not { } element || element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return false;
+        }
+
+        if (TryGetError(out _))
         {
             return false;
         }

@@ -15,7 +15,7 @@ public class CompanyConfigurationService(IApiClient apiClient, IIxonAuthenticati
 
         var companyResult = await apiClient.GetAssociatedCompanyAsync();
         
-        if (companyResult.Error != null)
+        if (companyResult.HasError)
         {
             response.ErrorMessage = companyResult.ErrorMessage;
             return response;
@@ -34,7 +34,7 @@ public class CompanyConfigurationService(IApiClient apiClient, IIxonAuthenticati
 
         var agentResult = await apiClient.GetAgentsAsync();
         
-        if (agentResult.Error != null)
+        if (agentResult.HasError)
         {
             response.ErrorMessage = agentResult.ErrorMessage;
             return response;
