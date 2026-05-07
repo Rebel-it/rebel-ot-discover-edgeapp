@@ -13,7 +13,7 @@ internal sealed class TagService(
         configuration["IXON_AgentId"]
         ?? throw new InvalidOperationException("IXON_AgentId configuration is not set.");
 
-    public async Task<IReadOnlyList<Tag>> GetTagsAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Tag>> GetTagsAsync()
     {
         var response = await apiClient.GetTagsAsync(_agentId);
         var tags = response.Data ?? [];
@@ -22,7 +22,7 @@ internal sealed class TagService(
         return tags;
     }
 
-    public async Task<Tag?> UploadTagAsync(Tag tag, CancellationToken cancellationToken = default)
+    public async Task<Tag?> UploadTagAsync(Tag tag)
     {
         ArgumentNullException.ThrowIfNull(tag);
 
@@ -37,12 +37,12 @@ internal sealed class TagService(
         return createdTag;
     }
 
-    public async Task<Tag?> CreateTagAsync(CreateTagRequest request, CancellationToken cancellationToken = default)
+    public async Task<Tag?> CreateTagAsync(CreateTagRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
 
         var tag = MapToTag(request);
-        return await UploadTagAsync(tag, cancellationToken);
+        return await UploadTagAsync(tag);
     }
 
     private static Tag MapToTag(CreateTagRequest request) => new()

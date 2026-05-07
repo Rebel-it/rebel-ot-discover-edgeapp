@@ -5,7 +5,7 @@ namespace Rebelit.OT.Discover.EdgeApp.Services;
 
 public interface ITagService
 {
-    Task<IReadOnlyList<Tag>> GetTagsAsync(CancellationToken cancellationToken = default);
-    Task<Tag?> UploadTagAsync(Tag tag, CancellationToken cancellationToken = default);
-    Task<Tag?> CreateTagAsync(CreateTagRequest request, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Tag>> GetTagsAsync();
+    Task<Tag?> UploadTagAsync(Tag tag);
+    Task<Tag?> CreateTagAsync(CreateTagRequest request);
 }
