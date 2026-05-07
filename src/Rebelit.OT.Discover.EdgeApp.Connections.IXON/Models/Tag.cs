@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 

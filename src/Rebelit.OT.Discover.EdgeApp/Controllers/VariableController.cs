@@ -12,7 +12,7 @@ public class VariableController(IVariableService variableService) : ControllerBa
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GetVariableAsync(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetVariablesAsync(CancellationToken cancellationToken)
     {
         var variables = await _variableService.GetVariablesAsync(cancellationToken);
         return Ok(variables);

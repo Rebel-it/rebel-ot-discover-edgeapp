@@ -242,7 +242,7 @@ function TagPage() {
             )}
 
             {isModalOpen && (
-                <dialog ref={dialogRef} className={styles.modal} onClose={closeModal}>
+                  <dialog ref={dialogRef} className={styles.modal} onClose={closeModal} aria-labelledby="modal-title">
                     <h2 id="modal-title">Add tag</h2>
 
                     <div className={styles.formField}>

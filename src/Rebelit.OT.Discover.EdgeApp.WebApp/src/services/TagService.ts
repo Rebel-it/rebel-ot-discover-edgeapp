@@ -27,14 +27,3 @@ export async function createTag(request: CreateTagRequest): Promise<Response> {
         body: JSON.stringify(request),
     })
 }
-
-export async function getRetentions(): Promise<string[]> {
-    const response = await fetch(`${apiBaseUrl}/api/tags/retentions`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-    })
-    if (!response.ok) return []
-    return response.json() as Promise<string[]>
-}
-
-
