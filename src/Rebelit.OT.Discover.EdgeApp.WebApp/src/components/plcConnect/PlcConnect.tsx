@@ -34,26 +34,13 @@ function PlcConnect() {
         setConnectionSucceeded(false)
 
         try {
-            const response = await connectToPlc(plcObject)
-
-            if (response.status === 200) {
-                setConnectionSucceeded(true)
-                return
-            }
-
-            let nextErrorMessage = 'PLC connection failed. Please check your credentials and try again.'
-      const responseText = await response.text()
-
-      if (responseText) {
-        nextErrorMessage = responseText
-      }
-
-      setErrorMessage(nextErrorMessage)
-    } catch {
-            setErrorMessage('Unable to reach the PLC service. Check that the API is running.')
-    } finally {
-      setIsSubmitting(false)
-    }
+            await connectToPlc(plcObject)
+            setConnectionSucceeded(true)
+        } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : 'PLC connection failed. Please check your credentials and try again.')
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     return (

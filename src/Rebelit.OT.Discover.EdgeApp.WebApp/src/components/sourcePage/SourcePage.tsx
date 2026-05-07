@@ -34,20 +34,10 @@ function SourcePage() {
         setErrorMessage('')
         setSourceCreationSucceeded(false)
         try {
-            const response = await createSource(sourceObject)   
-            if (response.status === 200) {
-                setSourceCreationSucceeded(true)
-                return
-            }
-            let nextErrorMessage = 'Source creation failed. Please check your input and try again.'
-            const responseText = await response.text()
-
-            if (responseText) {
-                nextErrorMessage = responseText
-            }
-            setErrorMessage(nextErrorMessage)
-        } catch {
-            setErrorMessage('Unable to reach the source creation service. Check that the API is running.')
+            await createSource(sourceObject)
+            setSourceCreationSucceeded(true)
+        } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : 'Source creation failed. Please check your input and try again.')
         } finally {
             setIsSubmitting(false)
         }
