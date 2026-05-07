@@ -18,6 +18,16 @@ public class ApiClientTests
         BaseUrl = "https://test.example.com",
     };
 
+    private static Tag CreateTagRequest() => new()
+    {
+        LogEvent = "interval",
+        LoggingInterval = "1s",
+        Name = "n",
+        RetentionPolicy = "30d",
+        Slug = "s",
+        Variable = new TagVariable { PublicId = "var-1" },
+    };
+
     private static (FakeApiClient Client, MockHttpMessageHandler Handler) CreateSut(
         HttpStatusCode status,
         string responseJson
@@ -109,7 +119,7 @@ public class ApiClientTests
     public async Task GetTagsAsync_WithOkResponse_ReturnsDeserializedTags()
     {
         const string json =
-            """{"data":[{"publicId":"tag-1","tagId":10,"slug":"s","name":"n","logEvent":"always","loggingInterval":"1s","retentionPolicy":"30d","aggregators":[]}]}""";
+            """{"data":[{"slug":"s","name":"n","logEvent":"interval","loggingInterval":"1s","retentionPolicy":"30d","variable":{"publicId":"var-1"},"edgeAggregator":"Last"}]}""";
         var (client, _) = CreateSut(HttpStatusCode.OK, json);
 
         var result = await client.GetTagsAsync("agent-1");
@@ -117,7 +127,8 @@ public class ApiClientTests
         Assert.Multiple(() =>
         {
             Assert.That(result.Data, Has.Length.EqualTo(1));
-            Assert.That(result.Data[0].PublicId, Is.EqualTo("tag-1"));
+            Assert.That(result.Data[0].Slug, Is.EqualTo("s"));
+            Assert.That(result.Data[0].Variable.PublicId, Is.EqualTo("var-1"));
         });
     }
 
@@ -146,22 +157,26 @@ public class ApiClientTests
     public async Task PostTagAsync_WithOkResponse_ReturnsDeserializedTag()
     {
         const string json =
-            """{"data":{"publicId":"tag-1","tagId":10,"slug":"s","name":"n","logEvent":"always","loggingInterval":"1s","retentionPolicy":"30d","aggregators":[]}}""";
+            """{"data":{"slug":"s","name":"n","logEvent":"interval","loggingInterval":"1s","retentionPolicy":"30d","variable":{"publicId":"var-1"},"edgeAggregator":"Last"}}""";
         var (client, _) = CreateSut(HttpStatusCode.OK, json);
 
-        var result = await client.PostTagAsync("agent-1", new Tag { Name = "n" });
+        var result = await client.PostTagAsync("agent-1", CreateTagRequest());
 
-        Assert.That(result!.Data.PublicId, Is.EqualTo("tag-1"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result!.Data.Slug, Is.EqualTo("s"));
+            Assert.That(result.Data.Variable.PublicId, Is.EqualTo("var-1"));
+        });
     }
 
     [Test]
     public async Task PostTagAsync_WhenCalled_UsesCorrectUriAndMethod()
     {
         const string json =
-            """{"data":{"publicId":"tag-1","tagId":1,"slug":"s","name":"n","logEvent":"e","loggingInterval":"1s","retentionPolicy":"30d","aggregators":[]}}""";
+            """{"data":{"slug":"s","name":"n","logEvent":"interval","loggingInterval":"1s","retentionPolicy":"30d","variable":{"publicId":"var-1"}}}""";
         var (client, handler) = CreateSut(HttpStatusCode.OK, json);
 
-        await client.PostTagAsync("agent-5", new Tag { Name = "n" });
+        await client.PostTagAsync("agent-5", CreateTagRequest());
 
         Assert.Multiple(() =>
         {
@@ -178,7 +193,7 @@ public class ApiClientTests
     {
         var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
 
-        Assert.ThrowsAsync<HttpRequestException>(() => client.PostTagAsync("agent-1", new Tag()));
+        Assert.ThrowsAsync<HttpRequestException>(() => client.PostTagAsync("agent-1", CreateTagRequest()));
     }
 
     [Test]

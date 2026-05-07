@@ -21,7 +21,6 @@ public class Scraper(
 ) : IScraper
 {
     internal const int BatchSize = 5;
-    private const string DefaultExportFolder = "exports";
 
     public string Address { get; } =
         configuration["OPCUA_ServerAddress"]
@@ -44,112 +43,8 @@ public class Scraper(
     /// </summary>
     private List<Variable> _CreatedVariables = [];
 
-    /// <summary>
-    /// Contains all the tags that are built on runtime
-    /// </summary>
-    private List<Tag> _CreatedTags = [];
-
     public IReadOnlyList<Variable> CreatedVariables => _CreatedVariables;
-    public IReadOnlyList<Tag> CreatedTags => _CreatedTags;
 
-    public async Task ExecuteAsync(CancellationToken cancellationToken)
-    {
-        var dataSourceId = await dataSourceResolver.ResolveAsync(AgentId, "");
-
-        var client = await clientFactory.Create(Address, Username, Password);
-
-        var nodes = await FetchReferenceDescriptionsAsync(cancellationToken);
-        if (nodes is null)
-            return;
-
-        logger.LogInformation("Found {NodeCount} nodes in the OPC UA address space.", nodes.Count);
-        foreach (var rd in nodes)
-            logger.LogTrace("Found node {NodeId} ({DisplayName}).", rd.NodeId, rd.DisplayName);
-
-        await nodeSynchronizer.InitializeAsync(AgentId);
-
-        var filteredNodes = nodes.Where(rd =>
-        {
-            if (rd.NodeId.NamespaceIndex == 0)
-            {
-                logger.LogDebug(
-                    "Skipping node {NodeId} in namespace 0.",
-                    rd.NodeId
-                );
-                return false;
-            }
-            return true;
-        });
-
-        //map all vartiables in a list
-        foreach(var batch in filteredNodes.Chunk(BatchSize))
-        {
-            var batchVariables = await Task.WhenAll(
-                batch.Select(rd => nodeSynchronizer.MapVariableAsync(client, rd, dataSourceId)));
-            _CreatedVariables.AddRange(batchVariables.Where(v => v is not null)!);
-        }
-
-        logger.LogInformation(
-            "Mapped {VariableCount} variables from OPC UA nodes.",
-            _CreatedVariables.Count
-        );
-
-        //Create Tags
-        foreach(var variable in _CreatedVariables)
-        {
-            var tag = nodeSynchronizer.CreateTag(variable);
-            if(tag is not null)
-            {
-                _CreatedTags.Add(tag);
-            }
-        }
-        logger.LogInformation(
-            "Built {TagCount} tags from variables.",
-            _CreatedTags.Count
-        );
-
-        logger.LogInformation(
-          "Scraping complete. {VariableCount} variables and {TagCount} tags ready for export.",
-          _CreatedVariables.Count,
-          _CreatedTags.Count
-      );
-
-        //Export to csv
-        var exportFolder = GetExportFolder();
-        EnsureExportFolderExists(exportFolder);
-
-        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-        var variableFilePath = Path.Combine(exportFolder, $"variables_{timestamp}.csv");
-        var tagFilePath = Path.Combine(exportFolder, $"tags_{timestamp}.csv");
-
-        await csvExporters.CreateVariableCsvFileAsync(_CreatedVariables, variableFilePath);
-        await csvExporters.CreateTagCsvFileAsync(_CreatedTags, tagFilePath);
-
-    }
-
-    private string GetExportFolder()
-    {
-        var configuredPath = configuration["ExportPath"];
-
-        if (!string.IsNullOrWhiteSpace(configuredPath))
-        {
-            logger.LogInformation("Using configured export path: {ExportPath}", configuredPath);
-            return configuredPath;
-        }
-
-        var defaultPath = Path.Combine(Directory.GetCurrentDirectory(), DefaultExportFolder);
-        logger.LogInformation("Using default export path: {ExportPath}", defaultPath);
-        return defaultPath;
-    }
-
-    private void EnsureExportFolderExists(string folderPath)
-    {
-        if (!Directory.Exists(folderPath))
-        {
-            logger.LogInformation("Creating export folder: {FolderPath}", folderPath);
-            Directory.CreateDirectory(folderPath);
-        }
-    }
     protected virtual async Task<ReferenceDescriptionCollection?> FetchReferenceDescriptionsAsync(
         CancellationToken cancellationToken
     )

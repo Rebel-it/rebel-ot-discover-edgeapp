@@ -44,84 +44,6 @@ public class ScraperTests
         Environment.SetEnvironmentVariable("OPCUA_Username", null);
         Environment.SetEnvironmentVariable("OPCUA_Password", null);
     }
-
-    [Test]
-    public async Task ExecuteAsync_WhenUAClientFails_DoesNotInitializeOrSyncNodes()
-    {
-        var scraper = CreateSut();
-
-        await scraper.ExecuteAsync(CancellationToken.None);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(_nodeSynchronizer.InitializeCallCount, Is.EqualTo(0));
-            Assert.That(_nodeSynchronizer.SynchronizeCallCount, Is.EqualTo(0));
-        });
-    }
-
-    [Test]
-    public async Task ExecuteAsync_WithNodes_InitializesNodeSynchronizerWithAgentId()
-    {
-        var scraper = CreateFakeNodeScraper(nodeCount: 1);
-
-        await scraper.ExecuteAsync(CancellationToken.None);
-
-        Assert.That(_nodeSynchronizer.LastInitializedAgentId, Is.EqualTo("test-agent-id"));
-    }
-
-    [Test]
-    public async Task ExecuteAsync_WithNodes_PassesResolvedDataSourceIdToEachSynchronize()
-    {
-        var scraper = CreateFakeNodeScraper(nodeCount: 2);
-
-        await scraper.ExecuteAsync(CancellationToken.None);
-
-        Assert.That(_nodeSynchronizer.ReceivedDataSourceIds, Is.All.EqualTo("resolved-ds-id"));
-    }
-
-    [Test]
-    public async Task ExecuteAsync_WithManyNodes_ProcessesInBatchesOfBatchSize()
-    {
-        const int nodeCount = 11;
-        var scraper = CreateFakeNodeScraper(nodeCount);
-
-        await scraper.ExecuteAsync(CancellationToken.None);
-
-        Assert.That(
-            _nodeSynchronizer.MaxConcurrentSynchronizeCalls,
-            Is.LessThanOrEqualTo(Scraper.BatchSize)
-        );
-    }
-
-    private Scraper CreateSut()
-    {
-        var configuration = new ConfigurationBuilder().AddEnvironmentVariables().Build();
-        return new(
-            _uaClientFactory,
-            _csvExporter,
-            _clientSamplerFactory,
-            _dataSourceResolver,
-            _nodeSynchronizer,
-            configuration,
-            NullLogger<Scraper>.Instance
-        );
-    }
-
-    private Scraper CreateFakeNodeScraper(int nodeCount)
-    {
-        var configuration = new ConfigurationBuilder().AddEnvironmentVariables().Build();
-        return new FakeNodeScraper(
-            _uaClientFactory,
-            _csvExporter,
-            _clientSamplerFactory,
-            _dataSourceResolver,
-            _nodeSynchronizer,
-            configuration,
-            NullLogger<Scraper>.Instance,
-            nodeCount
-        );
-    }
-
     private sealed class SpyNodeSynchronizer : INodeSynchronizer
     {
         private readonly object _syncLock = new();
@@ -171,20 +93,6 @@ public class ScraperTests
                 PublicId = Guid.NewGuid().ToString(),
                 Source = new Source { PublicId = dataSourceId }
             });
-        }
-
-        public Tag CreateTag(Variable variable)
-        {
-            return new Tag
-            {
-                Name = variable.Name,
-                Slug = variable.Slug,
-                Variable = variable,
-                Source = variable.Source,
-                RetentionPolicy = "260w",
-                LogEvent = "change",
-                LoggingInterval = "72s"
-            };
         }
 
         public Task SynchronizeVariablesAsync(string agentId, IEnumerable<Variable> variables) => Task.CompletedTask;

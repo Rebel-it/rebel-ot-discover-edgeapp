@@ -41,11 +41,11 @@ internal sealed class TagService(
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var tag = MapToTag2(request);
+        var tag = MapToTag(request);
         return await UploadTagAsync(tag, cancellationToken);
     }
 
-    private static Tag MapToTag2(CreateTagRequest request) => new()
+    private static Tag MapToTag(CreateTagRequest request) => new()
     {
         Name = request.Name,
         Slug = request.Slug,

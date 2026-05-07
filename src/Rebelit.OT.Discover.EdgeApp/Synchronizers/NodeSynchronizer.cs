@@ -11,7 +11,6 @@ namespace Rebelit.OT.Discover.EdgeApp.Synchronizers;
 public interface INodeSynchronizer
 {
     Task InitializeAsync(string agentId);
-    Task SynchronizeAsync(UAClient client, ReferenceDescription referenceDescription, string dataSourceId);
 
     Task SynchronizeVariablesAsync(string agentId, IEnumerable<Variable> variables);
 
@@ -22,12 +21,6 @@ public interface INodeSynchronizer
     /// <returns>A task that represents the asynchronous operation. The task result contains the mapped Variable if successful;
     /// otherwise, null if the mapping could not be performed.</returns>
     Task<Variable?> MapVariableAsync(UAClient client, ReferenceDescription referenceDescription, string dataSourceId);
-
-    /// <summary>
-    /// Creates a new tag associated with the specified variable.
-    /// </summary>
-    /// <returns>A Tag instance representing the specified variable.</returns>
-    Tag CreateTag(Variable variable);
 }
 
 internal sealed class NodeSynchronizer(
@@ -54,30 +47,6 @@ internal sealed class NodeSynchronizer(
         [
             .. (await apiClient.GetTagsAsync(agentId)).Data.Select(t => t.Variable.PublicId),
         ];
-    }
-
-    public async Task SynchronizeAsync(
-        UAClient client,
-        ReferenceDescription referenceDescription,
-        string dataSourceId
-    )
-    {
-        try
-        {
-            var variable = await CreateVariableIfNewAsync(client,referenceDescription, dataSourceId);
-            if (variable is not null)
-                await CreateTagIfNewAsync(variable);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(
-                ex,
-                "Error synchronizing node {NodeId} with address {Address}: {Message}",
-                referenceDescription.NodeId,
-                referenceDescription.NodeId.ToString(),
-                ex.Message
-            );
-        }
     }
 
     /// <summary>
@@ -176,59 +145,6 @@ internal sealed class NodeSynchronizer(
         var result = await apiClient.PostVariableAsync(_agentId, variable);
         variable.PublicId = result?.Data.PublicId ?? variable.PublicId;
         return variable;
-    }
-
-    private async Task CreateTagIfNewAsync(Variable variable)
-    {
-        if (string.IsNullOrEmpty(variable.PublicId))
-            return;
-
-        if (_existingTags.Contains(variable.PublicId))
-        {
-            logger.LogTrace(
-                "Tag for variable '{PublicId}' already exists. Skipping creation.",
-                variable.PublicId
-            );
-            return;
-        }
-
-        var tag = new Tag
-        {
-            Name = variable.Name,
-            Slug = variable.Slug,
-            Source = variable.Source,
-            Variable = variable,
-            RetentionPolicy = "260w",
-            LogEvent = "change",
-            LoggingInterval = "72s",
-        };
-
-        logger.LogInformation(
-            "Creating tag for variable '{VariableName}' with PublicId '{VariablePublicId}'...",
-            variable.Name,
-            variable.PublicId
-        );
-
-        await apiClient.PostTagAsync(_agentId, tag);
-    }
-
-    public Tag CreateTag(Variable variable)
-    {
-        if (string.IsNullOrEmpty(variable.Source.PublicId))
-            return null;
-
-        var tag = new Tag
-        {
-            Name = variable.Name,
-            Slug = variable.Slug,
-            Source = variable.Source,
-            Variable = variable,
-            RetentionPolicy = "260w",
-            LogEvent = "change",
-            LoggingInterval = "72s",
-        };
-
-        return tag;
     }
 
     public async Task<Variable?> MapVariableAsync(UAClient client, ReferenceDescription referenceDescription, string dataSourceId)
