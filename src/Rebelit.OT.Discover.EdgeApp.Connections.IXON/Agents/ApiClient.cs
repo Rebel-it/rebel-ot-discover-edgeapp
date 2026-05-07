@@ -73,18 +73,10 @@ internal class ApiClient(
         return await Post<Response<DataSource>>(uri, newDataSource);
     }
 
-    public async Task<Response<Company?>?> GetAssociatedCompanyAsync()
+    public async Task<Response<Company[]>> GetAssociatedCompanyAsync()
     {
         const string uri = "/api/companies?fields=publicId,name";
-        var response = await Get<Response<Company[]>>(uri);
-        var result = new Response<Company?>
-        {
-            Data = response.Data.FirstOrDefault(),
-            Status = response.Status,
-            Type = response.Type,
-            MoreAfter = response.MoreAfter
-        };
-        return result;
+        return await Get<Response<Company[]>>(uri);
     }
 
     public async Task<Response<Agent[]>> GetAgentsAsync()

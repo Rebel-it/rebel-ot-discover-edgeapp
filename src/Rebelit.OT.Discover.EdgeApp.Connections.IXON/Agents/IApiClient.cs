@@ -75,7 +75,7 @@ public interface IApiClient
     ///     A service account can be associated with only one company.
     /// </summary>
     /// <returns></returns>
-    Task<Response<Company?>?> GetAssociatedCompanyAsync();
+    Task<Response<Company[]>> GetAssociatedCompanyAsync();
     
     /// <summary>
     ///     Gets a list of agents associated with the companyId.

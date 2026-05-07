@@ -6,35 +6,50 @@ namespace Rebelit.OT.Discover.EdgeApp.Services;
 
 public class CompanyConfigurationService(IApiClient apiClient, IIxonAuthenticationContext authenticationContext) : ICompanyConfigurationService
 {
-    public async Task<CompanyConfigurationDto?> GetConfigurationAsync()
+    public async Task<ResponseDto<CompanyConfigurationDto>> GetConfigurationAsync()
     {
-        try
+        var response = new ResponseDto<CompanyConfigurationDto>
         {
-            var company = (await apiClient.GetAssociatedCompanyAsync())?.Data;
-            if (company == null)
-            {
-                return null;
-            }
+            Data = new CompanyConfigurationDto()
+        };
 
-            authenticationContext.IxonHeaders.CompanyId = company.PublicId;
-
-            var agents = (await apiClient.GetAgentsAsync()).Data;
-            if(agents.Length == 0)
-            {
-                return null;
-            }
-
-            var agent = agents[0];
-
-            return new CompanyConfigurationDto
-            {
-                AgentId = agent.PublicId,
-                CompanyId = company.PublicId
-            };
-        }
-        catch (HttpRequestException)
+        var companyResult = await apiClient.GetAssociatedCompanyAsync();
+        
+        if (companyResult.Error != null)
         {
-            return null;
+            response.ErrorMessage = companyResult.ErrorMessage;
+            return response;
         }
+        
+        var company = companyResult.Data?.FirstOrDefault();
+
+        if (company == null)
+        {
+            response.ErrorMessage = "No associated company found.";
+            return response;
+        }
+
+        authenticationContext.IxonHeaders.CompanyId = company.PublicId;
+        response.Data.CompanyId = company.PublicId;
+
+        var agentResult = await apiClient.GetAgentsAsync();
+        
+        if (agentResult.Error != null)
+        {
+            response.ErrorMessage = agentResult.ErrorMessage;
+            return response;
+        }
+        var agents = agentResult.Data?.ToArray();
+        
+        if (agents is { Length: 0 })
+        {
+            response.ErrorMessage = "It seems there are no agents in the company.";
+            return response;
+        }
+
+        var agent = agents![0];
+        response.Data.AgentId = agent.PublicId;
+        
+        return response;
     }
 }

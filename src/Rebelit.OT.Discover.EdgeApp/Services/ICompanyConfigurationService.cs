@@ -4,5 +4,5 @@ namespace Rebelit.OT.Discover.EdgeApp.Services;
 
 public interface ICompanyConfigurationService
 {
-    Task<CompanyConfigurationDto?> GetConfigurationAsync();
+    Task<ResponseDto<CompanyConfigurationDto>> GetConfigurationAsync();
 }
