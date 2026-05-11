@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Tests.Agents;
 
@@ -12,9 +13,6 @@ public class ApiClientTests
 {
     private static readonly Configuration DefaultConfig = new()
     {
-        ApplicationId = "app-id",
-        CompanyId = "company-id",
-        BearerToken = "bearer-token",
         BaseUrl = "https://test.example.com",
     };
 
@@ -729,7 +727,7 @@ public class ApiClientTests
         ILogger<ApiClient> logger,
         HttpMessageHandler handler,
         TimeProvider timeProvider
-    ) : ApiClient(config, logger, timeProvider)
+    ) : ApiClient(config, logger, timeProvider, new FakeIxonAuthenticationContext())
     {
         protected override HttpMessageHandler? GetHttpMessageHandler() => handler;
     }
@@ -739,11 +737,25 @@ public class ApiClientTests
         ILogger<BaseAgent> logger,
         HttpMessageHandler handler,
         TimeProvider timeProvider
-    ) : BaseAgent(config, logger, timeProvider)
+    ) : BaseAgent(config, logger, timeProvider, new FakeIxonAuthenticationContext())
     {
         protected override HttpMessageHandler? GetHttpMessageHandler() => handler;
 
         public Task PostAsync(string uri, object body) => Post(uri, body);
+    }
+
+    private sealed class FakeIxonAuthenticationContext : IIxonAuthenticationContext
+    {
+        public IxonHeaders IxonHeaders { get; set; } = new()
+        {
+            ServiceAccount = new ServiceAccount
+            {
+                AccessToken = "bearer-token",
+                ApiApplicationId = "app-id",
+            },
+            CompanyId = "company-id",
+            AgentId = "agent-id",
+        };
     }
 
     private sealed class FakeOptionsMonitor(Configuration config) : IOptionsMonitor<Configuration>
