@@ -32,7 +32,6 @@ internal abstract class BaseAgent
         var response = await ExecuteRequestAsync(http =>
             http.GetAsync($"{_configuration.CurrentValue.BaseUrl}{uri}")
         );
-        response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
         return System.Text.Json.JsonSerializer.Deserialize<T>(content)!;
     }
@@ -42,7 +41,6 @@ internal abstract class BaseAgent
         var response = await ExecuteRequestAsync(http =>
             http.PostAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
         );
-        response.EnsureSuccessStatusCode();
         return System.Text.Json.JsonSerializer.Deserialize<T>(
             await response.Content.ReadAsStringAsync()
         );
@@ -50,10 +48,9 @@ internal abstract class BaseAgent
 
     protected async Task Post(string uri, object body)
     {
-        var response = await ExecuteRequestAsync(http =>
+        await ExecuteRequestAsync(http =>
             http.PostAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
         );
-        response.EnsureSuccessStatusCode();
     }
 
     protected async Task<T?> PostCsv<T>(string uri, string csv)
