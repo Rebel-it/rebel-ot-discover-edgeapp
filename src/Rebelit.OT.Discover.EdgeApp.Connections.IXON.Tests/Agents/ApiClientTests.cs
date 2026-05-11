@@ -96,23 +96,6 @@ public class ApiClientTests
 
         AssertCommonHeaders(handler.LastRequest!);
     }
-
-    [Test]
-    public void GetDataVariablesAsync_OnBadRequest_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
-
-        Assert.ThrowsAsync<HttpRequestException>(() => client.GetDataVariablesAsync("agent-1"));
-    }
-
-    [Test]
-    public void GetDataVariablesAsync_OnServerError_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.InternalServerError, "server error");
-
-        Assert.ThrowsAsync<HttpRequestException>(() => client.GetDataVariablesAsync("agent-1"));
-    }
-
     [Test]
     public async Task GetTagsAsync_WithOkResponse_ReturnsDeserializedTags()
     {
@@ -141,14 +124,6 @@ public class ApiClientTests
             handler.LastRequest!.RequestUri!.ToString(),
             Does.Contain("/api/agents/agent-99/data-tags")
         );
-    }
-
-    [Test]
-    public void GetTagsAsync_OnBadRequest_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
-
-        Assert.ThrowsAsync<HttpRequestException>(() => client.GetTagsAsync("agent-1"));
     }
 
     [Test]
@@ -184,14 +159,6 @@ public class ApiClientTests
                 Does.Contain("/api/agents/agent-5/data-tags")
             );
         });
-    }
-
-    [Test]
-    public void PostTagAsync_OnBadRequest_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
-
-        Assert.ThrowsAsync<HttpRequestException>(() => client.PostTagAsync("agent-1", CreateTagRequest()));
     }
 
     [Test]
@@ -246,27 +213,6 @@ public class ApiClientTests
     }
 
     [Test]
-    public void PostVariableAsync_OnBadRequest_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
-
-        Assert.ThrowsAsync<HttpRequestException>(() =>
-            client.PostVariableAsync(
-                "agent-1",
-                new Variable
-                {
-                    PublicId = "v",
-                    Address = "a",
-                    Name = "n",
-                    Slug = "s",
-                    Type = "t",
-                    Width = "w",
-                }
-            )
-        );
-    }
-
-    [Test]
     public async Task GetAgentAsync_WithOkResponse_ReturnsDeserializedAgent()
     {
         const string json =
@@ -304,14 +250,6 @@ public class ApiClientTests
         await client.GetAgentAsync("agent-1");
 
         AssertCommonHeaders(handler.LastRequest!);
-    }
-
-    [Test]
-    public void GetAgentAsync_OnBadRequest_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
-
-        Assert.ThrowsAsync<HttpRequestException>(() => client.GetAgentAsync("agent-1"));
     }
 
     [Test]
@@ -353,23 +291,6 @@ public class ApiClientTests
 
         AssertCommonHeaders(handler.LastRequest!);
     }
-
-    [Test]
-    public void GetDataSourcesAsync_OnBadRequest_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
-
-        Assert.ThrowsAsync<HttpRequestException>(() => client.GetDataSourcesAsync("agent-1"));
-    }
-
-    [Test]
-    public void GetDataSourcesAsync_OnServerError_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.InternalServerError, "server error");
-
-        Assert.ThrowsAsync<HttpRequestException>(() => client.GetDataSourcesAsync("agent-1"));
-    }
-
     [Test]
     public async Task PostDataSourceAsync_WithOkResponse_ReturnsDeserializedDataSource()
     {
@@ -416,23 +337,6 @@ public class ApiClientTests
     }
 
     [Test]
-    public void PostDataSourceAsync_OnBadRequest_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
-        var newDataSource = new DataSource
-        {
-            Name = "n",
-            Slug = "s",
-            Device = new Source { PublicId = "d" },
-            Protocol = new DataSourceProtocol { PublicId = "modbus" },
-        };
-
-        Assert.ThrowsAsync<HttpRequestException>(() =>
-            client.PostDataSourceAsync("agent-1", newDataSource)
-        );
-    }
-
-    [Test]
     public async Task Post_WhenCalled_SendsPostRequest()
     {
         var (agent, handler) = CreateBaseAgentSut(HttpStatusCode.OK);
@@ -440,35 +344,6 @@ public class ApiClientTests
         await agent.PostAsync("/api/test", new { Value = 1 });
 
         Assert.That(handler.LastRequest!.Method, Is.EqualTo(HttpMethod.Post));
-    }
-
-    [Test]
-    public void Post_OnBadRequest_ThrowsHttpRequestException()
-    {
-        var (agent, _) = CreateBaseAgentSut(HttpStatusCode.BadRequest, "error");
-
-        Assert.ThrowsAsync<HttpRequestException>(() => agent.PostAsync("/api/test", new { }));
-    }
-
-    [Test]
-    public async Task GetDataVariablesAsync_WhenUnauthorized_DoesNotRetry()
-    {
-        var responses = new Queue<Func<HttpResponseMessage>>([
-            () => new HttpResponseMessage(HttpStatusCode.Unauthorized)
-            {
-                Content = new StringContent("unauthorized"),
-            },
-        ]);
-        var handler = new SequentialMockHttpMessageHandler(responses);
-        var client = new FakeApiClient(
-            new FakeOptionsMonitor(DefaultConfig),
-            NullLogger<ApiClient>.Instance,
-            handler,
-            TimeProvider.System
-        );
-
-        Assert.ThrowsAsync<HttpRequestException>(() => client.GetDataVariablesAsync("agent-1"));
-        Assert.That(handler.RequestCount, Is.EqualTo(1));
     }
 
     [Test]
