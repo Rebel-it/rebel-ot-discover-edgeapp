@@ -11,7 +11,6 @@ public class ResponseTests
     {
         var response = new Response<int>
         {
-            Data = 42,
             MoreAfter = "cursor",
             Status = "ok",
             Type = "list",
@@ -19,7 +18,7 @@ public class ResponseTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(response.Data, Is.EqualTo(42));
+            Assert.That(response.Data, Is.EqualTo(0));
             Assert.That(response.MoreAfter, Is.EqualTo("cursor"));
             Assert.That(response.Status, Is.EqualTo("ok"));
             Assert.That(response.Type, Is.EqualTo("list"));

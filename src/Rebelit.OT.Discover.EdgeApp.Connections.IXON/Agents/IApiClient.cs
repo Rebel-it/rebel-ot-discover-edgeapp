@@ -37,13 +37,7 @@ public interface IApiClient
     /// <returns></returns>
     Task<Response<Tag[]>> GetTagsAsync(string agentId);
 
-    /// <summary>
-    ///     Set a Tag.
-    /// </summary>
-    /// <param name="agentId"></param>
-    /// <param name="newTag"></param>
-    /// <returns></returns>
-    Task<Response<Tag>?> PostTagAsync(string agentId, Tag newTag);
+    Task<Response<Tag>?> PostTagAsync(string agentId, Tag tag);
 
     /// <summary>
     ///     Gets all data sources for the specified agent.

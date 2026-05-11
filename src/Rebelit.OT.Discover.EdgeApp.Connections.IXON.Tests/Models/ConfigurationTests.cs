@@ -22,18 +22,12 @@ public class ConfigurationTests
     {
         var config = new Configuration
         {
-            ApplicationId = "app-id",
-            BearerToken = "token",
-            CompanyId = "company-id",
             BaseUrl = "https://custom.example.com",
             Version = 3,
         };
 
         Assert.Multiple(() =>
         {
-            Assert.That(config.ApplicationId, Is.EqualTo("app-id"));
-            Assert.That(config.BearerToken, Is.EqualTo("token"));
-            Assert.That(config.CompanyId, Is.EqualTo("company-id"));
             Assert.That(config.BaseUrl, Is.EqualTo("https://custom.example.com"));
             Assert.That(config.Version, Is.EqualTo(3));
         });

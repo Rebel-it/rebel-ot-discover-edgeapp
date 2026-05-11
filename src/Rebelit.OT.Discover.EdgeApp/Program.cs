@@ -43,6 +43,8 @@ if (builder.Environment.IsDevelopment())
     });
 }
 
+builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<IVariableService, VariableService>();
 builder.Services.AddSingleton<ICsvExporters, CsvExporters>();
 builder.Services.AddScoped<IScraper, Scraper>();
 builder.Services.AddSingleton<IOpcUaVariableMapper, OpcUaVariableMapper>();

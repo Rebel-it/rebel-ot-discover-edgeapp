@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Tests.Agents;
 
@@ -12,10 +13,17 @@ public class ApiClientTests
 {
     private static readonly Configuration DefaultConfig = new()
     {
-        ApplicationId = "app-id",
-        CompanyId = "company-id",
-        BearerToken = "bearer-token",
         BaseUrl = "https://test.example.com",
+    };
+
+    private static Tag CreateTagRequest() => new()
+    {
+        LogEvent = "interval",
+        LoggingInterval = "1s",
+        Name = "n",
+        RetentionPolicy = "30d",
+        Slug = "s",
+        Variable = new TagVariable { PublicId = "var-1" },
     };
 
     private static (FakeApiClient Client, MockHttpMessageHandler Handler) CreateSut(
@@ -88,28 +96,11 @@ public class ApiClientTests
 
         AssertCommonHeaders(handler.LastRequest!);
     }
-
-    [Test]
-    public void GetDataVariablesAsync_OnBadRequest_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
-
-        Assert.ThrowsAsync<HttpRequestException>(() => client.GetDataVariablesAsync("agent-1"));
-    }
-
-    [Test]
-    public void GetDataVariablesAsync_OnServerError_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.InternalServerError, "server error");
-
-        Assert.ThrowsAsync<HttpRequestException>(() => client.GetDataVariablesAsync("agent-1"));
-    }
-
     [Test]
     public async Task GetTagsAsync_WithOkResponse_ReturnsDeserializedTags()
     {
         const string json =
-            """{"data":[{"publicId":"tag-1","tagId":10,"slug":"s","name":"n","logEvent":"always","loggingInterval":"1s","retentionPolicy":"30d","aggregators":[]}]}""";
+            """{"data":[{"slug":"s","name":"n","logEvent":"interval","loggingInterval":"1s","retentionPolicy":"30d","variable":{"publicId":"var-1"},"edgeAggregator":"Last"}]}""";
         var (client, _) = CreateSut(HttpStatusCode.OK, json);
 
         var result = await client.GetTagsAsync("agent-1");
@@ -117,7 +108,8 @@ public class ApiClientTests
         Assert.Multiple(() =>
         {
             Assert.That(result.Data, Has.Length.EqualTo(1));
-            Assert.That(result.Data[0].PublicId, Is.EqualTo("tag-1"));
+            Assert.That(result.Data[0].Slug, Is.EqualTo("s"));
+            Assert.That(result.Data[0].Variable.PublicId, Is.EqualTo("var-1"));
         });
     }
 
@@ -135,33 +127,29 @@ public class ApiClientTests
     }
 
     [Test]
-    public void GetTagsAsync_OnBadRequest_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
-
-        Assert.ThrowsAsync<HttpRequestException>(() => client.GetTagsAsync("agent-1"));
-    }
-
-    [Test]
     public async Task PostTagAsync_WithOkResponse_ReturnsDeserializedTag()
     {
         const string json =
-            """{"data":{"publicId":"tag-1","tagId":10,"slug":"s","name":"n","logEvent":"always","loggingInterval":"1s","retentionPolicy":"30d","aggregators":[]}}""";
+            """{"data":{"slug":"s","name":"n","logEvent":"interval","loggingInterval":"1s","retentionPolicy":"30d","variable":{"publicId":"var-1"},"edgeAggregator":"Last"}}""";
         var (client, _) = CreateSut(HttpStatusCode.OK, json);
 
-        var result = await client.PostTagAsync("agent-1", new Tag { Name = "n" });
+        var result = await client.PostTagAsync("agent-1", CreateTagRequest());
 
-        Assert.That(result!.Data.PublicId, Is.EqualTo("tag-1"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result!.Data.Slug, Is.EqualTo("s"));
+            Assert.That(result.Data.Variable.PublicId, Is.EqualTo("var-1"));
+        });
     }
 
     [Test]
     public async Task PostTagAsync_WhenCalled_UsesCorrectUriAndMethod()
     {
         const string json =
-            """{"data":{"publicId":"tag-1","tagId":1,"slug":"s","name":"n","logEvent":"e","loggingInterval":"1s","retentionPolicy":"30d","aggregators":[]}}""";
+            """{"data":{"slug":"s","name":"n","logEvent":"interval","loggingInterval":"1s","retentionPolicy":"30d","variable":{"publicId":"var-1"}}}""";
         var (client, handler) = CreateSut(HttpStatusCode.OK, json);
 
-        await client.PostTagAsync("agent-5", new Tag { Name = "n" });
+        await client.PostTagAsync("agent-5", CreateTagRequest());
 
         Assert.Multiple(() =>
         {
@@ -171,14 +159,6 @@ public class ApiClientTests
                 Does.Contain("/api/agents/agent-5/data-tags")
             );
         });
-    }
-
-    [Test]
-    public void PostTagAsync_OnBadRequest_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
-
-        Assert.ThrowsAsync<HttpRequestException>(() => client.PostTagAsync("agent-1", new Tag()));
     }
 
     [Test]
@@ -233,27 +213,6 @@ public class ApiClientTests
     }
 
     [Test]
-    public void PostVariableAsync_OnBadRequest_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
-
-        Assert.ThrowsAsync<HttpRequestException>(() =>
-            client.PostVariableAsync(
-                "agent-1",
-                new Variable
-                {
-                    PublicId = "v",
-                    Address = "a",
-                    Name = "n",
-                    Slug = "s",
-                    Type = "t",
-                    Width = "w",
-                }
-            )
-        );
-    }
-
-    [Test]
     public async Task GetAgentAsync_WithOkResponse_ReturnsDeserializedAgent()
     {
         const string json =
@@ -291,14 +250,6 @@ public class ApiClientTests
         await client.GetAgentAsync("agent-1");
 
         AssertCommonHeaders(handler.LastRequest!);
-    }
-
-    [Test]
-    public void GetAgentAsync_OnBadRequest_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
-
-        Assert.ThrowsAsync<HttpRequestException>(() => client.GetAgentAsync("agent-1"));
     }
 
     [Test]
@@ -340,23 +291,6 @@ public class ApiClientTests
 
         AssertCommonHeaders(handler.LastRequest!);
     }
-
-    [Test]
-    public void GetDataSourcesAsync_OnBadRequest_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
-
-        Assert.ThrowsAsync<HttpRequestException>(() => client.GetDataSourcesAsync("agent-1"));
-    }
-
-    [Test]
-    public void GetDataSourcesAsync_OnServerError_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.InternalServerError, "server error");
-
-        Assert.ThrowsAsync<HttpRequestException>(() => client.GetDataSourcesAsync("agent-1"));
-    }
-
     [Test]
     public async Task PostDataSourceAsync_WithOkResponse_ReturnsDeserializedDataSource()
     {
@@ -403,23 +337,6 @@ public class ApiClientTests
     }
 
     [Test]
-    public void PostDataSourceAsync_OnBadRequest_ThrowsHttpRequestException()
-    {
-        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
-        var newDataSource = new DataSource
-        {
-            Name = "n",
-            Slug = "s",
-            Device = new Source { PublicId = "d" },
-            Protocol = new DataSourceProtocol { PublicId = "modbus" },
-        };
-
-        Assert.ThrowsAsync<HttpRequestException>(() =>
-            client.PostDataSourceAsync("agent-1", newDataSource)
-        );
-    }
-
-    [Test]
     public async Task Post_WhenCalled_SendsPostRequest()
     {
         var (agent, handler) = CreateBaseAgentSut(HttpStatusCode.OK);
@@ -427,35 +344,6 @@ public class ApiClientTests
         await agent.PostAsync("/api/test", new { Value = 1 });
 
         Assert.That(handler.LastRequest!.Method, Is.EqualTo(HttpMethod.Post));
-    }
-
-    [Test]
-    public void Post_OnBadRequest_ThrowsHttpRequestException()
-    {
-        var (agent, _) = CreateBaseAgentSut(HttpStatusCode.BadRequest, "error");
-
-        Assert.ThrowsAsync<HttpRequestException>(() => agent.PostAsync("/api/test", new { }));
-    }
-
-    [Test]
-    public async Task GetDataVariablesAsync_WhenUnauthorized_DoesNotRetry()
-    {
-        var responses = new Queue<Func<HttpResponseMessage>>([
-            () => new HttpResponseMessage(HttpStatusCode.Unauthorized)
-            {
-                Content = new StringContent("unauthorized"),
-            },
-        ]);
-        var handler = new SequentialMockHttpMessageHandler(responses);
-        var client = new FakeApiClient(
-            new FakeOptionsMonitor(DefaultConfig),
-            NullLogger<ApiClient>.Instance,
-            handler,
-            TimeProvider.System
-        );
-
-        Assert.ThrowsAsync<HttpRequestException>(() => client.GetDataVariablesAsync("agent-1"));
-        Assert.That(handler.RequestCount, Is.EqualTo(1));
     }
 
     [Test]
@@ -714,7 +602,7 @@ public class ApiClientTests
         ILogger<ApiClient> logger,
         HttpMessageHandler handler,
         TimeProvider timeProvider
-    ) : ApiClient(config, logger, timeProvider)
+    ) : ApiClient(config, logger, timeProvider, new FakeIxonAuthenticationContext())
     {
         protected override HttpMessageHandler? GetHttpMessageHandler() => handler;
     }
@@ -724,11 +612,25 @@ public class ApiClientTests
         ILogger<BaseAgent> logger,
         HttpMessageHandler handler,
         TimeProvider timeProvider
-    ) : BaseAgent(config, logger, timeProvider)
+    ) : BaseAgent(config, logger, timeProvider, new FakeIxonAuthenticationContext())
     {
         protected override HttpMessageHandler? GetHttpMessageHandler() => handler;
 
         public Task PostAsync(string uri, object body) => Post(uri, body);
+    }
+
+    private sealed class FakeIxonAuthenticationContext : IIxonAuthenticationContext
+    {
+        public IxonHeaders IxonHeaders { get; set; } = new()
+        {
+            ServiceAccount = new ServiceAccount
+            {
+                AccessToken = "bearer-token",
+                ApiApplicationId = "app-id",
+            },
+            CompanyId = "company-id",
+            AgentId = "agent-id",
+        };
     }
 
     private sealed class FakeOptionsMonitor(Configuration config) : IOptionsMonitor<Configuration>

@@ -65,7 +65,7 @@ internal sealed class CsvExporters(
         foreach (var tag in tags)
         {
             var identifier = EscapeCsvField(tag.Slug ?? "");
-            var address = EscapeCsvField(tag.Variable?.Address ?? "");
+            var address = EscapeCsvField(tag.Variable?.PublicId ?? "");
             var name = EscapeCsvField(tag.Name ?? "");
             var loggingInterval = EscapeCsvField(tag.LoggingInterval ?? "");
             var retentionPolicy = EscapeCsvField(tag.RetentionPolicy ?? "");

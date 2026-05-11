@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.Resolvers;
+using System.Text.Json;
 
 namespace Rebelit.OT.Discover.EdgeApp.Tests;
 
@@ -174,24 +175,31 @@ public class DataSourceResolverTests
         public Task<Response<Device[]>> GetDevicesAsync(string agentId)
         {
             GetDevicesCallCount++;
-            return Task.FromResult(new Response<Device[]> { Data = devices });
+            var response = new Response<Device[]>
+            {
+                RawData = JsonSerializer.SerializeToElement(devices),
+            };
+            return Task.FromResult(response);
         }
 
-        public Task<Response<DataSource>?> PostDataSourceAsync(
-            string agentId,
-            DataSource newDataSource
-        )
+        public Task<Response<DataSource>?> PostDataSourceAsync(string agentId, DataSource newDataSource)
         {
             PostedDataSource = newDataSource;
             var response = new Response<DataSource>
             {
-                Data = new DataSource { PublicId = newDataSourceId },
+                RawData = JsonSerializer.SerializeToElement(new DataSource { PublicId = newDataSourceId }),
             };
             return Task.FromResult<Response<DataSource>?>(response);
         }
 
-        public Task<Response<DataSource[]>> GetDataSourcesAsync(string agentId) =>
-            Task.FromResult(new Response<DataSource[]> { Data = existingDataSources ?? [] });
+        public Task<Response<DataSource[]>> GetDataSourcesAsync(string agentId)
+        {
+            var sources = existingDataSources ?? [];
+            return Task.FromResult(new Response<DataSource[]>
+            {
+                RawData = JsonSerializer.SerializeToElement(sources),
+            });
+        }
 
         public Task<Response<Variable[]>> GetDataVariablesAsync(string agentId) =>
             throw new NotSupportedException();
@@ -209,6 +217,12 @@ public class DataSourceResolverTests
             throw new NotSupportedException();
 
         public Task<Response<Agent>> GetAgentAsync(string agentId) =>
+            throw new NotSupportedException();
+
+        public Task<Response<Company[]>> GetAssociatedCompanyAsync() =>
+            throw new NotSupportedException();
+
+        public Task<Response<Agent[]>> GetAgentsAsync() =>
             throw new NotSupportedException();
     }
 }
