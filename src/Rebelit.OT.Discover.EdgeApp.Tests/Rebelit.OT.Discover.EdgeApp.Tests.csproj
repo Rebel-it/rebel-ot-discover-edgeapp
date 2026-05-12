@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Rebelit.OT.Discover.EdgeApp/Rebelit.OT.Discover.EdgeApp.csproj" />
+    <ProjectReference Include="..\Rebelit.OT.Discover.EdgeApp.API\Rebelit.OT.Discover.EdgeApp.API.csproj" />
     <ProjectReference Include="../Rebelit.OT.Discover.EdgeApp.Connections.IXON/Rebelit.OT.Discover.EdgeApp.Connections.IXON.csproj" />
     <ProjectReference Include="../Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.csproj" />
   </ItemGroup>

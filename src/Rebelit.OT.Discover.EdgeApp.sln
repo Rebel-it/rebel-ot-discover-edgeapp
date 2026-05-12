@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rebelit.OT.Discover.EdgeApp", "Rebelit.OT.Discover.EdgeApp\Rebelit.OT.Discover.EdgeApp.csproj", "{507061A6-3E34-41D6-BB51-C9C608F247B6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rebelit.OT.Discover.EdgeApp.API", "Rebelit.OT.Discover.EdgeApp.API\Rebelit.OT.Discover.EdgeApp.API.csproj", "{507061A6-3E34-41D6-BB51-C9C608F247B6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rebelit.OT.Discover.EdgeApp.Connections.IXON", "Rebelit.OT.Discover.EdgeApp.Connections.IXON\Rebelit.OT.Discover.EdgeApp.Connections.IXON.csproj", "{8F6176F9-311D-404C-B7AD-1D5CE8DA477E}"
 EndProject

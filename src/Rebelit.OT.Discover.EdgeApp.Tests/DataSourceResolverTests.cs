@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
-using Rebelit.OT.Discover.EdgeApp.Resolvers;
+using Rebelit.OT.Discover.EdgeApp.API.Resolvers;
 using System.Text.Json;
 
 namespace Rebelit.OT.Discover.EdgeApp.Tests;
