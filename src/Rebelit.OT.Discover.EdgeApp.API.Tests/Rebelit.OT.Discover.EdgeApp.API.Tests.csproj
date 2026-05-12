@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <RootNamespace>Rebelit.OT.Discover.EdgeApp.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

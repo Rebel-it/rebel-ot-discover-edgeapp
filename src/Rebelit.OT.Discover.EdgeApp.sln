@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rebelit.OT.Discover.EdgeApp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rebelit.OT.Discover.EdgeApp.Connections.OPCUA", "Rebelit.OT.Discover.EdgeApp.Connections.OPCUA\Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.csproj", "{0EE83107-558F-4AB9-B3D0-22CC59AC2F00}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rebelit.OT.Discover.EdgeApp.Tests", "Rebelit.OT.Discover.EdgeApp.Tests\Rebelit.OT.Discover.EdgeApp.Tests.csproj", "{D092C92A-BD84-462C-9579-9EE3F4653303}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rebelit.OT.Discover.EdgeApp.API.Tests", "Rebelit.OT.Discover.EdgeApp.API.Tests\Rebelit.OT.Discover.EdgeApp.API.Tests.csproj", "{D092C92A-BD84-462C-9579-9EE3F4653303}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Tests", "Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Tests\Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Tests.csproj", "{ED36DB88-A339-4B87-94E1-5F63AF6E136A}"
 EndProject
