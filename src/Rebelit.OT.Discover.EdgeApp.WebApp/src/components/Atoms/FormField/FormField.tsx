@@ -8,10 +8,9 @@ type FormFieldProps = {
     type?: ComponentProps<'input'>['type']
     required?: boolean
     autoComplete?: ComponentProps<'input'>['autoComplete']
-    inputMode?: ComponentProps<'input'>['inputMode']
 }
 
-function FormField({ id, label, value, onChange, type = 'text', required, autoComplete = 'off' }: FormFieldProps) {
+function FormField({ id, label, value, onChange, type = 'text', required, autoComplete = 'off' }: Readonly<FormFieldProps>) {
     return (
         <div className={styles.formField}>
             <label htmlFor={id}>{label}</label>

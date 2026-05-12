@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useRef } from 'react'
 import styles from './TagPage.module.css'
+import DropDown, { type DropDownOption } from '../../components/Atoms/DropDown/DropDown'
 import { createTag, type CreateTagRequest } from '../../services/TagService'
 import { getVariables, type VariableOption } from '../../services/VariableService'
 import {
@@ -10,7 +11,6 @@ import {
     FORMULA_OPTIONS,
     RETENTION_OPTIONS,
 } from './TagPage.constants'
-
 
 type LoggingOn = 'Interval' | 'Change'
 
@@ -54,6 +54,11 @@ function TagPage() {
     const intervalLabel = isChange ? 'Rate limit' : 'Interval'
     const formulaLabel = isChange ? 'Specification' : 'Formula'
     const formulaOptions = isChange ? SPECIFICATION_OPTIONS : FORMULA_OPTIONS
+    const variableOptions: DropDownOption[] = variables.map((variable) => ({
+        label: variable.label,
+        value: variable.publicId,
+    }))
+    const loggingOnOptions: DropDownOption[] = LOGGING_ON_OPTIONS.map((value) => ({ label: value, value }))
 
     useEffect(() => {
         const dialog = dialogRef.current
@@ -201,20 +206,15 @@ function TagPage() {
                   <dialog ref={dialogRef} className={styles.modal} onClose={closeModal} aria-labelledby="modal-title">
                     <h2 id="modal-title">Add tag</h2>
 
-                    <div className={styles.formField}>
-                        <label htmlFor="variable">Variable</label>
-                        <select
-                            id="variable"
-                            value={draft.variablePublicId}
-                            onChange={(e) => handleVariableChange(e.target.value)}
-                            disabled={variablesLoading}
-                        >
-                            <option value="">{variablesLoading ? 'Loading...' : 'Select a variable'}</option>
-                            {variables.map((v) => (
-                                <option key={v.publicId} value={v.publicId}>{v.label}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <DropDown
+                        id="variable"
+                        label="Variable"
+                        value={draft.variablePublicId}
+                        options={variableOptions}
+                        onChange={handleVariableChange}
+                        disabled={variablesLoading}
+                        placeholder={variablesLoading ? 'Loading...' : 'Select a variable'}
+                    />
 
                     <div className={styles.formField}>
                         <label htmlFor="name">Name</label>
@@ -226,33 +226,23 @@ function TagPage() {
                         <input id="identifier" value={draft.identifier} onChange={(e) => setDraftField('identifier', e.target.value)} />
                     </div>
 
-                    <div className={styles.formField}>
-                        <label htmlFor="loggingOn">Logging on</label>
-                        <select
-                            id="loggingOn"
-                            value={draft.loggingOn}
-                            onChange={(e) => handleLoggingOnChange(e.target.value as Tag['loggingOn'])}
-                        >
-                            <option value="">select an option</option>
-                            {LOGGING_ON_OPTIONS.map((v) => (
-                                <option key={v} value={v}>{v}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <DropDown
+                        id="loggingOn"
+                        label="Logging on"
+                        value={draft.loggingOn}
+                        options={loggingOnOptions}
+                        onChange={(value) => handleLoggingOnChange(value as Tag['loggingOn'])}
+                        placeholder="select an option"
+                    />
 
-                    <div className={styles.formField}>
-                        <label htmlFor="interval">{intervalLabel}</label>
-                        <select
-                            id="interval"
-                            value={draft.interval}
-                            onChange={(e) => setDraftField('interval', e.target.value)}
-                        >
-                            <option value="">select an option</option>
-                            {intervalOptions.map((o) => (
-                                <option key={o.value} value={o.value}>{o.label}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <DropDown
+                        id="interval"
+                        label={intervalLabel}
+                        value={draft.interval}
+                        options={intervalOptions}
+                        onChange={(value) => setDraftField('interval', value)}
+                        placeholder="select an option"
+                    />
 
                     {!isChange && draft.interval === 'custom' && (
                         <div className={styles.formField}>
@@ -266,33 +256,23 @@ function TagPage() {
                         </div>
                     )}
 
-                    <div className={styles.formField}>
-                        <label htmlFor="formula">{formulaLabel}</label>
-                        <select
-                            id="formula"
-                            value={draft.formula}
-                            onChange={(e) => setDraftField('formula', e.target.value)}
-                        >
-                            <option value="">select an option</option>
-                            {formulaOptions.map((o) => (
-                                <option key={o.value} value={o.value}>{o.label}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <DropDown
+                        id="formula"
+                        label={formulaLabel}
+                        value={draft.formula}
+                        options={formulaOptions}
+                        onChange={(value) => setDraftField('formula', value)}
+                        placeholder="select an option"
+                    />
 
-                    <div className={styles.formField}>
-                        <label htmlFor="retention">Retention</label>
-                        <select
-                            id="retention"
-                            value={draft.retention}
-                            onChange={(e) => setDraftField('retention', e.target.value)}
-                        >
-                            <option value="">select a retention</option>
-                            {RETENTION_OPTIONS.map((o) => (
-                                <option key={o.value} value={o.value}>{o.label}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <DropDown
+                        id="retention"
+                        label="Retention"
+                        value={draft.retention}
+                        options={RETENTION_OPTIONS}
+                        onChange={(value) => setDraftField('retention', value)}
+                        placeholder="select a retention"
+                    />
 
                     {errorMessage && <p>{errorMessage}</p>}
 
