@@ -2,7 +2,7 @@ import { useEffect, useState, type ComponentProps } from 'react'
 import { SaveIxonAuthenticationHeaders, clearIxonAuthenticationHeaders } from '../../services/sessionStorageService.ts'
 import styles from './LoginPage.module.css'
 import { useNavigate } from 'react-router-dom'
-import FormField from '../shared/FormField'
+import FormField from '../Atoms/FormField.tsx'
 import { getCompanyConfiguration } from '../../services/companyConfigurationService.ts'
 import type { ServiceAccountObject } from '../../models/ServiceAccountObject.ts'
 

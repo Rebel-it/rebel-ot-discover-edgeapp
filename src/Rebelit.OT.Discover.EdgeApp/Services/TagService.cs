@@ -37,6 +37,20 @@ internal sealed class TagService(
         return createdTag;
     }
 
+    public async Task<Tag?> UpdateTagAsync(Tag tag, string publicId)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        var response = await apiClient.UpdateTagAsync(_agentId, publicId, tag);
+        var updatedTag = response?.Data;
+
+        logger.LogInformation(
+             "Updated tag {TagName} for agent {AgentId}.",
+             updatedTag?.Name ?? tag.Name,
+             _agentId);
+
+        return updatedTag;
+    }
+
     public async Task<Tag?> CreateTagAsync(CreateTagRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -56,4 +70,19 @@ internal sealed class TagService(
         EdgeAggregator = request.EdgeAggregator,
         Variable = new TagVariable { PublicId = request.Variable },
     };
+
+    public async Task<Tag?> UpdateTagAsync(UpdateTagRequest request)
+    {
+        var tag = MapToTag(request);
+        ArgumentNullException.ThrowIfNull(tag);
+        var response = await apiClient.UpdateTagAsync(_agentId, request.PublicId, tag);
+        var updatedTag = response?.Data;
+
+        logger.LogInformation(
+             "Updated tag {TagName} for agent {AgentId}.",
+             updatedTag?.Name ?? tag.Name,
+             _agentId);
+
+        return updatedTag;
+    }
 }

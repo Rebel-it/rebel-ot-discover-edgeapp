@@ -8,4 +8,5 @@ public interface ITagService
     Task<IReadOnlyList<Tag>> GetTagsAsync();
     Task<Tag?> UploadTagAsync(Tag tag);
     Task<Tag?> CreateTagAsync(CreateTagRequest request);
+    Task<Tag?> UpdateTagAsync(UpdateTagRequest request);
 }

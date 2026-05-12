@@ -3,7 +3,7 @@ import { connectToPlc } from '../../services/PlcService.ts'
 import Loginstyles from '../loginPage/LoginPage.module.css'
 import type { PlcAuthObject } from '../../models/PlcAuthObject'
 import { useState, type ComponentProps } from 'react'
-import FormField from '../shared/FormField'
+import FormField from '../Atoms/FormField.tsx'
 
 type PlcFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 

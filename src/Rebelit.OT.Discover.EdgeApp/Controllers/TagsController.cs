@@ -30,4 +30,16 @@ public class TagsController(ITagService tagService) : BaseController
         var createdTag = await _tagService.CreateTagAsync(model);
         return Ok(createdTag);
     }
+
+    [HttpPut]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateTagAsync([FromBody] UpdateTagRequest model)
+    {
+        if (string.IsNullOrWhiteSpace(model.PublicId))
+            return BadRequest(new { message = "Tag public ID is required." });
+
+        var updatedTag = await _tagService.UpdateTagAsync(model);
+        return Ok(updatedTag);
+    }
 }

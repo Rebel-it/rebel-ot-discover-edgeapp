@@ -45,11 +45,30 @@ internal abstract class BaseAgent
             await response.Content.ReadAsStringAsync()
         );
     }
-
     protected async Task Post(string uri, object body)
     {
         await ExecuteRequestAsync(http =>
             http.PostAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
+        );
+    }
+
+    protected async Task<T?> Patch<T>(string uri, object body)
+    {
+        var response = await ExecuteRequestAsync(http =>
+           http.PatchAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
+        );
+        return System.Text.Json.JsonSerializer.Deserialize<T>(
+            await response.Content.ReadAsStringAsync()
+        );
+    }
+
+    protected async Task<T?> Put<T>(string uri, object body)
+    {
+        var response = await ExecuteRequestAsync(http =>
+            http.PutAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
+        );
+        return System.Text.Json.JsonSerializer.Deserialize<T>(
+            await response.Content.ReadAsStringAsync()
         );
     }
 

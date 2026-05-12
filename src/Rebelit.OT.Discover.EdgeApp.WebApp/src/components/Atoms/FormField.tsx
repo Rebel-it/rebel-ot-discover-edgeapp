@@ -1,6 +1,5 @@
 import type { ComponentProps } from 'react'
-import styles from '../loginPage/LoginPage.module.css'
-
+import styles from './FormField.module.css'
 type FormFieldProps = {
     id: string
     label: string

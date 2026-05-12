@@ -22,3 +22,7 @@ export type Tag = {
 export function createTag(request: CreateTagRequest): Promise<void> {
     return httpClient.post('/tags', request)
 }
+
+export function updateTag(identifier: string, request: CreateTagRequest): Promise<void> {
+    return httpClient.put(`/tags/${identifier}`, request)
+}

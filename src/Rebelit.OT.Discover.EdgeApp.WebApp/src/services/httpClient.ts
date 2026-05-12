@@ -53,4 +53,12 @@ export const httpClient = {
       body: body !== undefined ? JSON.stringify(body) : undefined,
     }).then(handleResponse<TResponse>)
   },
+
+  put<TResponse = void, TBody = unknown>(path: string, body?: TBody): Promise<TResponse> {
+    return fetch(`${apiBaseUrl}${path}`, {
+      method: 'PUT',
+      headers: buildHeaders(),
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    }).then(handleResponse<TResponse>)
+  }
 }

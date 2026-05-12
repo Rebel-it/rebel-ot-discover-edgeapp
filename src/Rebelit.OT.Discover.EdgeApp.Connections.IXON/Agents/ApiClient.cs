@@ -31,6 +31,11 @@ internal class ApiClient(
         var uri = $"/api/agents/{agentId}/data-tags";
         return await Post<Response<Tag>>(uri, tag);
     }
+    public async Task<Response<Tag>?> UpdateTagAsync(string agentId, string publicId, Tag tag)
+    {
+        var uri = $"/api/agents/{agentId}/data-tags/{publicId}";
+        return await Put<Response<Tag>>(uri, tag);
+    }
 
     public async Task<Response<Variable>?> PostVariableAsync(string agentId, Variable newVariable)
     {
@@ -84,4 +89,5 @@ internal class ApiClient(
         const string uri = "/api/agents?fields=publicId,name,deviceId";
         return await Get<Response<Agent[]>>(uri);
     }
+    
 }
