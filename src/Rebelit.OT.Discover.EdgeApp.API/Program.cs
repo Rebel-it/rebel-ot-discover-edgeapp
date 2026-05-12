@@ -7,6 +7,7 @@ using Rebelit.OT.Discover.EdgeApp.API.Services;
 using Rebelit.OT.Discover.EdgeApp.API.Synchronizers;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Extensions;
+using Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro;
 using Serilog;
 using Serilog.Events;
 
@@ -52,6 +53,7 @@ builder.Services.AddScoped<INodeSynchronizer, NodeSynchronizer>();
 builder.Services.AddScoped<ICompanyConfigurationService, CompanyConfigurationService>();
 builder.Services.AddOPCUAClient("Rebelit.OT.Scraper");
 builder.Services.AddIXONClient();
+builder.Services.AddSecureEdgeProClient("http://172.27.21.1:80");
 
 var app = builder.Build();
 
