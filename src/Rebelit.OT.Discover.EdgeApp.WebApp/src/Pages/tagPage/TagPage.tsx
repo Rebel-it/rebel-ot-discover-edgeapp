@@ -9,7 +9,8 @@ import {
     SPECIFICATION_OPTIONS,
     FORMULA_OPTIONS,
     RETENTION_OPTIONS,
-} from '../../Pages/tagPage/TagPage.constants'
+} from './TagPage.constants'
+
 
 type LoggingOn = 'Interval' | 'Change'
 

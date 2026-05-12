@@ -4,7 +4,7 @@ import LoginPage from './components/loginPage/LoginPage'
 import PlcConnect from './components/plcConnect/PlcConnect'
 import SourcePage from './components/sourcePage/SourcePage'
 import VariablesPage from './components/variablesPage/VariablesPage'
-import TagPage from './components/tagPage/TagPage'
+import TagPage from './Pages/tagPage/TagPage'
 
 function App() {
   return (
