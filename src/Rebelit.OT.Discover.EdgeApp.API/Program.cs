@@ -53,7 +53,9 @@ builder.Services.AddScoped<INodeSynchronizer, NodeSynchronizer>();
 builder.Services.AddScoped<ICompanyConfigurationService, CompanyConfigurationService>();
 builder.Services.AddOPCUAClient("Rebelit.OT.Scraper");
 builder.Services.AddIXONClient();
-builder.Services.AddSecureEdgeProClient("http://172.27.21.1:80");
+var secureEdgeProBaseAddress = builder.Configuration["SECUREEDGEPRO_BaseAddress"]
+    ?? throw new InvalidOperationException("SECUREEDGEPRO_BaseAddress environment variable is not set. Ensure the entrypoint script ran correctly or set it explicitly.");
+builder.Services.AddSecureEdgeProClient(secureEdgeProBaseAddress);
 
 var app = builder.Build();
 

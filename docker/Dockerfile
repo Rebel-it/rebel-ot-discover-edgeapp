@@ -32,7 +32,11 @@ RUN dotnet publish Rebelit.OT.Discover.EdgeApp/Rebelit.OT.Discover.EdgeApp.cspro
 FROM mcr.microsoft.com/dotnet/runtime:10.0 AS runtime
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y --no-install-recommends iproute2 && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app/publish .
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # ── IXON credentials ───────────────────────────────────────────────────────────
 ARG IXON_ApplicationId
@@ -60,4 +64,4 @@ ENV OPCUA_Password="$OPCUA_Password"
 ARG  LOG_LEVEL
 ENV  LOG_LEVEL="$LOG_LEVEL"
 
-ENTRYPOINT ["dotnet", "Rebelit.OT.Discover.EdgeApp.dll"]
+ENTRYPOINT ["/entrypoint.sh"]
