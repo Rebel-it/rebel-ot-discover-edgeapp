@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.Resolvers;
 
@@ -20,6 +21,7 @@ public interface IDataSourceResolver
 internal sealed class DataSourceResolver(
     IApiClient apiClient,
     IConfiguration configuration,
+    IIxonAuthenticationContext authenticationContext,
     ILogger<DataSourceResolver> logger
 ) : IDataSourceResolver
 {
@@ -37,13 +39,13 @@ internal sealed class DataSourceResolver(
 
         logger.LogInformation("Creating a new OPC-UA data source...");
 
-        var devicesResponse = await apiClient.GetDevicesAsync(agentId);
+        var devicesResponse = await apiClient.GetDevicesAsync(authenticationContext.IxonHeaders.AgentId);
         var devices = devicesResponse.Data ?? [];
         var device = FindDeviceByHost(devices);
 
         if (device?.PublicId is null)
             throw new InvalidOperationException(
-                $"Could not resolve device publicId for agent '{agentId}'."
+                $"Could not resolve device publicId for agent '{authenticationContext.IxonHeaders.AgentId}'."
             );
 
         logger.LogInformation(
@@ -53,7 +55,7 @@ internal sealed class DataSourceResolver(
             device.IpAddress
         );
 
-        var existingDataSource = await FindExistingDataSourceAsync(agentId, device.PublicId, sourceName);
+        var existingDataSource = await FindExistingDataSourceAsync(authenticationContext.IxonHeaders.AgentId, device.PublicId, sourceName);
         if (existingDataSource is not null)
         {
             logger.LogInformation(
@@ -66,7 +68,7 @@ internal sealed class DataSourceResolver(
         }
 
         var newDataSource = BuildDataSource(device.PublicId, sourceName);
-        var result = await apiClient.PostDataSourceAsync(agentId, newDataSource);
+        var result = await apiClient.PostDataSourceAsync(authenticationContext.IxonHeaders.AgentId, newDataSource);
         var createdId =
             result?.Data.PublicId
             ?? throw new InvalidOperationException("Failed to create a new data source in IXON.");
@@ -81,7 +83,7 @@ internal sealed class DataSourceResolver(
         string sourceName
     )
     {
-        var dataSourcesResponse = await apiClient.GetDataSourcesAsync(agentId);
+        var dataSourcesResponse = await apiClient.GetDataSourcesAsync(authenticationContext.IxonHeaders.AgentId);
         var dataSources = dataSourcesResponse.Data ?? [];
         return dataSources.FirstOrDefault(ds =>
             ds.Device?.PublicId == devicePublicId
