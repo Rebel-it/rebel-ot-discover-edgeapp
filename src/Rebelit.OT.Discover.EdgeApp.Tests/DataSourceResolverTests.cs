@@ -4,6 +4,7 @@ using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.Resolvers;
 using System.Text.Json;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.Tests;
 
@@ -15,39 +16,54 @@ public class DataSourceResolverTests
     private const string DefaultUsername = "user";
     private const string DefaultPassword = "pass";
 
-    private static IConfiguration BuildConfig(
-        string? dataSourceId = null,
-        string address = DefaultAddress
-    )
-    {
-        var dict = new Dictionary<string, string?>
+    private static FakeIxonAuthenticationContext CreateAuthenticationContext(
+        string address = DefaultAddress,
+        string username = DefaultUsername,
+        string password = DefaultPassword,
+        string agentId = DefaultAgentId
+    ) =>
+        new()
         {
-            ["OPCUA_ServerAddress"] = address,
-            ["OPCUA_Username"] = DefaultUsername,
-            ["OPCUA_Password"] = DefaultPassword,
+            IxonHeaders = new IxonHeaders
+            {
+                ServiceAccount = new ServiceAccount
+                {
+                    AccessToken = "token",
+                    ApiApplicationId = "app-id",
+                },
+                AgentId = agentId,
+                PlcUrl = address,
+                PlcUsername = username,
+                PlcPassword = password,
+            },
         };
-        if (dataSourceId is not null)
-            dict["IXON_DataSourceId"] = dataSourceId;
-        return new ConfigurationBuilder().AddInMemoryCollection(dict).Build();
-    }
 
     [Test]
-    public async Task ResolveAsync_WhenDataSourceIdIsConfigured_ReturnsItWithoutCallingApi()
+    public void ResolveAsync_WhenDataSourceIdIsConfigured_ReturnsItWithoutCallingApi()
     {
         var apiClient = new SpyApiClient([]);
         var resolver = new DataSourceResolver(
             apiClient,
-            BuildConfig(dataSourceId: "pre-configured-id"),
+            CreateAuthenticationContext(),
             NullLogger<DataSourceResolver>.Instance
         );
 
-        var result = await resolver.ResolveAsync(DefaultAgentId, "");
+        Assert.ThrowsAsync<InvalidOperationException>(() => resolver.ResolveAsync(""));
+        Assert.That(apiClient.GetDevicesCallCount, Is.EqualTo(1));
+    }
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(result, Is.EqualTo("pre-configured-id"));
-            Assert.That(apiClient.GetDevicesCallCount, Is.EqualTo(0));
-        });
+    [Test]
+    public void ResolveAsync_WhenDataSourceIdIsConfigured_ThrowsInvalidOperationException_WhenNoDeviceIsResolved()
+    {
+        var apiClient = new SpyApiClient([]);
+        var resolver = new DataSourceResolver(
+            apiClient,
+            CreateAuthenticationContext(),
+            NullLogger<DataSourceResolver>.Instance
+        );
+
+        Assert.ThrowsAsync<InvalidOperationException>(() => resolver.ResolveAsync(""));
+        Assert.That(apiClient.GetDevicesCallCount, Is.EqualTo(1));
     }
 
     [Test]
@@ -57,24 +73,38 @@ public class DataSourceResolverTests
         var apiClient = new SpyApiClient([device], newDataSourceId: "new-ds-id");
         var resolver = new DataSourceResolver(
             apiClient,
-            BuildConfig(),
+            CreateAuthenticationContext(),
             NullLogger<DataSourceResolver>.Instance
         );
 
-        var result = await resolver.ResolveAsync(DefaultAgentId, "");
+        var result = await resolver.ResolveAsync( "");
 
         Assert.That(result, Is.EqualTo("new-ds-id"));
     }
 
     [Test]
-    public async Task ResolveAsync_WhenExistingDataSourceMatchesDevice_ReturnsExistingIdWithoutPosting()
+    public void ResolveAsync_WhenNoDeviceIsResolved_ThrowsInvalidOperationException()
+    {
+        var apiClient = new SpyApiClient([]);
+        var resolver = new DataSourceResolver(
+            apiClient,
+            CreateAuthenticationContext(),
+            NullLogger<DataSourceResolver>.Instance
+        );
+
+        Assert.ThrowsAsync<InvalidOperationException>(() => resolver.ResolveAsync(""));
+        Assert.That(apiClient.GetDevicesCallCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ResolveAsync_WhenExistingDataSourceMatchesDeviceAndSourceName_ReturnsExistingIdWithoutPosting()
     {
         var device = new Device { PublicId = "device-1", IpAddress = "127.0.0.1" };
         var existingDataSource = new DataSource
         {
             PublicId = "existing-ds-id",
             Name = "OPC UA",
-            Slug = "opcua",
+            Slug = "opc-ua",
             Device = new Source { PublicId = "device-1" },
         };
         var apiClient = new SpyApiClient(
@@ -84,15 +114,16 @@ public class DataSourceResolverTests
         );
         var resolver = new DataSourceResolver(
             apiClient,
-            BuildConfig(),
+            CreateAuthenticationContext(),
             NullLogger<DataSourceResolver>.Instance
         );
 
-        var result = await resolver.ResolveAsync(DefaultAgentId, "");
+        var result = await resolver.ResolveAsync("opc-ua");
 
         Assert.Multiple(() =>
         {
-            Assert.That(result, Is.EqualTo("new-ds-id"));
+            Assert.That(result, Is.EqualTo("existing-ds-id"));
+            Assert.That(apiClient.PostedDataSource, Is.Null);
         });
     }
 
@@ -104,7 +135,7 @@ public class DataSourceResolverTests
         {
             PublicId = "other-ds-id",
             Name = "OPC UA",
-            Slug = "opcua",
+            Slug = "other-source",
             Device = new Source { PublicId = "device-other" },
         };
         var apiClient = new SpyApiClient(
@@ -114,11 +145,11 @@ public class DataSourceResolverTests
         );
         var resolver = new DataSourceResolver(
             apiClient,
-            BuildConfig(),
+            CreateAuthenticationContext(),
             NullLogger<DataSourceResolver>.Instance
         );
 
-        var result = await resolver.ResolveAsync(DefaultAgentId, "");
+        var result = await resolver.ResolveAsync( "");
 
         Assert.That(result, Is.EqualTo("new-ds-id"));
     }
@@ -134,11 +165,11 @@ public class DataSourceResolverTests
         var apiClient = new SpyApiClient(devices, "new-ds-id");
         var resolver = new DataSourceResolver(
             apiClient,
-            BuildConfig(address: "opc.tcp://192.168.1.100:4840"),
+            CreateAuthenticationContext(address: "opc.tcp://192.168.1.100:4840"),
             NullLogger<DataSourceResolver>.Instance
         );
 
-        await resolver.ResolveAsync(DefaultAgentId, "");
+        await resolver.ResolveAsync( "");
 
         Assert.That(apiClient.PostedDataSource?.Device?.PublicId, Is.EqualTo("dev-2"));
     }
@@ -154,11 +185,11 @@ public class DataSourceResolverTests
         var apiClient = new SpyApiClient(devices, "new-ds-id");
         var resolver = new DataSourceResolver(
             apiClient,
-            BuildConfig(address: "opc.tcp://192.168.1.99:4840"),
+            CreateAuthenticationContext(address: "opc.tcp://192.168.1.99:4840"),
             NullLogger<DataSourceResolver>.Instance
         );
 
-        await resolver.ResolveAsync(DefaultAgentId, "");
+        await resolver.ResolveAsync( "");
 
         Assert.That(apiClient.PostedDataSource?.Device?.PublicId, Is.EqualTo("dev-first"));
     }
@@ -172,7 +203,7 @@ public class DataSourceResolverTests
         public int GetDevicesCallCount { get; private set; }
         public DataSource? PostedDataSource { get; private set; }
 
-        public Task<Response<Device[]>> GetDevicesAsync(string agentId)
+        public Task<Response<Device[]>> GetDevicesAsync()
         {
             GetDevicesCallCount++;
             var response = new Response<Device[]>
@@ -182,7 +213,7 @@ public class DataSourceResolverTests
             return Task.FromResult(response);
         }
 
-        public Task<Response<DataSource>?> PostDataSourceAsync(string agentId, DataSource newDataSource)
+        public Task<Response<DataSource>?> PostDataSourceAsync(DataSource newDataSource)
         {
             PostedDataSource = newDataSource;
             var response = new Response<DataSource>
@@ -192,7 +223,7 @@ public class DataSourceResolverTests
             return Task.FromResult<Response<DataSource>?>(response);
         }
 
-        public Task<Response<DataSource[]>> GetDataSourcesAsync(string agentId)
+        public Task<Response<DataSource[]>> GetDataSourcesAsync()
         {
             var sources = existingDataSources ?? [];
             return Task.FromResult(new Response<DataSource[]>
@@ -201,22 +232,25 @@ public class DataSourceResolverTests
             });
         }
 
-        public Task<Response<Variable[]>> GetDataVariablesAsync(string agentId) =>
+        public Task<Response<Variable[]>> GetDataVariablesAsync() =>
             throw new NotSupportedException();
 
-        public Task<Response<Tag[]>> GetTagsAsync(string agentId) =>
+        public Task<Response<Tag[]>> GetTagsAsync() =>
             throw new NotSupportedException();
 
-        public Task<Response<Variable>?> PostVariableAsync(string agentId, Variable newVariable) =>
+        public Task<Response<Variable>?> PostVariableAsync(Variable newVariable) =>
             throw new NotSupportedException();
 
-        public Task<Response<Tag>?> PostTagAsync(string agentId, Tag newTag) =>
+        public Task<Response<Tag>?> PostTagAsync(Tag newTag) =>
             throw new NotSupportedException();
 
-        public Task<Response<Variable[]>?> PostVariablesAsync(string agentId, IEnumerable<Variable> variables) =>
+        public Task<Response<Tag>?> UpdateTagAsync(string publicId, Tag tag) =>
             throw new NotSupportedException();
 
-        public Task<Response<Agent>> GetAgentAsync(string agentId) =>
+        public Task<Response<Variable[]>?> PostVariablesAsync(IEnumerable<Variable> variables) =>
+            throw new NotSupportedException();
+
+        public Task<Response<Agent>> GetAgentAsync() =>
             throw new NotSupportedException();
 
         public Task<Response<Company[]>> GetAssociatedCompanyAsync() =>
@@ -224,5 +258,10 @@ public class DataSourceResolverTests
 
         public Task<Response<Agent[]>> GetAgentsAsync() =>
             throw new NotSupportedException();
+    }
+
+    private sealed class FakeIxonAuthenticationContext : IIxonAuthenticationContext
+    {
+        public IxonHeaders IxonHeaders { get; set; } = null!;
     }
 }

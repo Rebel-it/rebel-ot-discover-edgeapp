@@ -12,7 +12,7 @@ public interface IApiClient
     /// </summary>
     /// <param name="newVariable"></param>
     /// <returns></returns>
-    Task<Response<Variable>?> PostVariableAsync(string agentId, Variable newVariable);
+    Task<Response<Variable>?> PostVariableAsync(Variable newVariable);
 
     /// <summary>
     /// Posts a collection of variables to the specified agent asynchronously.
@@ -21,50 +21,49 @@ public interface IApiClient
     /// <param name="variables">An IEnumerable of Variable objects to be posted.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains a response with an array of
     /// variables that were posted. If the operation fails, an exception is thrown.</returns>
-    Task<Response<Variable[]>?> PostVariablesAsync(string agentId, IEnumerable<Variable> variables);
+    Task<Response<Variable[]>?> PostVariablesAsync(IEnumerable<Variable> variables);
 
     /// <summary>
     ///     Get all Variables for a given Agent.
     /// </summary>
     /// <param name="agentId"></param>
     /// <returns></returns>
-    Task<Response<Variable[]>> GetDataVariablesAsync(string agentId);
+    Task<Response<Variable[]>> GetDataVariablesAsync();
 
     /// <summary>
     ///     Get all Tags for a given Agent.
     /// </summary>
     /// <param name="agentId"></param>
     /// <returns></returns>
-    Task<Response<Tag[]>> GetTagsAsync(string agentId);
+    Task<Response<Tag[]>> GetTagsAsync();
 
-    Task<Response<Tag>?> PostTagAsync(string agentId, Tag tag);
+    Task<Response<Tag>?> PostTagAsync(Tag tag);
 
-    Task<Response<Tag>?> UpdateTagAsync(string agentId ,string publicId, Tag tag);
-
+    Task<Response<Tag>?> UpdateTagAsync(string publicId, Tag tag);
     /// <summary>
     ///     Gets all data sources for the specified agent.
     /// </summary>
     /// <param name="agentId">The public ID of the agent.</param>
-    Task<Response<DataSource[]>> GetDataSourcesAsync(string agentId);
+    Task<Response<DataSource[]>> GetDataSourcesAsync();
 
     /// <summary>
     ///     Gets the agent details for the specified agent.
     /// </summary>
     /// <param name="agentId">The public ID of the agent.</param>
-    Task<Response<Agent>> GetAgentAsync(string agentId);
+    Task<Response<Agent>> GetAgentAsync();
 
     /// <summary>
     ///     Gets the devices associated with the specified agent.
     /// </summary>
     /// <param name="agentId">The public ID of the agent.</param>
-    Task<Response<Device[]>> GetDevicesAsync(string agentId);
+    Task<Response<Device[]>> GetDevicesAsync();
 
     /// <summary>
     ///     Creates a new data source for the specified agent.
     /// </summary>
     /// <param name="agentId">The public ID of the agent.</param>
     /// <param name="newDataSource">The data source to create.</param>
-    Task<Response<DataSource>?> PostDataSourceAsync(string agentId, DataSource newDataSource);
+    Task<Response<DataSource>?> PostDataSourceAsync(DataSource newDataSource);
     
     /// <summary>
     ///     Get company associated with service account.

@@ -20,7 +20,6 @@ public interface IDataSourceResolver
 
 internal sealed class DataSourceResolver(
     IApiClient apiClient,
-    IConfiguration configuration,
     IIxonAuthenticationContext authenticationContext,
     ILogger<DataSourceResolver> logger
 ) : IDataSourceResolver
@@ -31,15 +30,9 @@ internal sealed class DataSourceResolver(
         if (string.IsNullOrWhiteSpace(sourceName))
             sourceName = "OPC UA";
 
-        var configuredDataSourceId = configuration["IXON_DataSourceId"];
-        if (!string.IsNullOrEmpty(configuredDataSourceId))
-        {
-            return configuredDataSourceId;
-        }
-
         logger.LogInformation("Creating a new OPC-UA data source...");
 
-        var devicesResponse = await apiClient.GetDevicesAsync(authenticationContext.IxonHeaders.AgentId);
+        var devicesResponse = await apiClient.GetDevicesAsync();
         var devices = devicesResponse.Data ?? [];
         var device = FindDeviceByHost(devices);
 
@@ -68,7 +61,7 @@ internal sealed class DataSourceResolver(
         }
 
         var newDataSource = BuildDataSource(device.PublicId, sourceName);
-        var result = await apiClient.PostDataSourceAsync(authenticationContext.IxonHeaders.AgentId, newDataSource);
+        var result = await apiClient.PostDataSourceAsync(newDataSource);
         var createdId =
             result?.Data.PublicId
             ?? throw new InvalidOperationException("Failed to create a new data source in IXON.");
@@ -83,7 +76,7 @@ internal sealed class DataSourceResolver(
         string sourceName
     )
     {
-        var dataSourcesResponse = await apiClient.GetDataSourcesAsync(authenticationContext.IxonHeaders.AgentId);
+        var dataSourcesResponse = await apiClient.GetDataSourcesAsync();
         var dataSources = dataSourcesResponse.Data ?? [];
         return dataSources.FirstOrDefault(ds =>
             ds.Device?.PublicId == devicePublicId
@@ -93,7 +86,7 @@ internal sealed class DataSourceResolver(
 
     private DataSource BuildDataSource(string devicePublicId, string sourceName)
     {
-        var authenticationType = string.IsNullOrEmpty(_username) ? "anonymous" : "username";
+        var authenticationType = string.IsNullOrEmpty(authenticationContext.IxonHeaders.PlcUsername) ? "anonymous" : "username";
         return new DataSource
         {
             Name = sourceName,
@@ -104,15 +97,15 @@ internal sealed class DataSourceResolver(
             {
                 PublicId = "opc-ua",
                 AuthenticationType = authenticationType,
-                Username = string.IsNullOrEmpty(_username) ? null : _username,
-                Password = string.IsNullOrEmpty(_password) ? null : _password,
+                Username = string.IsNullOrEmpty(authenticationContext.IxonHeaders.PlcUsername) ? null : authenticationContext.IxonHeaders.PlcUsername,
+                Password = string.IsNullOrEmpty(authenticationContext.IxonHeaders.PlcPassword) ? null : authenticationContext.IxonHeaders.PlcPassword,
             },
         };
     }
 
     private Device? FindDeviceByHost(Device[] devices)
     {
-        var host = ExtractHost(_opcuaAddress);
+        var host = ExtractHost(authenticationContext.IxonHeaders.PlcUrl);
         if (string.IsNullOrEmpty(host))
             return devices.FirstOrDefault();
 

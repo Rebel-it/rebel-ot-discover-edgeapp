@@ -41,11 +41,11 @@ internal sealed class NodeSynchronizer(
     {
         _existingAddresses =
         [
-            .. (await apiClient.GetDataVariablesAsync(agentId)).Data.Select(v => v.Address),
+            .. (await apiClient.GetDataVariablesAsync()).Data.Select(v => v.Address),
         ];
         _existingTags =
         [
-            .. (await apiClient.GetTagsAsync(agentId)).Data.Select(t => t.Variable.PublicId),
+            .. (await apiClient.GetTagsAsync()).Data.Select(t => t.Variable.PublicId),
         ];
     }
 
@@ -142,7 +142,7 @@ internal sealed class NodeSynchronizer(
             variable.Type
         );
 
-        var result = await apiClient.PostVariableAsync(_agentId, variable);
+        var result = await apiClient.PostVariableAsync(variable);
         variable.PublicId = result?.Data.PublicId ?? variable.PublicId;
         return variable;
     }
@@ -196,7 +196,7 @@ internal sealed class NodeSynchronizer(
         }
 
         logger.LogInformation("Posting {Count} variables for agent {AgentId}.", variableList.Count, agentId);
-        var result = await apiClient.PostVariablesAsync(agentId, variableList);
+        var result = await apiClient.PostVariablesAsync(variableList);
 
         if (result is not null && result.Data is not null)
         {

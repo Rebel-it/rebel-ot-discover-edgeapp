@@ -15,7 +15,7 @@ internal sealed class VariableService(
 
     public async Task<IReadOnlyList<Variable>> GetVariablesAsync(CancellationToken cancellationToken = default)
     {
-        var response = await apiClient.GetDataVariablesAsync(_agentId);
+        var response = await apiClient.GetDataVariablesAsync();
         var variables = response.Data ?? [];
 
         logger.LogInformation("Retrieved {Count} variables for agent {AgentId}.", variables.Length, _agentId);
@@ -38,7 +38,7 @@ internal sealed class VariableService(
         if (variable.Source is null || string.IsNullOrWhiteSpace(variable.Source.PublicId))
             throw new ArgumentException("Variable source public id is required.", nameof(variable));
 
-        var response = await apiClient.PostVariableAsync(_agentId, variable);
+        var response = await apiClient.PostVariableAsync(variable);
         var createdVariable = response?.Data;
 
         logger.LogInformation(
@@ -57,7 +57,7 @@ internal sealed class VariableService(
         if (variableList.Count == 0)
             return [];
 
-        var response = await apiClient.PostVariablesAsync(_agentId, variableList);
+        var response = await apiClient.PostVariablesAsync(variableList);
         var createdVariables = response?.Data ?? [];
 
         logger.LogInformation("Created {Count} variables for agent {AgentId}.", createdVariables.Length, _agentId);
