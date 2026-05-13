@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { savePlcAuth } from '../../services/sessionStorageService.ts'
 import { connectToPlc } from '../../services/PlcService.ts'
 import Loginstyles from '../loginPage/LoginPage.module.css'
 import type { PlcAuthObject } from '../../models/PlcAuthObject'
@@ -35,6 +36,7 @@ function PlcConnect() {
 
         try {
             await connectToPlc(plcObject)
+            savePlcAuth(plcObject)
             setConnectionSucceeded(true)
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'PLC connection failed. Please check your credentials and try again.')

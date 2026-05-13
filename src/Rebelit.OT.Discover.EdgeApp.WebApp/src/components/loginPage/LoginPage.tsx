@@ -1,5 +1,5 @@
 import { useEffect, useState, type ComponentProps } from 'react'
-import { SaveIxonAuthenticationHeaders, clearIxonAuthenticationHeaders } from '../../services/sessionStorageService.ts'
+import { saveIxonAuth, clearIxonAuthenticationHeaders } from '../../services/sessionStorageService.ts'
 import styles from './LoginPage.module.css'
 import { useNavigate } from 'react-router-dom'
 import FormField from '../Atoms/FormField/FormField.tsx'
@@ -37,7 +37,7 @@ function LoginPage() {
     try {
       setIsSubmitting(true);
       const result = await getCompanyConfiguration(serviceAccount);
-      SaveIxonAuthenticationHeaders(serviceAccount, result);
+      saveIxonAuth(serviceAccount, result);
       setLoginSucceeded(true);
       setErrorMessage("");
     } catch (error) {

@@ -11,14 +11,17 @@ const PLC_URL = 'OpcUaServerAddress';
 const PLC_USERNAME = 'OpcUaUsername';
 const PLC_PASSWORD = 'OpcUaPassword';
 
-export function SaveIxonAuthenticationHeaders(auth: ServiceAccountObject, config: CompanyConfiguration , plcAuth: PlcAuthObject | null): void {
-  sessionStorage.setItem(COMPANY_ID, config?.companyId ?? '');
-  sessionStorage.setItem(AGENT_ID, config?.agentId ?? '');
+export function saveIxonAuth(auth: ServiceAccountObject, config: CompanyConfiguration): void {
   sessionStorage.setItem(API_APPLICATION_ID_KEY, auth.apiApplicationID);
   sessionStorage.setItem(ACCESS_TOKEN_KEY, auth.accessToken);
-  sessionStorage.setItem(PLC_URL, plcAuth?.OpcUaServerAddress ?? '');
-  sessionStorage.setItem(PLC_USERNAME, plcAuth?.OpcUaUsername ?? '');
-  sessionStorage.setItem(PLC_PASSWORD, plcAuth?.OpcUaPassword ?? '');
+  sessionStorage.setItem(COMPANY_ID, config.companyId ?? '');
+  sessionStorage.setItem(AGENT_ID, config.agentId ?? '');
+}
+
+export function savePlcAuth(plcAuth: PlcAuthObject): void {
+  sessionStorage.setItem(PLC_URL, plcAuth.OpcUaServerAddress);
+  sessionStorage.setItem(PLC_USERNAME, plcAuth.OpcUaUsername);
+  sessionStorage.setItem(PLC_PASSWORD, plcAuth.OpcUaPassword);
 }
 
 export function loadIxonAuthenticationHeaders(): IxonAuthenticationHeaders | null {
