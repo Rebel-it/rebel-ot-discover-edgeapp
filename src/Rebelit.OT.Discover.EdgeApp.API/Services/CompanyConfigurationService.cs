@@ -66,7 +66,8 @@ public class CompanyConfigurationService(
             return response;
         }
 
-        var agent = agents.FirstOrDefault(x => x.DeviceId != null && x.DeviceId.Contains(deviceSystemInfo.SerialNumber));
+        var agent = agents.FirstOrDefault(x => x.DeviceId != null && 
+                                               x.DeviceId.Contains(deviceSystemInfo.SerialNumber, StringComparison.InvariantCultureIgnoreCase));
         if (agent == null)
         {
             response.ErrorMessage = "No agent found in IXON with a device ID containing the device serial number.";

@@ -7,24 +7,24 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy solution + project files first for layer-cached restore
-COPY Rebelit.OT.Discover.EdgeApp.sln .
-COPY Directory.Build.props .
-COPY Directory.Packages.props .
-COPY Rebelit.OT.Discover.EdgeApp.API/Rebelit.OT.Discover.EdgeApp.API.csproj                                    Rebelit.OT.Discover.EdgeApp.API/
-COPY Rebelit.OT.Discover.EdgeApp.Connections.IXON/Rebelit.OT.Discover.EdgeApp.Connections.IXON.csproj  Rebelit.OT.Discover.EdgeApp.Connections.IXON/
-COPY Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.csproj Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/
-COPY Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro/Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro.csproj Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro/
-COPY Rebelit.OT.Discover.EdgeApp.SharedKernel/Rebelit.OT.Discover.EdgeApp.SharedKernel.csproj Rebelit.OT.Discover.EdgeApp.SharedKernel/
+COPY src/Rebelit.OT.Discover.EdgeApp.sln .
+COPY src/Directory.Build.props .
+COPY src/Directory.Packages.props .
+COPY src/Rebelit.OT.Discover.EdgeApp.API/Rebelit.OT.Discover.EdgeApp.API.csproj                                    Rebelit.OT.Discover.EdgeApp.API/
+COPY src/Rebelit.OT.Discover.EdgeApp.Connections.IXON/Rebelit.OT.Discover.EdgeApp.Connections.IXON.csproj  Rebelit.OT.Discover.EdgeApp.Connections.IXON/
+COPY src/Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.csproj Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/
+COPY src/Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro/Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro.csproj Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro/
+COPY src/Rebelit.OT.Discover.EdgeApp.SharedKernel/Rebelit.OT.Discover.EdgeApp.SharedKernel.csproj Rebelit.OT.Discover.EdgeApp.SharedKernel/
 
 RUN dotnet restore Rebelit.OT.Discover.EdgeApp.API/Rebelit.OT.Discover.EdgeApp.API.csproj \
     -r linux-arm64
 
 # Copy the rest of the source
-COPY Rebelit.OT.Discover.EdgeApp.API/                    Rebelit.OT.Discover.EdgeApp.API/
-COPY Rebelit.OT.Discover.EdgeApp.Connections.IXON/   Rebelit.OT.Discover.EdgeApp.Connections.IXON/
-COPY Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/  Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/
-COPY Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro/  Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro/
-COPY Rebelit.OT.Discover.EdgeApp.SharedKernel/  Rebelit.OT.Discover.EdgeApp.SharedKernel/
+COPY src/Rebelit.OT.Discover.EdgeApp.API/                    Rebelit.OT.Discover.EdgeApp.API/
+COPY src/Rebelit.OT.Discover.EdgeApp.Connections.IXON/   Rebelit.OT.Discover.EdgeApp.Connections.IXON/
+COPY src/Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/  Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/
+COPY src/Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro/  Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro/
+COPY src/Rebelit.OT.Discover.EdgeApp.SharedKernel/  Rebelit.OT.Discover.EdgeApp.SharedKernel/
 
 RUN dotnet publish Rebelit.OT.Discover.EdgeApp.API/Rebelit.OT.Discover.EdgeApp.API.csproj \
     -c Release \
@@ -42,10 +42,8 @@ EXPOSE 8080
 ENV ASPNETCORE_HTTP_PORTS=8080
 
 COPY --from=build /app/publish .
-
-# Write the entrypoint inline so the build context can remain ../src
-RUN printf '#!/bin/sh\nset -e\n\nif [ -z "$SECUREEDGEPRO_BaseAddress" ]; then\n    HOST_IP=$(ip route | awk '"'"'/default/ { print $3 }'"'"')\n    echo "Detected host IP: ${HOST_IP}"\n    export SECUREEDGEPRO_BaseAddress="http://${HOST_IP}:80"\nfi\n\necho "SecureEdge Pro base address: ${SECUREEDGEPRO_BaseAddress}"\n\nexec dotnet Rebelit.OT.Discover.EdgeApp.API.dll\n' > /entrypoint.sh \
-    && chmod +x /entrypoint.sh
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # ── OPC UA connection ──────────────────────────────────────────────────────────
 ARG OPCUA_ServerAddress

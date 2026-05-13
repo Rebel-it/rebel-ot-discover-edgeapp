@@ -38,10 +38,9 @@ docker buildx build \
     --tag "${SECURE_EDGE_IP}:5000/rebel-ot-discover-edgeapp:latest" \
     --no-cache \
     --push \
-    --build-arg OPCUA_ServerAddress="$OPCUA_ServerAddress" \
     --build-arg LOG_LEVEL="$LOG_LEVEL" \
     -f "${SCRIPT_DIR}/Dockerfile" \
-    "${SCRIPT_DIR}/../src"
+    "${SCRIPT_DIR}/.."
 
 # ── Build and push the frontend image ─────────────────────────────────────────
 docker buildx build \

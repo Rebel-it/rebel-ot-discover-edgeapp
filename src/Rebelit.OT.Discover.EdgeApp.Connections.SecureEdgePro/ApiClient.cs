@@ -16,7 +16,7 @@ public class ApiClient(
 
         try
         {
-            var response = await client.GetAsync("/api/v1/system/info");
+            using var response = await client.GetAsync("/api/v1/system/info");
             var content = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
