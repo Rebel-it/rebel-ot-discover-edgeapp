@@ -9,7 +9,6 @@ type SourceFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSu
 
 const defaultSourceObject: SourceObject = {
     DataSourceName: '',
-    AgentId: '',
 }
 
 function SourcePage() {
@@ -52,13 +51,6 @@ function SourcePage() {
                     label="Source name"
                     value={sourceObject.DataSourceName}
                     onChange={(value) => setSourceProperty('DataSourceName', value)}
-                />
-
-                <FormField
-                    id="agentId"
-                    label="Agent ID"
-                    value={sourceObject.AgentId}
-                    onChange={(value) => setSourceProperty('AgentId', value)}
                 />
 
                 {errorMessage && <p className={`${Loginstyles.formMessage} ${Loginstyles.errorMessage}`}>{errorMessage}</p>}

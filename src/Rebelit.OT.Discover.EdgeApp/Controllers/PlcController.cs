@@ -23,13 +23,6 @@ public class PlcController(
         {
             return BadRequest(new { message = "Failed to connect to the OPC UA server with the provided settings." });
         }
-
-        // settingsManager.Save(new Dictionary<string, string?>
-        // {
-        //     ["OPCUA_ServerAddress"] = settings.OpcUaServerAddress,
-        //     ["OPCUA_Username"] = settings.OpcUaUsername,
-        //     ["OPCUA_Password"] = settings.OpcUaPassword
-        // });
         return Ok(new { message = "OPC UA settings saved successfully." });
     }
 }

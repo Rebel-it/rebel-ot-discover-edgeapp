@@ -14,7 +14,7 @@ public interface IDataSourceResolver
     /// <param name="sourceName">The name of the source context in which to resolve the agent. Cannot be null or empty.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the resolved unique identifier as a
     /// string</returns>
-    Task<string> ResolveAsync(string agentId, string sourceName);
+    Task<string> ResolveAsync( string sourceName);
 }
 
 internal sealed class DataSourceResolver(
@@ -23,19 +23,8 @@ internal sealed class DataSourceResolver(
     ILogger<DataSourceResolver> logger
 ) : IDataSourceResolver
 {
-    private readonly string _opcuaAddress =
-        configuration["OPCUA_ServerAddress"]
-        ?? throw new InvalidOperationException("OPCUA_ServerAddress configuration is not set.");
-
-    private readonly string _username =
-        configuration["OPCUA_Username"]
-        ?? throw new InvalidOperationException("OPCUA_Username configuration is not set.");
-
-    private readonly string _password =
-        configuration["OPCUA_Password"]
-        ?? throw new InvalidOperationException("OPCUA_Password configuration is not set.");
-
-    public async Task<string> ResolveAsync(string agentId, string sourceName)
+  
+    public async Task<string> ResolveAsync( string sourceName)
     {
         if (string.IsNullOrWhiteSpace(sourceName))
             sourceName = "OPC UA";

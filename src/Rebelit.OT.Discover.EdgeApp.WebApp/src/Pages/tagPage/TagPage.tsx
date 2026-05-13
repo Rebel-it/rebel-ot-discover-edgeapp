@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useRef } from 'react'
 import styles from './TagPage.module.css'
 import DropDown, { type DropDownOption } from '../../components/Atoms/DropDown/DropDown'
-import { createTag, type CreateTagRequest } from '../../services/TagService'
+import { createTag, updateTag, getTags, type CreateTagRequest, type Tag as ApiTag } from '../../services/TagService'
 import { getVariables, type VariableOption } from '../../services/VariableService'
 import {
     LOGGING_ON_OPTIONS,
@@ -11,6 +11,7 @@ import {
     FORMULA_OPTIONS,
     RETENTION_OPTIONS,
 } from './TagPage.constants'
+import RoundButton from '../../components/Atoms/RoundButton/RoundButton'
 
 type LoggingOn = 'Interval' | 'Change'
 
@@ -38,14 +39,45 @@ const emptyTag = (): Tag => ({
     retention: '',
 })
 
+function mapApiTagToTag(apiTag: ApiTag): Tag {
+    let loggingOn: Tag['loggingOn'] = ''
+
+    if (apiTag.logEvent === 'interval') {
+        loggingOn = 'Interval'
+    } else if (apiTag.logEvent === 'change') {
+        loggingOn = 'Change'
+    }
+
+    let formula = apiTag.edgeAggregator ?? ''
+
+    if (apiTag.logEvent === 'change') {
+        formula = apiTag.onChangeExpiry === '1h' ? 'value_changes_hourly' : 'value_changes_only'
+    }
+
+    return {
+        variable: apiTag.variable.publicId,
+        variablePublicId: apiTag.variable.publicId,
+        name: apiTag.name,
+        identifier: apiTag.slug,
+        loggingOn,
+        interval: apiTag.loggingInterval,
+        customInterval: '',
+        formula,
+        retention: apiTag.retentionPolicy,
+    }
+}
+
 function TagPage() {
     const [tags, setTags] = useState<Tag[]>([])
+    const [tagsLoading, setTagsLoading] = useState(true)
+    const [tagsError, setTagsError] = useState('')
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [draft, setDraft] = useState<Tag>(emptyTag())
     const [variables, setVariables] = useState<VariableOption[]>([])
     const [variablesLoading, setVariablesLoading] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
+    const [editingIdentifier, setEditingIdentifier] = useState<string | null>(null)
     const dialogRef = useRef<HTMLDialogElement>(null)
     const isSubmittingRef = useRef(false)
 
@@ -59,6 +91,13 @@ function TagPage() {
         value: variable.publicId,
     }))
     const loggingOnOptions: DropDownOption[] = LOGGING_ON_OPTIONS.map((value) => ({ label: value, value }))
+
+    useEffect(() => {
+        getTags()
+            .then((loadedTags) => setTags(loadedTags.map(mapApiTagToTag)))
+            .catch(() => setTagsError('Unable to load tags. Check that the API is running.'))
+            .finally(() => setTagsLoading(false))
+    }, [])
 
     useEffect(() => {
         const dialog = dialogRef.current
@@ -127,6 +166,16 @@ function TagPage() {
 
     function openModal() {
         setDraft(emptyTag())
+        setEditingIdentifier(null)
+        setVariables([])
+        setVariablesLoading(true)
+        setErrorMessage('')
+        setIsModalOpen(true)
+    }
+
+    function openEditModal(tag: Tag) {
+        setDraft(tag)
+        setEditingIdentifier(tag.identifier)
         setVariables([])
         setVariablesLoading(true)
         setErrorMessage('')
@@ -148,9 +197,13 @@ function TagPage() {
         setErrorMessage('')
 
         try {
-            await createTag(request)
-
-            setTags((prev) => [...prev, draft])
+            if (editingIdentifier) {
+                await updateTag(editingIdentifier, request)
+                setTags((prev) => prev.map((t) => t.identifier === editingIdentifier ? draft : t))
+            } else {
+                await createTag(request)
+                setTags((prev) => [...prev, draft])
+            }
             setIsModalOpen(false)
         } catch {
             setErrorMessage('Unable to reach the tag service. Check that the API is running.')
@@ -169,14 +222,17 @@ function TagPage() {
                 </button>
             </div>
 
-            {tags.length === 0 ? (
+            {tagsLoading && <p className={styles.empty}>Loading tags...</p>}
+            {!tagsLoading && tagsError && <p className={styles.empty}>{tagsError}</p>}
+            {!tagsLoading && !tagsError && tags.length === 0 && (
                 <p className={styles.empty}>No tags yet. Click + to add one.</p>
-            ) : (
+            )}
+            {!tagsLoading && !tagsError && tags.length > 0 && (
                 <div className={styles.tableWrapper}>
                     <table className={styles.table}>
                         <thead>
                             <tr>
-                                <th>Variable</th>
+                                <th>PublicId</th>
                                 <th>Name</th>
                                 <th>Identifier</th>
                                 <th>Logging on</th>
@@ -195,6 +251,7 @@ function TagPage() {
                                     <td>{tag.interval === 'custom' ? tag.customInterval : tag.interval}</td>
                                     <td>{tag.formula}</td>
                                     <td>{tag.retention}</td>
+                                    <td><RoundButton onClick={() => openEditModal(tag)}> Edit</RoundButton></td>
                                 </tr>
                             ))}
                         </tbody>
@@ -204,7 +261,7 @@ function TagPage() {
 
             {isModalOpen && (
                   <dialog ref={dialogRef} className={styles.modal} onClose={closeModal} aria-labelledby="modal-title">
-                    <h2 id="modal-title">Add tag</h2>
+                    <h2 id="modal-title">{editingIdentifier ? 'Edit tag' : 'Add tag'}</h2>
 
                     <DropDown
                         id="variable"

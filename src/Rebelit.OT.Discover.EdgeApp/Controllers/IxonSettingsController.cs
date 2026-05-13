@@ -30,25 +30,17 @@ public class IxonSettingsController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SaveDataSourceId([FromBody] SaveDataSourceRequest saveDataSourceRequest)
     {
-        // settingsManager.Save(new Dictionary<string, string?>
-        // {
-        //     ["IXON_AgentId"] = saveDataSourceRequest.AgentId,
-        // });
-        //
-        // var settings = settingsManager.Load();
-        // settings.TryGetValue("IXON_AgentId", out var agentId);
-        //
-        // var result = await dataSourceResolver.ResolveAsync(agentId ?? string.Empty, saveDataSourceRequest.DataSourceName);
-        //
-        // if(string.IsNullOrEmpty(result))
-        // {
-        //     return BadRequest(new { message = "Failed to resolve data source ID." });
-        // }
-        //
-        // settingsManager.Save(new Dictionary<string, string?>
-        // {
-        //     ["IXON_DataSourceId"] = result,
-        // });
+        var result = await dataSourceResolver.ResolveAsync(agentId ?? string.Empty, saveDataSourceRequest.DataSourceName);
+
+        if (string.IsNullOrEmpty(result))
+        {
+            return BadRequest(new { message = "Failed to resolve data source ID." });
+        }
+
+        settingsManager.Save(new Dictionary<string, string?>
+        {
+            ["IXON_DataSourceId"] = result,
+        });
 
         return Ok(new { message = "Data source ID saved successfully.", dataSourceId = "temp" });
     }
