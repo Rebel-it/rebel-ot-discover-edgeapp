@@ -7,45 +7,43 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy solution + project files first for layer-cached restore
-COPY Rebelit.OT.Discover.EdgeApp.sln .
-COPY Directory.Build.props .
-COPY Directory.Packages.props .
-COPY Rebelit.OT.Discover.EdgeApp/Rebelit.OT.Discover.EdgeApp.csproj                                    Rebelit.OT.Discover.EdgeApp/
-COPY Rebelit.OT.Discover.EdgeApp.Connections.IXON/Rebelit.OT.Discover.EdgeApp.Connections.IXON.csproj  Rebelit.OT.Discover.EdgeApp.Connections.IXON/
-COPY Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.csproj Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/
+COPY src/Rebelit.OT.Discover.EdgeApp.sln .
+COPY src/Directory.Build.props .
+COPY src/Directory.Packages.props .
+COPY src/Rebelit.OT.Discover.EdgeApp.API/Rebelit.OT.Discover.EdgeApp.API.csproj                                    Rebelit.OT.Discover.EdgeApp.API/
+COPY src/Rebelit.OT.Discover.EdgeApp.Connections.IXON/Rebelit.OT.Discover.EdgeApp.Connections.IXON.csproj  Rebelit.OT.Discover.EdgeApp.Connections.IXON/
+COPY src/Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.csproj Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/
+COPY src/Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro/Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro.csproj Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro/
+COPY src/Rebelit.OT.Discover.EdgeApp.SharedKernel/Rebelit.OT.Discover.EdgeApp.SharedKernel.csproj Rebelit.OT.Discover.EdgeApp.SharedKernel/
 
-RUN dotnet restore Rebelit.OT.Discover.EdgeApp/Rebelit.OT.Discover.EdgeApp.csproj \
+RUN dotnet restore Rebelit.OT.Discover.EdgeApp.API/Rebelit.OT.Discover.EdgeApp.API.csproj \
     -r linux-arm64
 
 # Copy the rest of the source
-COPY Rebelit.OT.Discover.EdgeApp/                    Rebelit.OT.Discover.EdgeApp/
-COPY Rebelit.OT.Discover.EdgeApp.Connections.IXON/   Rebelit.OT.Discover.EdgeApp.Connections.IXON/
-COPY Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/  Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/
+COPY src/Rebelit.OT.Discover.EdgeApp.API/                    Rebelit.OT.Discover.EdgeApp.API/
+COPY src/Rebelit.OT.Discover.EdgeApp.Connections.IXON/   Rebelit.OT.Discover.EdgeApp.Connections.IXON/
+COPY src/Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/  Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/
+COPY src/Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro/  Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro/
+COPY src/Rebelit.OT.Discover.EdgeApp.SharedKernel/  Rebelit.OT.Discover.EdgeApp.SharedKernel/
 
-RUN dotnet publish Rebelit.OT.Discover.EdgeApp/Rebelit.OT.Discover.EdgeApp.csproj \
+RUN dotnet publish Rebelit.OT.Discover.EdgeApp.API/Rebelit.OT.Discover.EdgeApp.API.csproj \
     -c Release \
     -r linux-arm64 \
     --no-self-contained \
     -o /app/publish
 
 # ── Runtime stage ──────────────────────────────────────────────────────────────
-FROM mcr.microsoft.com/dotnet/runtime:10.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y --no-install-recommends iproute2 && rm -rf /var/lib/apt/lists/*
+
+EXPOSE 8080
+ENV ASPNETCORE_HTTP_PORTS=8080
+
 COPY --from=build /app/publish .
-
-# ── IXON credentials ───────────────────────────────────────────────────────────
-ARG IXON_ApplicationId
-ARG IXON_CompanyId
-ARG IXON_BearerToken
-ARG IXON_AgentId
-ARG IXON_DataSourceId
-
-ENV IXON_ApplicationId="$IXON_ApplicationId"
-ENV IXON_CompanyId="$IXON_CompanyId"
-ENV IXON_BearerToken="$IXON_BearerToken"
-ENV IXON_AgentId="$IXON_AgentId"
-ENV IXON_DataSourceId="$IXON_DataSourceId"
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # ── OPC UA connection ──────────────────────────────────────────────────────────
 ARG OPCUA_ServerAddress
@@ -60,4 +58,4 @@ ENV OPCUA_Password="$OPCUA_Password"
 ARG  LOG_LEVEL
 ENV  LOG_LEVEL="$LOG_LEVEL"
 
-ENTRYPOINT ["dotnet", "Rebelit.OT.Discover.EdgeApp.dll"]
+ENTRYPOINT ["/entrypoint.sh"]

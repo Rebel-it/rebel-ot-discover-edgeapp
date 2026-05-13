@@ -1,0 +1,32 @@
+server {
+    listen 80;
+
+    # Serve the React app
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Use Docker's internal DNS resolver; defer backend hostname resolution
+    # to request time so nginx starts even if the backend isn't up yet.
+    resolver 127.0.0.11 valid=10s;
+    set $backend "${BACKEND_URL}";
+
+    # Proxy all /api and /api/* requests to the backend container.
+    # ^~ prevents regex locations from matching these paths.
+    # The exact match for /api handles the bare path without a trailing slash.
+    location = /api {
+        proxy_pass $backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location ^~ /api/ {
+        proxy_pass $backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # React Router: fall back to index.html for all other routes
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

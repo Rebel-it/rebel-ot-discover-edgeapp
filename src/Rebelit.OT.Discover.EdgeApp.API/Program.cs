@@ -7,6 +7,7 @@ using Rebelit.OT.Discover.EdgeApp.API.Services;
 using Rebelit.OT.Discover.EdgeApp.API.Synchronizers;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Extensions;
+using Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro;
 using Serilog;
 using Serilog.Events;
 
@@ -52,6 +53,11 @@ builder.Services.AddScoped<INodeSynchronizer, NodeSynchronizer>();
 builder.Services.AddScoped<ICompanyConfigurationService, CompanyConfigurationService>();
 builder.Services.AddOPCUAClient("Rebelit.OT.Scraper");
 builder.Services.AddIXONClient();
+
+var secureEdgeProBaseAddress = builder.Configuration["SECUREEDGEPRO_BaseAddress"]
+    ?? throw new InvalidOperationException("SECUREEDGEPRO_BaseAddress is not configured. " +
+                                           "Set it in appsettings.Development.json for development or as an environment variable in production.");
+builder.Services.AddSecureEdgeProClient(secureEdgeProBaseAddress);
 
 var app = builder.Build();
 

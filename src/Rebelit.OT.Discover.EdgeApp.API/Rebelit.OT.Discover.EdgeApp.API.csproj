@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="../Rebelit.OT.Discover.EdgeApp.Connections.IXON/Rebelit.OT.Discover.EdgeApp.Connections.IXON.csproj" />
     <ProjectReference Include="../Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.csproj" />
+    <ProjectReference Include="..\Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro\Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro.csproj" />
     <ProjectReference Include="..\Rebelit.OT.Discover.EdgeApp.SharedKernel\Rebelit.OT.Discover.EdgeApp.SharedKernel.csproj" />
   </ItemGroup>
 </Project>
