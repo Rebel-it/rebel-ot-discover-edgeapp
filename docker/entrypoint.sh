@@ -11,4 +11,4 @@ fi
 
 echo "SecureEdge Pro base address: ${SECUREEDGEPRO_BaseAddress}"
 
-exec dotnet Rebelit.OT.Discover.EdgeApp.dll
+exec dotnet Rebelit.OT.Discover.EdgeApp.API.dll

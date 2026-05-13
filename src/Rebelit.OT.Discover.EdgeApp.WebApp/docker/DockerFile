@@ -8,4 +8,11 @@ COPY . .
 RUN npm run build
 
 FROM nginx:alpine
+EXPOSE 80
+# Default backend URL — overridable via environment variable at container start.
+# Must match the backend container name on the shared Docker network.
+ENV BACKEND_URL=http://rebel-ot-discover-edgeapp:8080
+# nginx's built-in envsubst support: files in /etc/nginx/templates/ are
+# processed at startup and written to /etc/nginx/conf.d/ with env vars substituted.
 COPY --from=builder /app/dist /usr/share/nginx/html
+COPY docker/default.conf.template /etc/nginx/templates/default.conf.template

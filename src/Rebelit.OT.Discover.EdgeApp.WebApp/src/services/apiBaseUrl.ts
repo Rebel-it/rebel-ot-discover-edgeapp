@@ -1,1 +1,1 @@
-export const apiBaseUrl = 'https://localhost:61411/api';
+export const apiBaseUrl = import.meta.env.DEV ? 'https://localhost:61411/api' : '/api';

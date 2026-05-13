@@ -3,41 +3,36 @@
 # Output executed commands and stop on errors.
 set -e
 
-# Prompt for SecureEdge IP and IXON credentials
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# ── Prompt for configuration ───────────────────────────────────────────────────
 read -rp "SecureEdge IP address (e.g. 172.27.21.1): " SECURE_EDGE_IP
 echo
-echo
-echo
+
+if [[ -z "$SECURE_EDGE_IP" ]]; then
+    echo "Error: SecureEdge IP address is required." >&2
+    exit 1
+fi
+
 read -rp "Log level (Verbose/Debug/Information/Warning/Error/Fatal) [Information]: " LOG_LEVEL
 LOG_LEVEL=${LOG_LEVEL:-Information}
 echo
 
-if [[ -z "$SECURE_EDGE_IP" ]]; then
-    echo "Error: all values are required." >&2
-    exit 1
-fi
-
-# Write the buildkitd config with the provided IP
-cat > "$(dirname "$0")/buildkitd-secure-edge-pro.toml" <<EOF
+# ── Configure buildkit for the IXON registry ──────────────────────────────────
+cat > "${SCRIPT_DIR}/buildkitd-secure-edge-pro.toml" <<EOF
 [registry."${SECURE_EDGE_IP}:5000"]
 http = true
 EOF
 
 set -x
 
-# Uncomment the following line should the edge gateway have been
-# given a different IP address.
-# docker buildx rm secure-edge-pro;
-
-# Remove the existing instance if necessary
+# ── Set up a single shared buildx builder ─────────────────────────────────────
 docker buildx rm secure-edge-pro || true
-
-# Create and initialize the build environment.
 docker buildx create --name secure-edge-pro \
-                     --config buildkitd-secure-edge-pro.toml
+                     --config "${SCRIPT_DIR}/buildkitd-secure-edge-pro.toml"
 docker buildx use secure-edge-pro
 
-# Build and push the image with credentials baked in via build args
+# ── Build and push the backend image ──────────────────────────────────────────
 docker buildx build \
     --platform linux/arm64/v8 \
     --tag "${SECURE_EDGE_IP}:5000/rebel-ot-discover-edgeapp:latest" \
@@ -45,5 +40,14 @@ docker buildx build \
     --push \
     --build-arg OPCUA_ServerAddress="$OPCUA_ServerAddress" \
     --build-arg LOG_LEVEL="$LOG_LEVEL" \
-    -f ./Dockerfile \
-    ../src
+    -f "${SCRIPT_DIR}/Dockerfile" \
+    "${SCRIPT_DIR}/../src"
+
+# ── Build and push the frontend image ─────────────────────────────────────────
+docker buildx build \
+    --platform linux/arm64/v8 \
+    --tag "${SECURE_EDGE_IP}:5000/rebel-ot-discover-edgeapp-react:latest" \
+    --no-cache \
+    --push \
+    -f "${SCRIPT_DIR}/../src/Rebelit.OT.Discover.EdgeApp.WebApp/docker/DockerFile" \
+    "${SCRIPT_DIR}/../src/Rebelit.OT.Discover.EdgeApp.WebApp"
