@@ -2,9 +2,9 @@ import { useEffect, useState, type ComponentProps } from 'react'
 import { SaveIxonAuthenticationHeaders, clearIxonAuthenticationHeaders } from '../../services/sessionStorageService.ts'
 import styles from './LoginPage.module.css'
 import { useNavigate } from 'react-router-dom'
-import FormField from '../shared/FormField'
 import { getCompanyConfiguration } from '../../services/companyConfigurationService.ts'
 import type { ServiceAccountObject } from '../../models/ServiceAccountObject.ts'
+import FormField from '../../components/atoms/FormField/FormField.tsx'
 
 type LoginFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
