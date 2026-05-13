@@ -26,11 +26,11 @@ export function loadIxonAuthenticationHeaders(): IxonAuthenticationHeaders | nul
   const accessToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
   const companyId = sessionStorage.getItem(COMPANY_ID);
   const agentId = sessionStorage.getItem(AGENT_ID);
-  const plcUrl = sessionStorage.getItem(PLC_URL);
-  const plcUsername = sessionStorage.getItem(PLC_USERNAME);
-  const plcPassword = sessionStorage.getItem(PLC_PASSWORD);
+  const opcUaServerAddress = sessionStorage.getItem(PLC_URL);
+  const opcUaUsername = sessionStorage.getItem(PLC_USERNAME);
+  const opcUaPassword = sessionStorage.getItem(PLC_PASSWORD);
  
-  if (!apiApplicationId || !accessToken || !companyId || !agentId|| !plcUrl || !plcUsername || !plcPassword) {
+  if (!apiApplicationId || !accessToken || !companyId || !agentId|| !opcUaServerAddress || !opcUaUsername || !opcUaPassword) {
     return null;
   }
 
@@ -39,9 +39,9 @@ export function loadIxonAuthenticationHeaders(): IxonAuthenticationHeaders | nul
     AccessToken: accessToken,
     CompanyId: companyId,
     AgentId: agentId,
-    PlcUrl: plcUrl,
-    PlcUsername: plcUsername,
-    PlcPassword: plcPassword  
+    OpcUaServerAddress: opcUaServerAddress,
+    OpcUaUsername: opcUaUsername,
+    OpcUaPassword: opcUaPassword  
   }
 }
 
