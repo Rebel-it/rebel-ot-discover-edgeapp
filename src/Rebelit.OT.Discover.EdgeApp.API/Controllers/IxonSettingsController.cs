@@ -52,14 +52,4 @@ public class IxonSettingsController(
 
         return Ok(new { message = "Data source ID saved successfully.", dataSourceId = "temp" });
     }
-
-    [HttpGet("ixon")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public IActionResult GetIxonSettings() => Ok(new
-    {
-        applicationId = configuration["IXON_ApplicationId"] ?? string.Empty,
-        companyId = configuration["IXON_CompanyId"] ?? string.Empty,
-        agentId = configuration["IXON_AgentId"] ?? string.Empty,
-        dataSourceId = configuration["IXON_DataSourceId"] ?? string.Empty
-    });
 }

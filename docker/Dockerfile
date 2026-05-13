@@ -35,21 +35,10 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends iproute2 && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/publish .
-COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
 
-# ── IXON credentials ───────────────────────────────────────────────────────────
-ARG IXON_ApplicationId
-ARG IXON_CompanyId
-ARG IXON_BearerToken
-ARG IXON_AgentId
-ARG IXON_DataSourceId
-
-ENV IXON_ApplicationId="$IXON_ApplicationId"
-ENV IXON_CompanyId="$IXON_CompanyId"
-ENV IXON_BearerToken="$IXON_BearerToken"
-ENV IXON_AgentId="$IXON_AgentId"
-ENV IXON_DataSourceId="$IXON_DataSourceId"
+# Write the entrypoint inline so the build context can remain ../src
+RUN printf '#!/bin/sh\nset -e\n\nif [ -z "$SECUREEDGEPRO_BaseAddress" ]; then\n    HOST_IP=$(ip route | awk '"'"'/default/ { print $3 }'"'"')\n    echo "Detected host IP: ${HOST_IP}"\n    export SECUREEDGEPRO_BaseAddress="http://${HOST_IP}:80"\nfi\n\necho "SecureEdge Pro base address: ${SECUREEDGEPRO_BaseAddress}"\n\nexec dotnet Rebelit.OT.Discover.EdgeApp.dll\n' > /entrypoint.sh \
+    && chmod +x /entrypoint.sh
 
 # ── OPC UA connection ──────────────────────────────────────────────────────────
 ARG OPCUA_ServerAddress
