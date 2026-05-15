@@ -1,0 +1,24 @@
+.cleanup-page-container {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  justify-content: center;
+
+  .cleanup-message-wrapper {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+
+    p {
+      color: white;
+    }
+
+    .cleanup-decision-wrapper {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+  }
+}
