@@ -1,6 +1,7 @@
 using Rebelit.OT.Discover.EdgeApp.API.Models;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.API.Services;
 

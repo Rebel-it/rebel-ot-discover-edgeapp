@@ -6,4 +6,5 @@ export interface IxonAuthenticationHeaders {
   OpcUaServerAddress: string;
   OpcUaUsername: string;
   OpcUaPassword: string;
+  SourceId: string;
 }

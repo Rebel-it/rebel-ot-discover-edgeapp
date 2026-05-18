@@ -35,6 +35,11 @@ async function handleResponse<T>(response: Response): Promise<T> {
     return response.json() as Promise<T>
   }
 
+  const text = await response.text()
+  if (text.length > 0) {
+    return text as unknown as T
+  }
+
   return undefined as unknown as T
 }
 
@@ -50,7 +55,7 @@ export const httpClient = {
     return fetch(`${apiBaseUrl}${path}`, {
       method: 'POST',
       headers: buildHeaders(),
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined ? undefined : JSON.stringify(body),
     }).then(handleResponse<TResponse>)
   },
 
@@ -58,7 +63,7 @@ export const httpClient = {
     return fetch(`${apiBaseUrl}${path}`, {
       method: 'PUT',
       headers: buildHeaders(),
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined ? undefined : JSON.stringify(body),
     }).then(handleResponse<TResponse>)
   }
 }

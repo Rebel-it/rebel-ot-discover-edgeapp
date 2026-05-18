@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useState, type ComponentProps } from 'react'
+import { saveSourceId } from '../../services/sessionStorageService.ts'
 import Loginstyles from '../loginPage/LoginPage.module.css'
 import type { SourceObject } from '../../models/SourceObject'
 import { createSource } from '../../services/DataSourceService'
@@ -33,8 +34,10 @@ function SourcePage() {
         setErrorMessage('')
         setSourceCreationSucceeded(false)
         try {
-            await createSource(sourceObject)
-            setSourceCreationSucceeded(true)
+            const result: string = await createSource(sourceObject);
+            
+            saveSourceId(result);
+            setSourceCreationSucceeded(true);
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'Source creation failed. Please check your input and try again.')
         } finally {

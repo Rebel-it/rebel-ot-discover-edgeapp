@@ -10,6 +10,7 @@ const AGENT_ID = 'agentId';
 const PLC_URL = 'OpcUaServerAddress';
 const PLC_USERNAME = 'OpcUaUsername';
 const PLC_PASSWORD = 'OpcUaPassword';
+const SOURCE_ID = 'sourceId';
 
 export function saveIxonAuth(auth: ServiceAccountObject, config: CompanyConfiguration): void {
   sessionStorage.setItem(API_APPLICATION_ID_KEY, auth.apiApplicationID);
@@ -24,6 +25,10 @@ export function savePlcAuth(plcAuth: PlcAuthObject): void {
   sessionStorage.setItem(PLC_PASSWORD, plcAuth.OpcUaPassword);
 }
 
+export function saveSourceId(sourceId: string): void {
+  sessionStorage.setItem(SOURCE_ID, sourceId);
+}
+
 export function loadIxonAuthenticationHeaders(): IxonAuthenticationHeaders | null {
   const apiApplicationId = sessionStorage.getItem(API_APPLICATION_ID_KEY);
   const accessToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
@@ -32,8 +37,9 @@ export function loadIxonAuthenticationHeaders(): IxonAuthenticationHeaders | nul
   const opcUaServerAddress = sessionStorage.getItem(PLC_URL);
   const opcUaUsername = sessionStorage.getItem(PLC_USERNAME);
   const opcUaPassword = sessionStorage.getItem(PLC_PASSWORD);
+  const sourceId = sessionStorage.getItem(SOURCE_ID);
  
-  if (!apiApplicationId || !accessToken || !companyId || !agentId|| !opcUaServerAddress || !opcUaUsername || !opcUaPassword) {
+  if (!apiApplicationId || !accessToken || !companyId || !agentId) {
     return null;
   }
 
@@ -42,9 +48,10 @@ export function loadIxonAuthenticationHeaders(): IxonAuthenticationHeaders | nul
     AccessToken: accessToken,
     CompanyId: companyId,
     AgentId: agentId,
-    OpcUaServerAddress: opcUaServerAddress,
-    OpcUaUsername: opcUaUsername,
-    OpcUaPassword: opcUaPassword  
+    OpcUaServerAddress: opcUaServerAddress ?? '',
+    OpcUaUsername: opcUaUsername ?? '',
+    OpcUaPassword: opcUaPassword ?? '',
+    SourceId: sourceId ?? ''
   }
 }
 
@@ -56,4 +63,5 @@ export function clearIxonAuthenticationHeaders(): void {
   sessionStorage.removeItem(PLC_URL);
   sessionStorage.removeItem(PLC_USERNAME);
   sessionStorage.removeItem(PLC_PASSWORD);
+  sessionStorage.removeItem(SOURCE_ID);
 }

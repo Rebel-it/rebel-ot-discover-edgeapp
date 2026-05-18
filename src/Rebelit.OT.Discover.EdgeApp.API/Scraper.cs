@@ -5,6 +5,7 @@ using Rebelit.OT.Discover.EdgeApp.API.Synchronizers;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Clients;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Factory;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.API;
 

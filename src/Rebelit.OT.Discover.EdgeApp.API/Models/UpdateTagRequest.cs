@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 
-namespace Rebelit.OT.Discover.EdgeApp.Models;
+namespace Rebelit.OT.Discover.EdgeApp.API.Models;
 
 public class UpdateTagRequest() : CreateTagRequest
 {

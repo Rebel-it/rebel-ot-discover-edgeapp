@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentProps } from 'react'
+import { useState, type ComponentProps } from 'react'
 import { saveIxonAuth, clearIxonAuthenticationHeaders } from '../../services/sessionStorageService.ts'
 import styles from './LoginPage.module.css'
 import { useNavigate } from 'react-router-dom'
@@ -19,10 +19,6 @@ function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    clearIxonAuthenticationHeaders();
-  }, []);
 
   function setAuthProperty<K extends keyof ServiceAccountObject>(property: K, value: ServiceAccountObject[K]) {
     setServiceAccount((currentServiceAccount) => ({

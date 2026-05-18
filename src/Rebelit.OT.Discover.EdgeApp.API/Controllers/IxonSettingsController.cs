@@ -20,6 +20,6 @@ public class IxonSettingsController(
             return BadRequest(new { message = "Failed to resolve data source ID." });
         }
 
-        return Ok(new { message = "Data source ID saved successfully.", dataSourceId = "temp" });
+        return Ok(result);
     }
 }
