@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>38366589-22ae-48a1-92a0-77e93e25913b</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Rebelit.OT.Discover.EdgeApp.Connections.IXON/Rebelit.OT.Discover.EdgeApp.Connections.IXON.csproj" />
+    <ProjectReference Include="../Rebelit.OT.Discover.EdgeApp.Connections.OPCUA/Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.csproj" />
+    <ProjectReference Include="..\Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro\Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro.csproj" />
+    <ProjectReference Include="..\Rebelit.OT.Discover.EdgeApp.SharedKernel\Rebelit.OT.Discover.EdgeApp.SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

@@ -3,64 +3,50 @@
 # Output executed commands and stop on errors.
 set -e
 
-# Prompt for SecureEdge IP and IXON credentials
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# ── Prompt for configuration ───────────────────────────────────────────────────
 read -rp "SecureEdge IP address (e.g. 172.27.21.1): " SECURE_EDGE_IP
 echo
-read -rp "IXON Application ID:   " IXON_ApplicationId
-read -rp "IXON Company ID:       " IXON_CompanyId
-read -rp "IXON Bearer Token:    " IXON_BearerToken
-read -rp "IXON Agent ID:         " IXON_AgentId
-read -rp "IXON Data Source ID (leave blank to auto-create): " IXON_DataSourceId
-echo
-read -rp "OPC UA Server Address (e.g. opc.tcp://172.27.21.3:4840): " OPCUA_ServerAddress
-read -rp "OPC UA Username:       " OPCUA_Username
-read -rp "OPC UA Password:      " OPCUA_Password
-echo
+
+if [[ -z "$SECURE_EDGE_IP" ]]; then
+    echo "Error: SecureEdge IP address is required." >&2
+    exit 1
+fi
+
 read -rp "Log level (Verbose/Debug/Information/Warning/Error/Fatal) [Information]: " LOG_LEVEL
 LOG_LEVEL=${LOG_LEVEL:-Information}
 echo
 
-if [[ -z "$SECURE_EDGE_IP" || -z "$IXON_ApplicationId" || -z "$IXON_CompanyId" || -z "$IXON_BearerToken" \
-   || -z "$IXON_AgentId" \
-   || -z "$OPCUA_ServerAddress" || -z "$OPCUA_Username" || -z "$OPCUA_Password" ]]; then
-    echo "Error: all values are required." >&2
-    exit 1
-fi
-
-# Write the buildkitd config with the provided IP
-cat > "$(dirname "$0")/buildkitd-secure-edge-pro.toml" <<EOF
+# ── Configure buildkit for the IXON registry ──────────────────────────────────
+cat > "${SCRIPT_DIR}/buildkitd-secure-edge-pro.toml" <<EOF
 [registry."${SECURE_EDGE_IP}:5000"]
 http = true
 EOF
 
 set -x
 
-# Uncomment the following line should the edge gateway have been
-# given a different IP address.
-# docker buildx rm secure-edge-pro;
-
-# Remove the existing instance if necessary
+# ── Set up a single shared buildx builder ─────────────────────────────────────
 docker buildx rm secure-edge-pro || true
-
-# Create and initialize the build environment.
 docker buildx create --name secure-edge-pro \
-                     --config buildkitd-secure-edge-pro.toml
+                     --config "${SCRIPT_DIR}/buildkitd-secure-edge-pro.toml"
 docker buildx use secure-edge-pro
 
-# Build and push the image with credentials baked in via build args
+# ── Build and push the backend image ──────────────────────────────────────────
 docker buildx build \
     --platform linux/arm64/v8 \
     --tag "${SECURE_EDGE_IP}:5000/rebel-ot-discover-edgeapp:latest" \
     --no-cache \
     --push \
-    --build-arg IXON_ApplicationId="$IXON_ApplicationId" \
-    --build-arg IXON_CompanyId="$IXON_CompanyId" \
-    --build-arg IXON_BearerToken="$IXON_BearerToken" \
-    --build-arg IXON_AgentId="$IXON_AgentId" \
-    --build-arg IXON_DataSourceId="$IXON_DataSourceId" \
-    --build-arg OPCUA_ServerAddress="$OPCUA_ServerAddress" \
-    --build-arg OPCUA_Username="$OPCUA_Username" \
-    --build-arg OPCUA_Password="$OPCUA_Password" \
     --build-arg LOG_LEVEL="$LOG_LEVEL" \
-    -f ./Dockerfile \
-    ../src
+    -f "${SCRIPT_DIR}/Dockerfile" \
+    "${SCRIPT_DIR}/.."
+
+# ── Build and push the frontend image ─────────────────────────────────────────
+docker buildx build \
+    --platform linux/arm64/v8 \
+    --tag "${SECURE_EDGE_IP}:5000/rebel-ot-discover-edgeapp-react:latest" \
+    --no-cache \
+    --push \
+    -f "${SCRIPT_DIR}/../src/Rebelit.OT.Discover.EdgeApp.WebApp/docker/DockerFile" \
+    "${SCRIPT_DIR}/../src/Rebelit.OT.Discover.EdgeApp.WebApp"
