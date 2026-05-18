@@ -19,6 +19,20 @@ function buildHeaders(): Record<string, string> {
     if (auth.AgentId) {
       headers['Api-Agent-Id'] = auth.AgentId;
     }
+
+    if (auth.SourceId) {
+      headers['Source-Id'] = auth.SourceId;
+    }
+
+    if(auth.OpcUaServerAddress) {
+      headers['OpcUa-Server-Address'] = auth.OpcUaServerAddress;
+    }
+    if (auth.OpcUaUsername) {
+      headers['OpcUa-Username'] = auth.OpcUaUsername;
+    }
+    if (auth.OpcUaPassword) {
+      headers['OpcUa-Password'] = auth.OpcUaPassword;
+    }
   }
 
   return headers

@@ -1,24 +1,22 @@
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.API.Services;
 
 internal sealed class VariableService(
     IApiClient apiClient,
     IConfiguration configuration,
+    IIxonAuthenticationContext ixonAuthenticationContext,
     ILogger<VariableService> logger) : IVariableService
 {
-
-    private readonly string _agentId =
-        configuration["IXON_AgentId"]
-        ?? throw new InvalidOperationException("IXON_AgentId configuration is not set.");
 
     public async Task<IReadOnlyList<Variable>> GetVariablesAsync(CancellationToken cancellationToken = default)
     {
         var response = await apiClient.GetDataVariablesAsync();
         var variables = response.Data ?? [];
 
-        logger.LogInformation("Retrieved {Count} variables for agent {AgentId}.", variables.Length, _agentId);
+        logger.LogInformation("Retrieved {Count} variables for agent {AgentId}.", variables.Length, ixonAuthenticationContext.IxonHeaders.AgentId);
         return variables;
     }
 
@@ -44,7 +42,7 @@ internal sealed class VariableService(
         logger.LogInformation(
             "Created variable {VariableName} for agent {AgentId}.",
             createdVariable?.Name ?? variable.Name,
-            _agentId);
+            ixonAuthenticationContext.IxonHeaders.AgentId);
 
         return createdVariable;
     }
@@ -60,7 +58,7 @@ internal sealed class VariableService(
         var response = await apiClient.PostVariablesAsync(variableList);
         var createdVariables = response?.Data ?? [];
 
-        logger.LogInformation("Created {Count} variables for agent {AgentId}.", createdVariables.Length, _agentId);
+        logger.LogInformation("Created {Count} variables for agent {AgentId}.", createdVariables.Length, ixonAuthenticationContext.IxonHeaders.AgentId);
         return createdVariables;
     }
 }

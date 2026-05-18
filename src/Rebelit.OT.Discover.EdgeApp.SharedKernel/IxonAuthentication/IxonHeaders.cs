@@ -31,4 +31,9 @@ public class IxonHeaders
     ///     The password for authenticating with the PLC.
     /// </summary>
     public string? PlcPassword { get; set; }
+
+    /// <summary>
+    /// Sourceid of the opcua datasource
+    /// </summary>
+    public string? SourceId { get; set; }
 }

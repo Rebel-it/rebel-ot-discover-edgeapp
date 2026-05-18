@@ -10,9 +10,10 @@ public class AuthenticationFilter : IActionFilter
     private const string AccessTokenHeader = "Api-Access-Token";
     private const string CompanyIdHeader = "Api-Company-Id";
     private const string AgentIdHeader = "Api-Agent-Id";
-    private const string PlcUrlHeader = "Plc-Url";
-    private const string PlcUsernameHeader = "Plc-Username";
-    private const string PlcPasswordHeader = "Plc-Password";
+    private const string PlcUrlHeader = "OpcUa-Server-Address";
+    private const string PlcUsernameHeader = "OpcUa-Username";
+    private const string PlcPasswordHeader = "OpcUa-Password";
+    private const string SourceIdHeader = "Source-Id";
 
     public void OnActionExecuting(ActionExecutingContext context)
     {
@@ -35,6 +36,7 @@ public class AuthenticationFilter : IActionFilter
         headers.TryGetValue(PlcUrlHeader, out var plcUrl);
         headers.TryGetValue(PlcUsernameHeader, out var plcUsername);
         headers.TryGetValue(PlcPasswordHeader, out var plcPassword);
+        headers.TryGetValue(SourceIdHeader, out var sourceId);
         
         var authContext = context.HttpContext.RequestServices.GetRequiredService<IIxonAuthenticationContext>();
         authContext.IxonHeaders = new IxonHeaders
@@ -48,7 +50,8 @@ public class AuthenticationFilter : IActionFilter
             AgentId = agentId,
             PlcUrl = plcUrl,
             PlcUsername = plcUsername,
-            PlcPassword = plcPassword
+            PlcPassword = plcPassword,
+            SourceId = sourceId
         };
     }
 

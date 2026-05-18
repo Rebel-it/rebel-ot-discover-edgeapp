@@ -56,7 +56,7 @@ public class Scraper(
     public async Task ExecuteVariableScraperAsync(CancellationToken cancellationToken)
     {
         _CreatedVariables.Clear();
-        var dataSourceId = await dataSourceResolver.ResolveAsync("");
+        var dataSourceId = ixonAuthenticationContext.IxonHeaders.SourceId;
 
         var client = await clientFactory.Create(ixonAuthenticationContext.IxonHeaders.PlcUrl, ixonAuthenticationContext.IxonHeaders.PlcUsername, ixonAuthenticationContext.IxonHeaders.PlcPassword);
         if (client is null)
