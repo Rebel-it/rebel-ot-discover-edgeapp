@@ -25,3 +25,7 @@ export function updateTag(identifier: string, request: CreateTagRequest): Promis
 export function getTags(): Promise<Tag[]> {
     return httpClient.get('/tags')
 }   
+
+export function getFilledTags(): Promise<Tag[]> {
+    return httpClient.get('/tags/prefilled')
+}

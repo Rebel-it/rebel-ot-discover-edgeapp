@@ -9,6 +9,7 @@ internal sealed class TagService(
     IApiClient apiClient,
     IIxonAuthenticationContext ixonAuthenticationContext,
      IConfiguration configuration,
+     IVariableService variableService,
     ILogger<TagService> logger) : ITagService
 {
     public async Task<IReadOnlyList<Tag>> GetTagsAsync()
@@ -17,6 +18,28 @@ internal sealed class TagService(
         var tags = response.Data ?? [];
 
         logger.LogInformation("Retrieved {Count} tags for agent {AgentId}.", tags.Length, ixonAuthenticationContext.IxonHeaders.AgentId);
+        return tags;
+    }
+    public async Task<IReadOnlyList<Tag>> GetPrefilledTagsAsync()
+    {
+        var variables = await variableService.GetVariablesAsync();
+        List<Tag> tags = new List<Tag>();
+
+        foreach (var variable in variables)
+        {
+            var tag = new Tag
+            {
+                Name = variable.Name,
+                Slug = variable.Name.ToLower().Replace(" ", "-"),
+                LogEvent = "interval",
+                LoggingInterval = "500ms",
+                RetentionPolicy = "260w",
+                EdgeAggregator = "last",
+                Variable = new TagVariable { PublicId = variable.PublicId },
+            };
+            tags.Add(tag);
+        }
+
         return tags;
     }
 

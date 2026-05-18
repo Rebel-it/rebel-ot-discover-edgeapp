@@ -19,6 +19,15 @@ public class TagsController(ITagService tagService) : BaseController
         return Ok(tags);
     }
 
+    [HttpGet("prefilled")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetPrefilledTagsAsync()
+    {
+        var tags = await _tagService.GetPrefilledTagsAsync();
+        return Ok(tags); 
+    }
+
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
