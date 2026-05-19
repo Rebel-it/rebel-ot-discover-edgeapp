@@ -45,7 +45,7 @@ internal sealed class DataSourceResolver(
             device.IpAddress
         );
 
-        var existingDataSource = await FindExistingDataSourceAsync(authenticationContext.IxonHeaders.AgentId, device.PublicId, sourceName);
+        var existingDataSource = await FindExistingDataSourceAsync(device.PublicId, sourceName);
         if (existingDataSource is not null)
         {
             logger.LogInformation(
@@ -68,7 +68,6 @@ internal sealed class DataSourceResolver(
     }
 
     private async Task<DataSource?> FindExistingDataSourceAsync(
-        string agentId,
         string devicePublicId,
         string sourceName
     )

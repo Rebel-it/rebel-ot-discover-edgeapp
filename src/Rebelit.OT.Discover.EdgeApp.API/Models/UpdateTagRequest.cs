@@ -6,5 +6,5 @@ namespace Rebelit.OT.Discover.EdgeApp.API.Models;
 public class UpdateTagRequest() : CreateTagRequest
 {
     [JsonPropertyName("publicid")]
-    public string PublicId { get; set; }
+    public required string PublicId { get; set; }
 }

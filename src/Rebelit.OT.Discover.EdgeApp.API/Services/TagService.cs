@@ -8,8 +8,7 @@ namespace Rebelit.OT.Discover.EdgeApp.API.Services;
 internal sealed class TagService(
     IApiClient apiClient,
     IIxonAuthenticationContext ixonAuthenticationContext,
-     IConfiguration configuration,
-     IVariableService variableService,
+    IVariableService variableService,
     ILogger<TagService> logger) : ITagService
 {
     public async Task<IReadOnlyList<Tag>> GetTagsAsync()

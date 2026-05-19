@@ -22,7 +22,7 @@ export function createTags(requests: Tag[]): Promise<void> {
     return httpClient.post('/tags/CreateTags', requests)
 }
 
-export function updateTag(identifier: string, request: CreateTagRequest): Promise<void> {
+export function updateTag(identifier: string, request: Tag): Promise<void> {
     return httpClient.put(`/tags/${identifier}`, request)
 }
 
