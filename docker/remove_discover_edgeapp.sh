@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Removes all rebel-ot-discover containers and images from the SecureEdge device.
-# Run this from your laptop, the same way you run push_ixon.sh.
+# Run this from your laptop, the same way you run install_discover_edgeapp.sh.
 set -e
 
 BACKEND_CONTAINER="rebel-ot-discover-edgeapp"
