@@ -73,7 +73,6 @@ internal sealed class TagService(
 
     public async Task<Tag?> UpdateTagAsync(Tag tag, string publicId)
     {
-        ArgumentNullException.ThrowIfNull(tag);
         var response = await apiClient.UpdateTagAsync(publicId, tag);
         var updatedTag = response?.Data;
 
@@ -87,8 +86,6 @@ internal sealed class TagService(
 
     public async Task<Tag?> CreateTagAsync(Tag request)
     {
-        ArgumentNullException.ThrowIfNull(request);
-
         return await UploadTagAsync(request);
     }
 
