@@ -94,4 +94,4 @@ rm -f "${COOKIE_JAR}"
 
 echo
 echo "=== Cleanup complete ==="
-
+echo "Recommended: Remove the IXON service account you created for this tool in the IXON Cloud to avoid leaving unused accounts."
