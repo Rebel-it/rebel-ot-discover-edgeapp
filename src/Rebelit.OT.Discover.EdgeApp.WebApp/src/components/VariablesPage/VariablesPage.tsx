@@ -64,7 +64,7 @@ function VariablesPage() {
             </div>
 
             {synchronizationSucceeded && (
-                <button type="button" className={sharedStyles.nextButton} onClick={() => navigate('/')}>
+                <button type="button" className={sharedStyles.nextButton} onClick={() => navigate('/tags')}>
                     Next
                 </button>
             )}

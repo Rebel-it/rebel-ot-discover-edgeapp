@@ -6,7 +6,4 @@ public class SaveDataSourceRequest
 {
     [Required]
     public required string DataSourceName { get; set; }
-
-    [Required]
-    public required string AgentId { get; set; }
 }

@@ -16,4 +16,24 @@ public class IxonHeaders
     ///     The Agent ID that represents the IXON device.
     /// </summary>
     public string? AgentId { get; set; }
+
+    /// <summary>
+    ///     The URL of the PLC.
+    /// </summary>
+    public string? PlcUrl { get; set; }
+
+    /// <summary>
+    ///     The username for authenticating with the PLC.
+    /// </summary>
+    public string? PlcUsername { get; set; }
+
+    /// <summary>
+    ///     The password for authenticating with the PLC.
+    /// </summary>
+    public string? PlcPassword { get; set; }
+
+    /// <summary>
+    /// Sourceid of the opcua datasource
+    /// </summary>
+    public string? SourceId { get; set; }
 }

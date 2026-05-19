@@ -1,4 +1,6 @@
 import { httpClient } from './httpClient'
+import type { Tag } from '../models/Tag'
+export type { Tag } from '../models/Tag'
 
 
 export type CreateTagRequest = {
@@ -9,16 +11,25 @@ export type CreateTagRequest = {
     retentionPolicy: string
     slug: string
     variable: string
-    
     edgeAggregator: string | null
 }
 
-export type Tag = {
-    variable: string
-    name: string
-    identifier: string
+export function createTag(request: Tag): Promise<void> {
+    return httpClient.post('/tags', request)
 }
 
-export function createTag(request: CreateTagRequest): Promise<void> {
-    return httpClient.post('/tags', request)
+export function createTags(requests: Tag[]): Promise<void> {
+    return httpClient.post('/tags/CreateTags', requests)
+}
+
+export function updateTag(identifier: string, request: Tag): Promise<void> {
+    return httpClient.put(`/tags/${identifier}`, request)
+}
+
+export function getTags(): Promise<Tag[]> {
+    return httpClient.get('/tags')
+}   
+
+export function getFilledTags(): Promise<Tag[]> {
+    return httpClient.get('/tags/prefilled')
 }

@@ -3,6 +3,7 @@ using Rebelit.OT.Discover.EdgeApp.API.Mappers;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Clients;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.API.Synchronizers;
 
@@ -28,10 +29,6 @@ internal sealed class NodeSynchronizer(
     ILogger<NodeSynchronizer> logger
 ) : INodeSynchronizer
 {
-    private readonly string _agentId =
-        configuration["IXON_AgentId"]
-        ?? throw new InvalidOperationException("IXON_AgentId configuration is not set.");
-
     private HashSet<string> _existingAddresses = [];
     private HashSet<string> _existingTags = [];
 
@@ -39,11 +36,11 @@ internal sealed class NodeSynchronizer(
     {
         _existingAddresses =
         [
-            .. (await apiClient.GetDataVariablesAsync(agentId)).Data.Select(v => v.Address),
+            .. (await apiClient.GetDataVariablesAsync()).Data.Select(v => v.Address),
         ];
         _existingTags =
         [
-            .. (await apiClient.GetTagsAsync(agentId)).Data.Select(t => t.Variable.PublicId),
+            .. (await apiClient.GetTagsAsync()).Data.Select(t => t.Variable.PublicId),
         ];
     }
 
@@ -92,57 +89,6 @@ internal sealed class NodeSynchronizer(
             logger.LogError(ex, "Error reading DataType attribute for node {NodeId}", nodeId);
             return null;
         }
-    }
-
-    private async Task<Variable?> CreateVariableIfNewAsync(
-        UAClient client,
-        ReferenceDescription referenceDescription,
-        string dataSourceId
-    )
-    {
-        var address = referenceDescription.NodeId.ToString();
-
-        if (_existingAddresses.Contains(address))
-        {
-            logger.LogTrace(
-                "Variable with address {Address} already exists. Skipping creation.",
-                address
-            );
-            return null;
-        }
-
-        if (address.Contains("(type)"))
-        {
-            logger.LogTrace(
-                "Node {NodeId} is a type definition. Skipping variable creation.",
-                address
-            );
-            return null;
-        }
-
-        var dataTypeNodeId = await ReadDataTypeAttributeAsync(client, (NodeId)referenceDescription.NodeId);
-
-        var variable = variableMapper.Map(dataTypeNodeId,referenceDescription, dataSourceId);
-        if (variable is null)
-        {
-            logger.LogWarning(
-                "Node '{DisplayName}' ({NodeId}) could not be mapped to an IXON variable and was skipped.",
-                referenceDescription.DisplayName,
-                referenceDescription.NodeId
-            );
-            return null;
-        }
-
-        logger.LogInformation(
-            "Creating variable '{VariableName}' with address '{VariableAddress}' and type '{VariableType}'...",
-            variable.Name,
-            variable.Address,
-            variable.Type
-        );
-
-        var result = await apiClient.PostVariableAsync(_agentId, variable);
-        variable.PublicId = result?.Data.PublicId ?? variable.PublicId;
-        return variable;
     }
 
     public async Task<Variable?> MapVariableAsync(UAClient client, ReferenceDescription referenceDescription, string dataSourceId)
@@ -194,7 +140,7 @@ internal sealed class NodeSynchronizer(
         }
 
         logger.LogInformation("Posting {Count} variables for agent {AgentId}.", variableList.Count, agentId);
-        var result = await apiClient.PostVariablesAsync(agentId, variableList);
+        var result = await apiClient.PostVariablesAsync(variableList);
 
         if (result is not null && result.Data is not null)
         {

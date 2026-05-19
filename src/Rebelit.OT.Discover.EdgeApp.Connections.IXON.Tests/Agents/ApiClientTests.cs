@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -11,6 +12,8 @@ namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Tests.Agents;
 
 public class ApiClientTests
 {
+    private const string AgentId = "agent-id";
+
     private static readonly Configuration DefaultConfig = new()
     {
         BaseUrl = "https://test.example.com",
@@ -65,7 +68,7 @@ public class ApiClientTests
             """{"data":[{"publicId":"v1","address":"40001","name":"Temp","slug":"t","type":"int16","width":"1"}]}""";
         var (client, _) = CreateSut(HttpStatusCode.OK, json);
 
-        var result = await client.GetDataVariablesAsync("agent-1");
+        var result = await client.GetDataVariablesAsync();
 
         Assert.Multiple(() =>
         {
@@ -79,11 +82,11 @@ public class ApiClientTests
     {
         var (client, handler) = CreateSut(HttpStatusCode.OK, """{"data":[]}""");
 
-        await client.GetDataVariablesAsync("agent-42");
+        await client.GetDataVariablesAsync();
 
         Assert.That(
             handler.LastRequest!.RequestUri!.ToString(),
-            Does.Contain("/api/agents/agent-42/data-variables")
+            Does.Contain($"/api/agents/{AgentId}/data-variables")
         );
     }
 
@@ -92,10 +95,27 @@ public class ApiClientTests
     {
         var (client, handler) = CreateSut(HttpStatusCode.OK, """{"data":[]}""");
 
-        await client.GetDataVariablesAsync("agent-1");
+        await client.GetDataVariablesAsync();
 
         AssertCommonHeaders(handler.LastRequest!);
     }
+
+    [Test]
+    public void GetDataVariablesAsync_OnBadRequest_ThrowsJsonException()
+    {
+        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
+
+        Assert.ThrowsAsync<JsonException>(() => client.GetDataVariablesAsync());
+    }
+
+    [Test]
+    public void GetDataVariablesAsync_OnServerError_ThrowsJsonException()
+    {
+        var (client, _) = CreateSut(HttpStatusCode.InternalServerError, "server error");
+
+        Assert.ThrowsAsync<JsonException>(() => client.GetDataVariablesAsync());
+    }
+
     [Test]
     public async Task GetTagsAsync_WithOkResponse_ReturnsDeserializedTags()
     {
@@ -103,7 +123,7 @@ public class ApiClientTests
             """{"data":[{"slug":"s","name":"n","logEvent":"interval","loggingInterval":"1s","retentionPolicy":"30d","variable":{"publicId":"var-1"},"edgeAggregator":"Last"}]}""";
         var (client, _) = CreateSut(HttpStatusCode.OK, json);
 
-        var result = await client.GetTagsAsync("agent-1");
+        var result = await client.GetTagsAsync();
 
         Assert.Multiple(() =>
         {
@@ -118,12 +138,20 @@ public class ApiClientTests
     {
         var (client, handler) = CreateSut(HttpStatusCode.OK, """{"data":[]}""");
 
-        await client.GetTagsAsync("agent-99");
+        await client.GetTagsAsync();
 
         Assert.That(
             handler.LastRequest!.RequestUri!.ToString(),
-            Does.Contain("/api/agents/agent-99/data-tags")
+            Does.Contain($"/api/agents/{AgentId}/data-tags")
         );
+    }
+
+    [Test]
+    public void GetTagsAsync_OnBadRequest_ThrowsJsonException()
+    {
+        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
+
+        Assert.ThrowsAsync<JsonException>(() => client.GetTagsAsync());
     }
 
     [Test]
@@ -133,7 +161,7 @@ public class ApiClientTests
             """{"data":{"slug":"s","name":"n","logEvent":"interval","loggingInterval":"1s","retentionPolicy":"30d","variable":{"publicId":"var-1"},"edgeAggregator":"Last"}}""";
         var (client, _) = CreateSut(HttpStatusCode.OK, json);
 
-        var result = await client.PostTagAsync("agent-1", CreateTagRequest());
+        var result = await client.PostTagAsync(CreateTagRequest());
 
         Assert.Multiple(() =>
         {
@@ -149,16 +177,24 @@ public class ApiClientTests
             """{"data":{"slug":"s","name":"n","logEvent":"interval","loggingInterval":"1s","retentionPolicy":"30d","variable":{"publicId":"var-1"}}}""";
         var (client, handler) = CreateSut(HttpStatusCode.OK, json);
 
-        await client.PostTagAsync("agent-5", CreateTagRequest());
+        await client.PostTagAsync(CreateTagRequest());
 
         Assert.Multiple(() =>
         {
             Assert.That(handler.LastRequest!.Method, Is.EqualTo(HttpMethod.Post));
             Assert.That(
                 handler.LastRequest.RequestUri!.ToString(),
-                Does.Contain("/api/agents/agent-5/data-tags")
+                Does.Contain($"/api/agents/{AgentId}/data-tags")
             );
         });
+    }
+
+    [Test]
+    public void PostTagAsync_OnBadRequest_ThrowsJsonException()
+    {
+        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
+
+        Assert.ThrowsAsync<JsonException>(() => client.PostTagAsync(CreateTagRequest()));
     }
 
     [Test]
@@ -177,7 +213,7 @@ public class ApiClientTests
             Width = "1",
         };
 
-        var result = await client.PostVariableAsync("agent-1", newVariable);
+        var result = await client.PostVariableAsync(newVariable);
 
         Assert.That(result!.Data.PublicId, Is.EqualTo("var-1"));
     }
@@ -190,7 +226,6 @@ public class ApiClientTests
         var (client, handler) = CreateSut(HttpStatusCode.OK, json);
 
         await client.PostVariableAsync(
-            "agent-7",
             new Variable
             {
                 PublicId = "v",
@@ -207,9 +242,29 @@ public class ApiClientTests
             Assert.That(handler.LastRequest!.Method, Is.EqualTo(HttpMethod.Post));
             Assert.That(
                 handler.LastRequest.RequestUri!.ToString(),
-                Does.Contain("/api/agents/agent-7/data-variables")
+                Does.Contain($"/api/agents/{AgentId}/data-variables")
             );
         });
+    }
+
+    [Test]
+    public void PostVariableAsync_OnBadRequest_ThrowsJsonException()
+    {
+        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
+
+        Assert.ThrowsAsync<JsonException>(() =>
+            client.PostVariableAsync(
+                new Variable
+                {
+                    PublicId = "v",
+                    Address = "a",
+                    Name = "n",
+                    Slug = "s",
+                    Type = "t",
+                    Width = "w",
+                }
+            )
+        );
     }
 
     [Test]
@@ -219,7 +274,7 @@ public class ApiClientTests
             """{"data":{"publicId":"9MuFepQeCJWL","name":"My Agent","deviceId":"dev-001"}}""";
         var (client, _) = CreateSut(HttpStatusCode.OK, json);
 
-        var result = await client.GetAgentAsync("9MuFepQeCJWL");
+        var result = await client.GetAgentAsync();
 
         Assert.Multiple(() =>
         {
@@ -234,11 +289,11 @@ public class ApiClientTests
     {
         var (client, handler) = CreateSut(HttpStatusCode.OK, """{"data":{"publicId":"abc"}}""");
 
-        await client.GetAgentAsync("agent-42");
+        await client.GetAgentAsync();
 
         Assert.That(
             handler.LastRequest!.RequestUri!.ToString(),
-            Does.Contain("/api/agents/agent-42?fields=publicId,name,deviceId")
+            Does.Contain($"/api/agents/{AgentId}?fields=publicId,name,deviceId")
         );
     }
 
@@ -247,9 +302,17 @@ public class ApiClientTests
     {
         var (client, handler) = CreateSut(HttpStatusCode.OK, """{"data":{"publicId":"abc"}}""");
 
-        await client.GetAgentAsync("agent-1");
+        await client.GetAgentAsync();
 
         AssertCommonHeaders(handler.LastRequest!);
+    }
+
+    [Test]
+    public void GetAgentAsync_OnBadRequest_ThrowsJsonException()
+    {
+        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
+
+        Assert.ThrowsAsync<JsonException>(() => client.GetAgentAsync());
     }
 
     [Test]
@@ -259,7 +322,7 @@ public class ApiClientTests
             """{"data":[{"publicId":"ds-1","name":"My Source","slug":"my-source","device":{"publicId":"dev-1"},"protocol":{"publicId":"modbus"}}]}""";
         var (client, _) = CreateSut(HttpStatusCode.OK, json);
 
-        var result = await client.GetDataSourcesAsync("agent-1");
+        var result = await client.GetDataSourcesAsync();
 
         Assert.Multiple(() =>
         {
@@ -274,11 +337,11 @@ public class ApiClientTests
     {
         var (client, handler) = CreateSut(HttpStatusCode.OK, """{"data":[]}""");
 
-        await client.GetDataSourcesAsync("agent-42");
+        await client.GetDataSourcesAsync();
 
         Assert.That(
             handler.LastRequest!.RequestUri!.ToString(),
-            Does.Contain("/api/agents/agent-42/data-sources")
+            Does.Contain($"/api/agents/{AgentId}/data-sources")
         );
     }
 
@@ -287,10 +350,27 @@ public class ApiClientTests
     {
         var (client, handler) = CreateSut(HttpStatusCode.OK, """{"data":[]}""");
 
-        await client.GetDataSourcesAsync("agent-1");
+        await client.GetDataSourcesAsync();
 
         AssertCommonHeaders(handler.LastRequest!);
     }
+
+    [Test]
+    public void GetDataSourcesAsync_OnBadRequest_ThrowsJsonException()
+    {
+        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
+
+        Assert.ThrowsAsync<JsonException>(() => client.GetDataSourcesAsync());
+    }
+
+    [Test]
+    public void GetDataSourcesAsync_OnServerError_ThrowsJsonException()
+    {
+        var (client, _) = CreateSut(HttpStatusCode.InternalServerError, "server error");
+
+        Assert.ThrowsAsync<JsonException>(() => client.GetDataSourcesAsync());
+    }
+
     [Test]
     public async Task PostDataSourceAsync_WithOkResponse_ReturnsDeserializedDataSource()
     {
@@ -305,7 +385,7 @@ public class ApiClientTests
             Protocol = new DataSourceProtocol { PublicId = "modbus" },
         };
 
-        var result = await client.PostDataSourceAsync("agent-1", newDataSource);
+        var result = await client.PostDataSourceAsync(newDataSource);
 
         Assert.That(result!.Data.PublicId, Is.EqualTo("ds-1"));
     }
@@ -324,16 +404,33 @@ public class ApiClientTests
             Protocol = new DataSourceProtocol { PublicId = "modbus" },
         };
 
-        await client.PostDataSourceAsync("agent-5", newDataSource);
+        await client.PostDataSourceAsync(newDataSource);
 
         Assert.Multiple(() =>
         {
             Assert.That(handler.LastRequest!.Method, Is.EqualTo(HttpMethod.Post));
             Assert.That(
                 handler.LastRequest.RequestUri!.ToString(),
-                Does.Contain("/api/agents/agent-5/data-sources")
+                Does.Contain($"/api/agents/{AgentId}/data-sources")
             );
         });
+    }
+
+    [Test]
+    public void PostDataSourceAsync_OnBadRequest_ThrowsJsonException()
+    {
+        var (client, _) = CreateSut(HttpStatusCode.BadRequest, "bad request");
+        var newDataSource = new DataSource
+        {
+            Name = "n",
+            Slug = "s",
+            Device = new Source { PublicId = "d" },
+            Protocol = new DataSourceProtocol { PublicId = "modbus" },
+        };
+
+        Assert.ThrowsAsync<JsonException>(() =>
+            client.PostDataSourceAsync(newDataSource)
+        );
     }
 
     [Test]
@@ -344,6 +441,35 @@ public class ApiClientTests
         await agent.PostAsync("/api/test", new { Value = 1 });
 
         Assert.That(handler.LastRequest!.Method, Is.EqualTo(HttpMethod.Post));
+    }
+
+    [Test]
+    public async Task Post_OnBadRequest_DoesNotThrow()
+    {
+        var (agent, _) = CreateBaseAgentSut(HttpStatusCode.BadRequest, "error");
+
+        Assert.DoesNotThrowAsync(() => agent.PostAsync("/api/test", new { }));
+    }
+
+    [Test]
+    public async Task GetDataVariablesAsync_WhenUnauthorized_DoesNotRetry_AndThrowsJsonException()
+    {
+        var responses = new Queue<Func<HttpResponseMessage>>([
+            () => new HttpResponseMessage(HttpStatusCode.Unauthorized)
+            {
+                Content = new StringContent("unauthorized"),
+            },
+        ]);
+        var handler = new SequentialMockHttpMessageHandler(responses);
+        var client = new FakeApiClient(
+            new FakeOptionsMonitor(DefaultConfig),
+            NullLogger<ApiClient>.Instance,
+            handler,
+            TimeProvider.System
+        );
+
+        Assert.ThrowsAsync<JsonException>(() => client.GetDataVariablesAsync());
+        Assert.That(handler.RequestCount, Is.EqualTo(1));
     }
 
     [Test]
@@ -368,7 +494,7 @@ public class ApiClientTests
         using var cts = new CancellationTokenSource();
         var advanceTask = AdvanceTimeInBackgroundAsync(fakeTime, cts.Token);
 
-        var result = await client.GetDataVariablesAsync("agent-1");
+        var result = await client.GetDataVariablesAsync();
 
         await cts.CancelAsync();
         await advanceTask;
@@ -401,7 +527,7 @@ public class ApiClientTests
         using var cts = new CancellationTokenSource();
         var advanceTask = AdvanceTimeInBackgroundAsync(fakeTime, cts.Token);
 
-        var result = await client.GetDataVariablesAsync("agent-1");
+        var result = await client.GetDataVariablesAsync();
 
         await cts.CancelAsync();
         await advanceTask;
@@ -444,7 +570,7 @@ public class ApiClientTests
         using var cts = new CancellationTokenSource();
         var advanceTask = AdvanceTimeInBackgroundAsync(fakeTime, cts.Token);
 
-        var result = await client.PostVariableAsync("agent-1", variable);
+        var result = await client.PostVariableAsync(variable);
 
         await cts.CancelAsync();
         await advanceTask;
@@ -487,7 +613,7 @@ public class ApiClientTests
         using var cts = new CancellationTokenSource();
         var advanceTask = AdvanceTimeInBackgroundAsync(fakeTime, cts.Token);
 
-        var result = await client.PostVariableAsync("agent-1", variable);
+        var result = await client.PostVariableAsync(variable);
 
         await cts.CancelAsync();
         await advanceTask;
@@ -521,7 +647,7 @@ public class ApiClientTests
         using var cts = new CancellationTokenSource();
         var advanceTask = AdvanceTimeInBackgroundAsync(fakeTime, cts.Token);
 
-        var result = await client.GetDataVariablesAsync("agent-1");
+        var result = await client.GetDataVariablesAsync();
 
         await cts.CancelAsync();
         await advanceTask;
@@ -621,16 +747,19 @@ public class ApiClientTests
 
     private sealed class FakeIxonAuthenticationContext : IIxonAuthenticationContext
     {
-        public IxonHeaders IxonHeaders { get; set; } = new()
+        public IxonHeaders IxonHeaders => new()
         {
             ServiceAccount = new ServiceAccount
             {
                 AccessToken = "bearer-token",
                 ApiApplicationId = "app-id",
+
             },
             CompanyId = "company-id",
-            AgentId = "agent-id",
+            AgentId = AgentId
         };
+
+        IxonHeaders IIxonAuthenticationContext.IxonHeaders { get => IxonHeaders; set => throw new NotImplementedException(); }
     }
 
     private sealed class FakeOptionsMonitor(Configuration config) : IOptionsMonitor<Configuration>

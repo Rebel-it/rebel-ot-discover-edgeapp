@@ -5,6 +5,7 @@ using Rebelit.OT.Discover.EdgeApp.API.Synchronizers;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Clients;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Factory;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.API;
 
@@ -14,27 +15,11 @@ public class Scraper(
     IClientSamplerFactory clientSamplerFactory,
     IDataSourceResolver dataSourceResolver,
     INodeSynchronizer nodeSynchronizer,
-    IConfiguration configuration,
+    IIxonAuthenticationContext ixonAuthenticationContext,
     ILogger<Scraper> logger
 ) : IScraper
 {
     internal const int BatchSize = 5;
-
-    public string Address { get; } =
-        configuration["OPCUA_ServerAddress"]
-        ?? throw new InvalidOperationException("OPCUA_ServerAddress configuration is not set.");
-
-    public string AgentId { get; } =
-        configuration["IXON_AgentId"]
-        ?? throw new InvalidOperationException("IXON_AgentId configuration is not set.");
-
-    public string Username { get; } =
-        configuration["OPCUA_Username"]
-        ?? throw new InvalidOperationException("OPCUA_Username configuration is not set.");
-
-    public string Password { get; } =
-        configuration["OPCUA_Password"]
-        ?? throw new InvalidOperationException("OPCUA_Password configuration is not set.");
 
     /// <summary>
     /// Contains all the variables that are mapped on runtime
@@ -47,7 +32,7 @@ public class Scraper(
         CancellationToken cancellationToken
     )
     {
-        var client = await clientFactory.Create(Address, Username, Password);
+        var client = await CreateClientAsync();
         if (client == null)
         {
             logger.LogError("Failed to create UAClient. Aborting execution.");
@@ -55,6 +40,17 @@ public class Scraper(
         }
 
         return await FetchReferenceDescriptionsAsync(client, cancellationToken);
+    }
+
+    private async Task<UAClient?> CreateClientAsync()
+    {
+        var plcUrl = ixonAuthenticationContext.IxonHeaders.PlcUrl;
+        var username = ixonAuthenticationContext.IxonHeaders.PlcUsername;
+        var password = ixonAuthenticationContext.IxonHeaders.PlcPassword;
+
+        return string.IsNullOrWhiteSpace(username) && string.IsNullOrWhiteSpace(password)
+            ? await clientFactory.Create(plcUrl)
+            : await clientFactory.Create(plcUrl, username, password);
     }
 
     private async Task<ReferenceDescriptionCollection?> FetchReferenceDescriptionsAsync(
@@ -71,9 +67,9 @@ public class Scraper(
     public async Task ExecuteVariableScraperAsync(CancellationToken cancellationToken)
     {
         _CreatedVariables.Clear();
-        var dataSourceId = await dataSourceResolver.ResolveAsync(AgentId, "");
+        var dataSourceId = ixonAuthenticationContext.IxonHeaders.SourceId;
 
-        var client = await clientFactory.Create(Address, Username, Password);
+        var client = await CreateClientAsync();
         if (client is null)
         {
             logger.LogError("Failed to create UAClient. Aborting execution.");
@@ -88,7 +84,7 @@ public class Scraper(
         foreach (var rd in nodes)
             logger.LogTrace("Found node {NodeId} ({DisplayName}).", rd.NodeId, rd.DisplayName);
 
-        await nodeSynchronizer.InitializeAsync(AgentId);
+        await nodeSynchronizer.InitializeAsync(ixonAuthenticationContext.IxonHeaders.AgentId);
 
         var filteredNodes = nodes.Where(rd =>
         {
@@ -113,6 +109,6 @@ public class Scraper(
             createdVariables.Count
         );
 
-        await nodeSynchronizer.SynchronizeVariablesAsync(AgentId, createdVariables);
+        await nodeSynchronizer.SynchronizeVariablesAsync(ixonAuthenticationContext.IxonHeaders.AgentId, createdVariables);
     }
 }
