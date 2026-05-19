@@ -76,4 +76,6 @@ public interface IApiClient
     /// </summary>
     /// <returns></returns>
     Task<Response<Agent[]>> GetAgentsAsync();
+
+    Task<Response<string>> PushConfiguration(string agentId);
 }

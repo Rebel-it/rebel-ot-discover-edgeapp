@@ -84,4 +84,10 @@ internal class ApiClient(
         const string uri = "/api/agents?fields=publicId,name,deviceId";
         return await Get<Response<Agent[]>>(uri);
     }
+
+    public Task<Response<string>> PushConfiguration(string agentId)
+    {
+        const string uri = "/api/agents/configuration/push";
+        throw new NotImplementedException();
+    }
 }
