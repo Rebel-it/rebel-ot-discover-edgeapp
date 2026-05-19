@@ -5,9 +5,33 @@ namespace Rebelit.OT.Discover.EdgeApp.API.Services;
 
 public interface ITagService
 {
+    /// <summary>
+    /// Get all tags that exist on the Ixon fleet manager
+    /// </summary>
     Task<IReadOnlyList<Tag>> GetTagsAsync();
+
+    /// <summary>
+    /// Returns a list of pre filled tags
+    /// </summary>
     Task<IReadOnlyList<Tag>> GetPrefilledTagsAsync();
+
+
     Task<Tag?> UploadTagAsync(Tag tag);
-    Task<Tag?> CreateTagAsync(CreateTagRequest request);
+
+    /// <summary>
+    /// Create a single tag 
+    /// </summary>
+    Task<Tag?> CreateTagAsync(Tag request);
+
+    /// <summary>
+    /// Create multiple tags at once
+    /// </summary>
+    Task<List<Tag>?> CreateTagsAsync(List<Tag> requests);
+
+    /// <summary>
+    /// Update an existing tag on the Ixon fleet manager
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
     Task<Tag?> UpdateTagAsync(UpdateTagRequest request);
 }

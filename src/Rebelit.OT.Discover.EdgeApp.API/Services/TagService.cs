@@ -57,6 +57,20 @@ internal sealed class TagService(
 
         return createdTag;
     }
+    public async Task<List<Tag>?> CreateTagsAsync(List<Tag> requests)
+    {
+        ArgumentNullException.ThrowIfNull(requests);
+        List<Tag> createdTags = [];
+        foreach(var tag in requests)
+        {
+            var createdTag = await UploadTagAsync(tag);
+            if (createdTag != null)
+            {
+                createdTags.Add(createdTag);
+            }
+        } 
+        return createdTags;
+    }
 
     public async Task<Tag?> UpdateTagAsync(Tag tag, string publicId)
     {
@@ -72,12 +86,11 @@ internal sealed class TagService(
         return updatedTag;
     }
 
-    public async Task<Tag?> CreateTagAsync(CreateTagRequest request)
+    public async Task<Tag?> CreateTagAsync(Tag request)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var tag = MapToTag(request);
-        return await UploadTagAsync(tag);
+        return await UploadTagAsync(request);
     }
 
     private static Tag MapToTag(CreateTagRequest request) => new()
@@ -106,4 +119,5 @@ internal sealed class TagService(
 
         return updatedTag;
     }
+
 }

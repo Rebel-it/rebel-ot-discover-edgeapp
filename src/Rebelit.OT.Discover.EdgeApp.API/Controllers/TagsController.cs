@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Rebelit.OT.Discover.EdgeApp.API.Models;
 using Rebelit.OT.Discover.EdgeApp.API.Services;
+using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 
 namespace Rebelit.OT.Discover.EdgeApp.API.Controllers;
 
@@ -31,13 +32,23 @@ public class TagsController(ITagService tagService) : BaseController
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreateTagAsync([FromBody] CreateTagRequest model)
+    public async Task<IActionResult> CreateTagAsync([FromBody] Tag model)
     {
         if (string.IsNullOrWhiteSpace(model.Name))
             return BadRequest(new { message = "Tag name is required." });
 
         var createdTag = await _tagService.CreateTagAsync(model);
         return Ok(createdTag);
+    }
+
+    [HttpPost("CreateTags")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateTagsAsync([FromBody] List<Tag> model)
+    {
+        var createdTags = await _tagService.CreateTagsAsync(model); 
+
+        return Ok(createdTags);
     }
 
     [HttpPut]

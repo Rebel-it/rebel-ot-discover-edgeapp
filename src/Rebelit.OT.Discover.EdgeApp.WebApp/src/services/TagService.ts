@@ -14,8 +14,12 @@ export type CreateTagRequest = {
     edgeAggregator: string | null
 }
 
-export function createTag(request: CreateTagRequest): Promise<void> {
+export function createTag(request: Tag): Promise<void> {
     return httpClient.post('/tags', request)
+}
+
+export function createTags(requests: Tag[]): Promise<void> {
+    return httpClient.post('/tags/CreateTags', requests)
 }
 
 export function updateTag(identifier: string, request: CreateTagRequest): Promise<void> {

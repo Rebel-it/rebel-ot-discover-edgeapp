@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useRef } from 'react'
 import styles from './TagPage.module.css'
-import { createTag, getFilledTags, type CreateTagRequest, type Tag as ApiTag } from '../../services/TagService'
+import { createTags, getFilledTags, type Tag as ApiTag } from '../../services/TagService'
 
 type LoggingOn = 'Interval' | 'Change'
 
@@ -72,7 +72,7 @@ function TagPage() {
         }
     }, [someSelected, allSelected])
 
-    function buildCreateTagRequest(tag: Tag): CreateTagRequest | null {
+    function buildCreateTagRequest(tag: Tag): ApiTag | null {
         switch (tag.loggingOn) {
             case 'Interval':
                 return {
@@ -82,7 +82,7 @@ function TagPage() {
                     onChangeExpiry: null,
                     retentionPolicy: tag.retention,
                     slug: tag.identifier,
-                    variable: tag.variablePublicId,
+                    variable: { publicId: tag.variablePublicId },
                     edgeAggregator: tag.formula && tag.formula !== 'last' ? tag.formula : null,
                 }
             case 'Change':
@@ -93,7 +93,7 @@ function TagPage() {
                     onChangeExpiry: tag.formula === 'value_changes_hourly' ? '1h' : null,
                     retentionPolicy: tag.retention,
                     slug: tag.identifier,
-                    variable: tag.variablePublicId,
+                    variable: { publicId: tag.variablePublicId },
                     edgeAggregator: null,
                 }
             default:
@@ -142,9 +142,9 @@ function TagPage() {
             const selectedTags = tags.filter((tag) => selectedTagKeys.has(getTagKey(tag)))
             const requests = selectedTags
                 .map(buildCreateTagRequest)
-                .filter((request): request is CreateTagRequest => request !== null)
+                .filter((request): request is ApiTag => request !== null)
 
-            await Promise.all(requests.map((request) => createTag(request)))
+            await createTags(requests)
 
             setTags((prev) => prev.filter((tag) => !selectedTagKeys.has(getTagKey(tag))))
             setSelectedTagKeys(new Set())
