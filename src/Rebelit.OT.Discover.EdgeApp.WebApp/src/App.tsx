@@ -3,9 +3,9 @@ import StartPage from './components/startPage/StartPage'
 import LoginPage from './components/loginPage/LoginPage'
 import PlcConnect from './components/plcConnect/PlcConnect'
 import SourcePage from './components/sourcePage/SourcePage'
-import TagPage from './components/tagPage/TagPage'
-import VariablesPage from './components/VariablesPage/VariablesPage'
-import ProtectedRoute from './components/shared/ProtectedRoute'
+import VariablesPage from './components/variablesPage/VariablesPage'
+import TagPage from './Pages/tagPage/TagPage'
+import ProtectedRoute from './components/shared/ProtectedRoute.'
 
 function App() {
   return (

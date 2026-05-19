@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom'
+import { savePlcAuth } from '../../services/sessionStorageService.ts'
 import { connectToPlc } from '../../services/PlcService.ts'
 import Loginstyles from '../loginPage/LoginPage.module.css'
 import type { PlcAuthObject } from '../../models/PlcAuthObject'
 import { useState, type ComponentProps } from 'react'
-import FormField from '../shared/FormField'
+import FormField from '../Atoms/FormField/FormField.tsx'
 
 type PlcFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
@@ -16,6 +17,7 @@ const defaultPlcObject: PlcAuthObject = {
 function PlcConnect() {
     const navigate = useNavigate()
     const [plcObject, setPlcObject] = useState<PlcAuthObject>(defaultPlcObject)
+    const [useCredentials, setUseCredentials] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [connectionSucceeded, setConnectionSucceeded] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
@@ -27,6 +29,18 @@ function PlcConnect() {
         }))
     }
 
+    function handleUseCredentialsChange(checked: boolean) {
+        setUseCredentials(checked)
+
+        if (!checked) {
+            setPlcObject((currentPlcObject) => ({
+                ...currentPlcObject,
+                OpcUaUsername: '',
+                OpcUaPassword: '',
+            }))
+        }
+    }
+
     async function handleSubmit(event: PlcFormSubmitEvent) {
         event.preventDefault()
         setIsSubmitting(true)
@@ -35,6 +49,7 @@ function PlcConnect() {
 
         try {
             await connectToPlc(plcObject)
+            savePlcAuth(plcObject)
             setConnectionSucceeded(true)
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'PLC connection failed. Please check your credentials and try again.')
@@ -56,20 +71,33 @@ function PlcConnect() {
                     required
                 />
 
-                <FormField
-                    id="OpcUaUsername"
-                    label="PLC User Name"
-                    value={plcObject.OpcUaUsername}
-                    onChange={(value) => setPlcProperty('OpcUaUsername', value)}
-                />
+                <label>
+                    <input
+                        type="checkbox"
+                        checked={useCredentials}
+                        onChange={(event) => handleUseCredentialsChange(event.target.checked)}
+                    />
+                    Use PLC username and password
+                </label>
 
-                <FormField
-                    id="OpcUaPassword"
-                    label="PLC Password"
-                    type="password"
-                    value={plcObject.OpcUaPassword}
-                    onChange={(value) => setPlcProperty('OpcUaPassword', value)}
-                />
+                {useCredentials && (
+                    <>
+                        <FormField
+                            id="OpcUaUsername"
+                            label="PLC User Name"
+                            value={plcObject.OpcUaUsername}
+                            onChange={(value) => setPlcProperty('OpcUaUsername', value)}
+                        />
+
+                        <FormField
+                            id="OpcUaPassword"
+                            label="PLC Password"
+                            type="password"
+                            value={plcObject.OpcUaPassword}
+                            onChange={(value) => setPlcProperty('OpcUaPassword', value)}
+                        />
+                    </>
+                )}
 
                 {errorMessage && <p className={`${Loginstyles.formMessage} ${Loginstyles.errorMessage}`}>{errorMessage}</p>}
 

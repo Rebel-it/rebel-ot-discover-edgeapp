@@ -1,15 +1,15 @@
 import { useNavigate } from 'react-router-dom'
 import { useState, type ComponentProps } from 'react'
+import { saveSourceId } from '../../services/sessionStorageService.ts'
 import Loginstyles from '../loginPage/LoginPage.module.css'
 import type { SourceObject } from '../../models/SourceObject'
 import { createSource } from '../../services/DataSourceService'
-import FormField from '../shared/FormField'
+import FormField from '../Atoms/FormField/FormField'
 
 type SourceFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
 const defaultSourceObject: SourceObject = {
     DataSourceName: '',
-    AgentId: '',
 }
 
 function SourcePage() {
@@ -34,8 +34,10 @@ function SourcePage() {
         setErrorMessage('')
         setSourceCreationSucceeded(false)
         try {
-            await createSource(sourceObject)
-            setSourceCreationSucceeded(true)
+            const result: string = await createSource(sourceObject);
+            
+            saveSourceId(result);
+            setSourceCreationSucceeded(true);
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'Source creation failed. Please check your input and try again.')
         } finally {
@@ -52,13 +54,6 @@ function SourcePage() {
                     label="Source name"
                     value={sourceObject.DataSourceName}
                     onChange={(value) => setSourceProperty('DataSourceName', value)}
-                />
-
-                <FormField
-                    id="agentId"
-                    label="Agent ID"
-                    value={sourceObject.AgentId}
-                    onChange={(value) => setSourceProperty('AgentId', value)}
                 />
 
                 {errorMessage && <p className={`${Loginstyles.formMessage} ${Loginstyles.errorMessage}`}>{errorMessage}</p>}
