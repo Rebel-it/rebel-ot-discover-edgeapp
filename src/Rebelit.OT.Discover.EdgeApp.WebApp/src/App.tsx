@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import StartPage from './components/startPage/StartPage'
-import LoginPage from './components/loginPage/LoginPage'
+import StartPage from './pages/startPage/StartPage'
 import PlcConnect from './components/plcConnect/PlcConnect'
-import SourcePage from './components/sourcePage/SourcePage'
-import VariablesPage from './components/variablesPage/VariablesPage'
-import TagPage from './Pages/tagPage/TagPage'
 import ProtectedRoute from './components/shared/ProtectedRoute.'
+import LoginPage from './pages/loginPage/LoginPage'
+import TagPage from './pages/tagPage/TagPage'
+import SourcePage from './pages/sourcePage/SourcePage'
+import VariablesPage from './pages/VariablesPage/VariablesPage'
 
 function App() {
   return (

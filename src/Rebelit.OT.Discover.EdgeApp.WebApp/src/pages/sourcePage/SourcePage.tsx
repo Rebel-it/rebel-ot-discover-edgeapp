@@ -4,7 +4,7 @@ import { saveSourceId } from '../../services/sessionStorageService.ts'
 import Loginstyles from '../loginPage/LoginPage.module.css'
 import type { SourceObject } from '../../models/SourceObject'
 import { createSource } from '../../services/DataSourceService'
-import FormField from '../Atoms/FormField/FormField'
+import FormField from '../../components/atoms/FormField/FormField'
 
 type SourceFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 

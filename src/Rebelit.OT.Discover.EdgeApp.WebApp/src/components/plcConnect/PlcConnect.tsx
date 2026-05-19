@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom'
 import { savePlcAuth } from '../../services/sessionStorageService.ts'
 import { connectToPlc } from '../../services/PlcService.ts'
-import Loginstyles from '../loginPage/LoginPage.module.css'
 import type { PlcAuthObject } from '../../models/PlcAuthObject'
 import { useState, type ComponentProps } from 'react'
-import FormField from '../Atoms/FormField/FormField.tsx'
+import FormField from '../atoms/FormField/FormField.tsx'
+import styles from './PlcConnect.module.css'
 
 type PlcFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
@@ -59,8 +59,8 @@ function PlcConnect() {
     }
 
     return (
-        <div className={Loginstyles.loginWrapper}>
-            <form className={Loginstyles.loginForm} onSubmit={handleSubmit} noValidate>
+        <div className={styles.loginWrapper}>
+            <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
                 <h1>PLC Connect</h1>
 
                 <FormField
@@ -99,21 +99,21 @@ function PlcConnect() {
                     </>
                 )}
 
-                {errorMessage && <p className={`${Loginstyles.formMessage} ${Loginstyles.errorMessage}`}>{errorMessage}</p>}
+                {errorMessage && <p className={`${styles.formMessage} ${styles.errorMessage}`}>{errorMessage}</p>}
 
                 {connectionSucceeded && (
-                    <p className={`${Loginstyles.formMessage} ${Loginstyles.successMessage}`}>
+                    <p className={`${styles.formMessage} ${styles.successMessage}`}>
                         PLC connection succeeded. Continue to the next step.
                     </p>
                 )}
 
-                <button type="submit" className={Loginstyles.loginButton} disabled={isSubmitting || connectionSucceeded}>
+                <button type="submit" className={styles.loginButton} disabled={isSubmitting || connectionSucceeded}>
                     {isSubmitting ? 'Connecting...' : 'Connect'}
                 </button>
             </form>
 
             {connectionSucceeded && (
-                <button type="button" className={Loginstyles.nextButton} onClick={() => navigate('/source')}>
+                <button type="button" className={styles.nextButton} onClick={() => navigate('/source')}>
                     Next
                 </button>
             )}
