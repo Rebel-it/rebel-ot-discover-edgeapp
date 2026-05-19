@@ -32,7 +32,7 @@ public class Scraper(
         CancellationToken cancellationToken
     )
     {
-        var client = await clientFactory.Create(ixonAuthenticationContext.IxonHeaders.PlcUrl, ixonAuthenticationContext.IxonHeaders.PlcUsername, ixonAuthenticationContext.IxonHeaders.PlcPassword);
+        var client = await CreateClientAsync();
         if (client == null)
         {
             logger.LogError("Failed to create UAClient. Aborting execution.");
@@ -40,6 +40,17 @@ public class Scraper(
         }
 
         return await FetchReferenceDescriptionsAsync(client, cancellationToken);
+    }
+
+    private async Task<UAClient?> CreateClientAsync()
+    {
+        var plcUrl = ixonAuthenticationContext.IxonHeaders.PlcUrl;
+        var username = ixonAuthenticationContext.IxonHeaders.PlcUsername;
+        var password = ixonAuthenticationContext.IxonHeaders.PlcPassword;
+
+        return string.IsNullOrWhiteSpace(username) && string.IsNullOrWhiteSpace(password)
+            ? await clientFactory.Create(plcUrl)
+            : await clientFactory.Create(plcUrl, username, password);
     }
 
     private async Task<ReferenceDescriptionCollection?> FetchReferenceDescriptionsAsync(
@@ -58,7 +69,7 @@ public class Scraper(
         _CreatedVariables.Clear();
         var dataSourceId = ixonAuthenticationContext.IxonHeaders.SourceId;
 
-        var client = await clientFactory.Create(ixonAuthenticationContext.IxonHeaders.PlcUrl, ixonAuthenticationContext.IxonHeaders.PlcUsername, ixonAuthenticationContext.IxonHeaders.PlcPassword);
+        var client = await CreateClientAsync();
         if (client is null)
         {
             logger.LogError("Failed to create UAClient. Aborting execution.");
