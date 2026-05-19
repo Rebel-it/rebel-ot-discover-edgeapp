@@ -19,6 +19,20 @@ function buildHeaders(): Record<string, string> {
     if (auth.AgentId) {
       headers['Api-Agent-Id'] = auth.AgentId;
     }
+
+    if (auth.SourceId) {
+      headers['Source-Id'] = auth.SourceId;
+    }
+
+    if(auth.OpcUaServerAddress) {
+      headers['OpcUa-Server-Address'] = auth.OpcUaServerAddress;
+    }
+    if (auth.OpcUaUsername) {
+      headers['OpcUa-Username'] = auth.OpcUaUsername;
+    }
+    if (auth.OpcUaPassword) {
+      headers['OpcUa-Password'] = auth.OpcUaPassword;
+    }
   }
 
   return headers
@@ -33,6 +47,11 @@ async function handleResponse<T>(response: Response): Promise<T> {
   const contentType = response.headers.get('content-type')
   if (contentType?.includes('application/json')) {
     return response.json() as Promise<T>
+  }
+
+  const text = await response.text()
+  if (text.length > 0) {
+    return text as unknown as T
   }
 
   return undefined as unknown as T
@@ -50,7 +69,15 @@ export const httpClient = {
     return fetch(`${apiBaseUrl}${path}`, {
       method: 'POST',
       headers: buildHeaders(),
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined ? undefined : JSON.stringify(body),
     }).then(handleResponse<TResponse>)
   },
+
+  put<TResponse = void, TBody = unknown>(path: string, body?: TBody): Promise<TResponse> {
+    return fetch(`${apiBaseUrl}${path}`, {
+      method: 'PUT',
+      headers: buildHeaders(),
+      body: body === undefined ? undefined : JSON.stringify(body),
+    }).then(handleResponse<TResponse>)
+  }
 }

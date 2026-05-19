@@ -12,6 +12,15 @@ public class UAClientFactory(
 ) : IUAClientFactory
 {
     /// <summary>
+    /// Creates and connects a new OPC UA client session using the specified server URI without credentials.
+    /// </summary>
+    /// <returns>A connected UAClient instance if the connection is successful; otherwise, <see langword="null"/>.</returns>
+    public Task<UAClient?> Create(string uri)
+    {
+        return Create(uri, string.Empty, string.Empty);
+    }
+
+    /// <summary>
     /// Creates and connects a new OPC UA client session using the specified server URI and user credentials.
     /// </summary>
     /// <returns>A connected UAClient instance if the connection is successful; otherwise, <see langword="null"/>.</returns>

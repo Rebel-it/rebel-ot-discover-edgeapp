@@ -1,24 +1,44 @@
 using Rebelit.OT.Discover.EdgeApp.API.Models;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.API.Services;
 
 internal sealed class TagService(
     IApiClient apiClient,
-    IConfiguration configuration,
+    IIxonAuthenticationContext ixonAuthenticationContext,
+    IVariableService variableService,
     ILogger<TagService> logger) : ITagService
 {
-    private readonly string _agentId =
-        configuration["IXON_AgentId"]
-        ?? throw new InvalidOperationException("IXON_AgentId configuration is not set.");
-
     public async Task<IReadOnlyList<Tag>> GetTagsAsync()
     {
-        var response = await apiClient.GetTagsAsync(_agentId);
+        var response = await apiClient.GetTagsAsync();
         var tags = response.Data ?? [];
 
-        logger.LogInformation("Retrieved {Count} tags for agent {AgentId}.", tags.Length, _agentId);
+        logger.LogInformation("Retrieved {Count} tags for agent {AgentId}.", tags.Length, ixonAuthenticationContext.IxonHeaders.AgentId);
+        return tags;
+    }
+    public async Task<IReadOnlyList<Tag>> GetPrefilledTagsAsync()
+    {
+        var variables = await variableService.GetVariablesAsync();
+        List<Tag> tags = new List<Tag>();
+
+        foreach (var variable in variables)
+        {
+            var tag = new Tag
+            {
+                Name = variable.Name,
+                Slug = variable.Name.ToLower().Replace(" ", "-"),
+                LogEvent = "interval",
+                LoggingInterval = "500ms",
+                RetentionPolicy = "260w",
+                EdgeAggregator = "last",
+                Variable = new TagVariable { PublicId = variable.PublicId },
+            };
+            tags.Add(tag);
+        }
+
         return tags;
     }
 
@@ -26,23 +46,47 @@ internal sealed class TagService(
     {
         ArgumentNullException.ThrowIfNull(tag);
 
-        var response = await apiClient.PostTagAsync(_agentId, tag);
+        var response = await apiClient.PostTagAsync(tag);
         var createdTag = response?.Data;
 
         logger.LogInformation(
             "Created tag {TagName} for agent {AgentId}.",
             createdTag?.Name ?? tag.Name,
-            _agentId);
+            ixonAuthenticationContext.IxonHeaders.AgentId);
 
         return createdTag;
     }
-
-    public async Task<Tag?> CreateTagAsync(CreateTagRequest request)
+    public async Task<List<Tag>?> CreateTagsAsync(List<Tag> requests)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(requests);
+        List<Tag> createdTags = [];
+        foreach(var tag in requests)
+        {
+            var createdTag = await UploadTagAsync(tag);
+            if (createdTag != null)
+            {
+                createdTags.Add(createdTag);
+            }
+        } 
+        return createdTags;
+    }
 
-        var tag = MapToTag(request);
-        return await UploadTagAsync(tag);
+    public async Task<Tag?> UpdateTagAsync(Tag tag, string publicId)
+    {
+        var response = await apiClient.UpdateTagAsync(publicId, tag);
+        var updatedTag = response?.Data;
+
+        logger.LogInformation(
+             "Updated tag {TagName} for agent {AgentId}.",
+             updatedTag?.Name ?? tag.Name,
+             ixonAuthenticationContext.IxonHeaders.AgentId);
+
+        return updatedTag;
+    }
+
+    public async Task<Tag?> CreateTagAsync(Tag request)
+    {
+        return await UploadTagAsync(request);
     }
 
     private static Tag MapToTag(CreateTagRequest request) => new()
@@ -56,4 +100,20 @@ internal sealed class TagService(
         EdgeAggregator = request.EdgeAggregator,
         Variable = new TagVariable { PublicId = request.Variable },
     };
+
+    public async Task<Tag?> UpdateTagAsync(UpdateTagRequest request)
+    {
+        var tag = MapToTag(request);
+        ArgumentNullException.ThrowIfNull(tag);
+        var response = await apiClient.UpdateTagAsync(request.PublicId, tag);
+        var updatedTag = response?.Data;
+
+        logger.LogInformation(
+             "Updated tag {TagName} for agent {AgentId}.",
+             updatedTag?.Name ?? tag.Name,
+             ixonAuthenticationContext.IxonHeaders.AgentId);
+
+        return updatedTag;
+    }
+
 }
