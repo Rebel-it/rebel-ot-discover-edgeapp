@@ -4,9 +4,9 @@
 # Run this from your laptop, the same way you run install_discover_edgeapp.sh.
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BACKEND_CONTAINER="rebel-ot-discover-edgeapp"
 FRONTEND_CONTAINER="rebel-ot-discover-edgeapp-react"
-COOKIE_JAR="$(mktemp)"
 
 # ── Prompt for configuration ───────────────────────────────────────────────────
 read -rp "SecureEdge IP address (e.g. 172.27.21.1): " SECURE_EDGE_IP
@@ -17,29 +17,8 @@ if [[ -z "$SECURE_EDGE_IP" ]]; then
     exit 1
 fi
 
-read -rp "Username [admin]: " USERNAME
-USERNAME=${USERNAME:-admin}
-
-read -rsp "Password: " PASSWORD
-echo
-echo
-
-if [[ -z "$PASSWORD" ]]; then
-    echo "Error: password is required." >&2
-    exit 1
-fi
-
-BASE_URL="http://${SECURE_EDGE_IP}:80"
-
-# ── Authenticate ───────────────────────────────────────────────────────────────
-echo "Authenticating..."
-curl --silent --fail-with-body \
-     --request POST \
-     --url "${BASE_URL}/auth/login" \
-     --cookie-jar "${COOKIE_JAR}" \
-     --data "username=${USERNAME}" \
-     --data "password=${PASSWORD}"
-echo
+# shellcheck source=auth_secure_edge_pro.sh
+source "${SCRIPT_DIR}/auth_secure_edge_pro.sh"
 
 # Helper: stop a container (ignores 404 if already stopped/missing)
 stop_container() {
