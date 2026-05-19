@@ -9,10 +9,13 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddSecureEdgeProClient(this IServiceCollection services, string baseAddress)
     {
-        services.AddHttpClient(ApiClient.HttpClientName, client =>
-        {
-            client.BaseAddress = new Uri(baseAddress);
-        });
+        services
+            .AddHttpClient(ApiClient.HttpClientName)
+            .ConfigureHttpClient(client =>
+            {
+                client.BaseAddress = new Uri(baseAddress);
+                client.Timeout = TimeSpan.FromSeconds(5);
+            });
 
         services.AddTransient<IApiClient, ApiClient>();
 

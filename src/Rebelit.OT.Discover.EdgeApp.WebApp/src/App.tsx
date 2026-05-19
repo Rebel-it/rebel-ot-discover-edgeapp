@@ -6,7 +6,6 @@ import VariablesPage from './pages/VariablesPage/VariablesPage'
 import ProtectedRoute from './components/shared/ProtectedRoute'
 import LoginPage from './pages/loginPage/LoginPage'
 import SourcePage from './pages/sourcePage/SourcePage'
-import CleanupPage from './pages/CleanupPage/CleanupPage'
 
 function App() {
   return (
@@ -19,7 +18,6 @@ function App() {
           <Route path="/source" element={<SourcePage />} />
           <Route path="/variables" element={<VariablesPage />} />
           <Route path="/tags" element={<TagPage />} />
-          <Route path="/cleanup" element={<CleanupPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
