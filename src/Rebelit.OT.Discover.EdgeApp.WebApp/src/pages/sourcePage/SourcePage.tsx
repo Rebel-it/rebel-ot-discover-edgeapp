@@ -2,9 +2,9 @@ import { useNavigate } from 'react-router-dom'
 import { useState, type ComponentProps } from 'react'
 import { saveSourceId } from '../../services/sessionStorageService.ts'
 import Loginstyles from '../loginPage/LoginPage.module.css'
-import type { SourceObject } from '../../models/SourceObject'
-import { createSource } from '../../services/DataSourceService'
-import FormField from '../../components/atoms/FormField/FormField'
+import type { SourceObject } from '../../models/SourceObject.ts'
+import { createSource } from '../../services/DataSourceService.ts'
+import FormField from '../../components/Atoms/FormField/FormField.tsx'
 
 type SourceFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
