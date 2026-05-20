@@ -5,22 +5,22 @@ This section documents the architecturally significant decisions in Architecture
 
 ---
 
-=== ADR-01: .NET 10 Console Application as the Application Model
+=== ADR-01: .NET 10 ASP.NET Core Web API as the Application Model
 
 *Status:* Accepted +
-*Date:* 2025
+*Date:* 2025 (updated 2026)
 
 *Context:*
-The application must run unattended on the IXON SecureEdge Pro, which is a Linux ARM64 edge gateway. The deployment target runs a standard Docker daemon. The team has existing C# expertise and requires a minimal operational footprint.
+The application must run on the IXON SecureEdge Pro, a Linux ARM64 edge gateway with a standard Docker daemon. The team has existing C# expertise. The introduction of the React wizard (ADR-08) required an HTTP API backend to receive requests from the browser.
 
 *Decision:*
-Use .NET 10 as the target framework and model the application as a plain console process (`dotnet Rebelit.OT.Discover.EdgeApp.dll`).
+Use .NET 10 as the target framework and model the application as an ASP.NET Core Web API (`dotnet Rebelit.OT.Discover.EdgeApp.API.dll`), exposed on port 8080 inside the Docker bridge network. The frontend nginx container proxies `/api/` requests to it.
 
 *Consequences:*
 
 * (+) Cross-platform: builds and runs identically on Linux ARM64 (production) and macOS/Linux/Windows (development) without conditional code.
-* (+) Small and simple: no HTTP server, no service host overhead, no daemon framework required.
-* (+) Containerises cleanly: the multi-stage Dockerfile produces a minimal runtime image.
+* (+) HTTP-native: integrates cleanly with the React wizard; standard controller/service/filter patterns apply.
+* (+) Containerises cleanly: the multi-stage Dockerfile produces a minimal `aspnet:10.0`-based runtime image.
 * (-) No built-in service lifecycle management (restart policies are delegated to the Docker daemon or SecureEdge container orchestration).
 
 ---
@@ -46,25 +46,13 @@ Decompose the solution into three projects. The core project (`EdgeApp`) defines
 
 === ADR-03: Credentials Baked into the Docker Image via Build Args
 
-*Status:* Accepted (with known trade-off -- see Risk R-01) +
-*Date:* 2025
+*Status:* Superseded by ADR-08 +
+*Date:* 2025 (superseded 2026)
 
 *Context:*
-The SecureEdge Pro does not expose a secrets management service or a writable volume that survives container recreation. An operator-friendly deployment workflow is required.
+This decision is no longer in effect. With the introduction of the React wizard (ADR-08), all IXON and OPC UA credentials are supplied by the browser at runtime as HTTP request headers. The Docker images contain no secrets and do not need to be rebuilt when credentials change.
 
-*Decision:*
-All nine secrets and addresses are supplied to `push_ixon.sh` interactively at build time and embedded into the Docker image as `ENV` variables via Docker `--build-arg`. The container reads them from the environment at startup.
-
-*Rejected alternatives:*
-
-* *Runtime env file / `docker run -e`*: the SecureEdge Pro's container management UI may not support runtime env injection without additional tooling.
-* *Secrets manager (Vault, AWS SSM)*: introduces a network dependency and operational overhead not justified for a single-tenant edge application.
-
-*Consequences:*
-
-* (+) Zero runtime dependencies; fully self-contained image.
-* (+) Simple deployment: one script, one push, container starts.
-* (-) Credentials are embedded in the image layer and visible to anyone with access to the image. Rotating a credential requires rebuilding and re-pushing the image.
+The original approach of baking credentials into the image as `ENV` variables via `--build-arg` was replaced because it required a full image rebuild and re-deploy for every credential rotation, and because the wizard made per-request credential supply practical.
 
 ---
 
@@ -95,27 +83,11 @@ Use the `OPCFoundation.NetStandard.Opc.Ua` SDK (v1.5.378), the official open-sou
 
 === ADR-05: Fixed 15-Minute Polling Cycle
 
-*Status:* Accepted +
-*Date:* 2025
+*Status:* Superseded by ADR-08 +
+*Date:* 2025 (superseded 2026)
 
 *Context:*
-New OPC UA nodes appear only when device configuration changes (rare). The application needs a trigger to check for new nodes without requiring external orchestration.
-
-*Decision:*
-Use a simple `Task.Delay(15 minutes)` loop inside `Application.Run`. The interval is hard-coded.
-
-*Rejected alternatives:*
-
-* *Cron / scheduled task outside the container*: requires host-level scheduling support which may not be available or configurable on the SecureEdge Pro.
-* *IXON webhook / push trigger*: IXON Cloud does not currently offer a webhook for new device configuration events.
-* *Configurable interval via env var*: adds complexity not currently required; can be introduced when the need arises.
-
-*Consequences:*
-
-* (+) Simple, no external scheduler dependency.
-* (+) Self-contained -- the container is the only unit to manage.
-* (-) Interval is not adjustable without rebuilding the image.
-* (-) If a cycle takes longer than 15 minutes (extremely large address space), the next cycle is delayed rather than running on a fixed wall-clock schedule.
+This decision is no longer in effect. The introduction of the React wizard (ADR-08) replaced the autonomous polling loop with on-demand, user-triggered discovery. The operator explicitly initiates a variable discovery run from the wizard; there is no background scheduler. The `Application` class and its `Task.Delay` loop have been removed.
 
 ---
 
@@ -162,21 +134,23 @@ Set `AutoAcceptUntrustedCertificates = true` and `MinimumCertificateKeySize = 10
 
 ---
 
-=== ADR-07: bearertoken generated by application
+=== ADR-09: IXON Service Account Authentication via Request Headers
 
 *Status:* Accepted +
 *Date:* 2026
 
 *Context:*
-Before when running the application you should provide the `IXON_BearerToken` as an environment variable. This is not ideal because you have to generate it in a terminal. It would be better if the application could generate the bearer token itself using the `Username` and `Password` and optional `OTP code` that a user fills in at startup.
+Earlier iterations required an `IXON_BearerToken` environment variable baked into the Docker image, and then explored generating a token from username/password at startup. Both approaches tied credentials to the container lifecycle. With the React wizard supplying context on every request, a cleaner model became available.
 
 *Decision:*
-The application will generate the bearer token itself at startup using the provided `Username` and `Password` and optional `OTP code`. The user will be prompted to enter these values at startup, and the application will handle the authentication process to obtain the bearer token. And the bearer token will regenerate itself when it expires.
+Authentication is based on an IXON service account configured in IXON Cloud. The wizard user supplies the service account's application ID (`Api-Application`) and access token (`Api-Access-Token`) in the login step. These are stored in browser session storage and attached as HTTP headers on every subsequent API call. The `AuthenticationFilter` validates their presence and writes them into the scoped `IIxonAuthenticationContext` for use by all downstream components.
 
 *Consequences:*
 
-* (+) Improved user experience: users only need to provide their IXON credentials at startup, and the application handles token management automatically.
-* (+) Enhanced security: the bearer token is not stored in environment variables or configuration files, reducing the risk of accidental exposure.
+* (+) No credentials stored on the device: the Docker images contain no secrets and never need to be rebuilt for a credential change.
+* (+) Per-request isolation: each browser session uses its own service account; there is no shared ambient credential in the container.
+* (+) The service account access token is managed entirely outside the application (generated and rotated in IXON Cloud).
+* (-) The browser must re-enter credentials after a session storage reset (e.g. closing the tab). Acceptable for the wizard use case.
 
 ---
 
