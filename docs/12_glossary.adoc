@@ -12,10 +12,10 @@
 | An IXON cloud entity representing a physical or virtual industrial device (e.g. a machine or PLC). Each agent has a unique `publicId`. Variables and Tags are created under a specific agent.
 
 | *ARG (Docker)*
-| A Docker build-time variable passed via `--build-arg`. In this project, all nine credentials and addresses are supplied as ARG values in `push_ixon.sh` and then written to ENV variables inside the image.
+| A Docker build-time variable passed via `--build-arg`. In this project only non-secret configuration (`LOG_LEVEL`) is supplied as an ARG. Credentials are not baked into the image; they are supplied at runtime by the user via the wizard.
 
 | *Bearer Token*
-| An authentication string required by the IXON Cloud API v2. It is passed in every HTTP request as `Authorization: Bearer <token>`. It acts as a long-lived secret tied to a company account and must be treated as a password.
+| The access token component of an IXON service account. Passed in every IXON Cloud API request as `Authorization: Bearer <token>`. Supplied by the user in the wizard login step and stored in browser session storage for the duration of the session.
 
 | *Browse (OPC UA)*
 | The OPC UA service operation that returns the child nodes of a given parent node. `BrowseFullAddressSpaceAsync` calls this operation recursively up to depth 128, starting from `RootFolder`, to enumerate the entire address space.
@@ -27,7 +27,7 @@
 | A public identifier for a company in the IXON platform. Passed as the `Api-Company` request header on every IXON API call.
 
 | *Data Tag (IXON)*
-| An IXON cloud entity that defines the logging configuration for a variable. Each tag specifies the retention policy, log-on-change behaviour, and logging interval. In this application, every new variable gets a tag created automatically with default values (260-week retention, log-on-change, 72 s interval).
+| An IXON cloud entity that defines the logging configuration for a variable. Each tag specifies the retention policy, log-on-change behaviour, and logging interval. Tags are reviewed and created by the user through the wizard after the variable discovery run completes.
 
 | *Data Variable (IXON)*
 | An IXON cloud entity that represents a single data point from a connected device. It holds the OPC UA node address, data type, bit width, and a reference to its source. Created in IXON by `ApiClient.PostVariableAsync`.
@@ -35,8 +35,8 @@
 | *Deduplication*
 | The process of checking whether a Variable or Tag already exists in IXON before issuing a POST request. Implemented in `Scraper` using `HashSet<string>` lookups against node addresses and tag variable public IDs.
 
-| *Discovery Cycle*
-| One execution of `Scraper.ExecuteAsync`. It browses the OPC UA address space, fetches existing IXON entries, and creates any missing Variables and Tags. Runs every 15 minutes.
+| *Discovery Run*
+| One execution of `Scraper.ExecuteVariableScraperAsync`, triggered on-demand by the user from the wizard. It browses the OPC UA address space, fetches existing IXON variables, and creates any missing Variables in IXON.
 
 | *Docker Buildx*
 | A Docker CLI plugin that extends `docker build` with multi-platform support. Used in `push_ixon.sh` to build a `linux/arm64/v8` image and push it directly to the SecureEdge Pro's local registry.
@@ -44,11 +44,11 @@
 | *Edge App*
 | Short name for the _Rebelit OT Discover Edge App_. The overall system documented in this arc42 document.
 
-| *EdgeApp (project)*
-| The .NET project `Rebelit.OT.Discover.EdgeApp`. Contains `Program`, `Application`, `IScraper`, and `Scraper`. The orchestration layer.
+| *EdgeApp.API (project)*
+| The .NET project `Rebelit.OT.Discover.EdgeApp.API`. The ASP.NET Core Web API backend. Contains the controllers, services, `IScraper`, `Scraper`, and `AuthenticationFilter`. The orchestration layer.
 
 | *ENV (Docker)*
-| A runtime environment variable available inside a running Docker container. In this project, all secrets are surfaced as ENV variables (sourced from build-time ARGs) and read by `Program.cs` at startup.
+| A runtime environment variable available inside a running Docker container. In this project only non-secret configuration is stored as ENV variables (`LOG_LEVEL`, `ASPNETCORE_HTTP_PORTS`, `BACKEND_URL`). All credentials are supplied per-request by the browser.
 
 | *Idempotent*
 | An operation that can be applied multiple times without changing the outcome beyond the first application. The discovery cycle is idempotent: running it twice produces the same IXON state as running it once.
@@ -60,7 +60,7 @@
 | An industrial IoT edge gateway made by IXON. Runs Linux on ARM64, hosts a Docker daemon, and bridges the OT network to the internet. The production deployment target for the Edge App.
 
 | *MachineId (IXON AgentId)*
-| Used interchangeably with _Agent_ in some IXON contexts. In this application, `IXON_AgentId` is the public identifier of the target machine whose Variables and Tags are managed.
+| Used interchangeably with _Agent_ in some IXON contexts. In this application, the agent ID is resolved automatically during the wizard's company detection step and stored in browser session storage.
 
 | *Node (OPC UA)*
 | The fundamental addressable unit in an OPC UA address space. Nodes include variables (data points), objects (grouping nodes), methods, and views. Each node has a unique `NodeId`.
@@ -83,6 +83,9 @@
 | *SecureEdge Pro*
 | See _IXON SecureEdge Pro_.
 
+| *Service Account (IXON)*
+| An IXON identity used for machine-to-machine API access. Consists of an `ApiApplicationId` and an `AccessToken`. Created in the IXON Cloud portal and entered by the user in the wizard login step. Passed on every API request via the `Api-Application` and `Authorization: Bearer` headers.
+
 | *Session (OPC UA)*
 | A stateful connection between an OPC UA client and server. Maintains authentication context and subscription state. Managed by `UAClient`, which keeps it alive via periodic keep-alive messages and reconnects automatically on failure.
 
@@ -90,13 +93,16 @@
 | A class from the OPC Foundation SDK that manages automatic session reconnection with configurable retry intervals. Used by `UAClient` with 1 s initial period and 15 s exponential back-off cap.
 
 | *Source (IXON)*
-| An IXON sub-entity under an agent that identifies the industrial data source (e.g. a specific OPC UA connection). Variables are associated with a source via `IXON_DataSourceId`. If `IXON_DataSourceId` is not provided, the app creates a new OPC UA data source automatically and uses its ID.
+| An IXON sub-entity under an agent that identifies the industrial data source (e.g. a specific OPC UA connection). Variables are associated with a source via a data source ID. The wizard resolves the data source by name or creates a new one automatically if none exists.
 
 | *Tag*
 | See _Data Tag (IXON)_.
 
 | *Variable*
 | See _Data Variable (IXON)_.
+
+| *Wizard*
+| The React web application (`Rebelit.OT.Discover.EdgeApp.WebApp`) that guides the user through the discovery workflow in a series of steps: login with service account credentials, auto-detect company and agent, connect to the OPC UA server, select or create a data source, run variable discovery, and review and create tags.
 
 | *Zero-touch Onboarding*
 | The goal of the Edge App: automatically discovering and registering all OPC UA data points in IXON without any manual configuration step by an operator.
