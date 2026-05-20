@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Rebelit.OT.Discover.EdgeApp.API.Resolvers;
+using Rebelit.OT.Discover.EdgeApp.API.Services;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 
 namespace Rebelit.OT.Discover.EdgeApp.API.Controllers;
 
 public class IxonSettingsController(
-    IDataSourceResolver dataSourceResolver
+    IDataSourceResolver dataSourceResolver,
+    IIxonSettingService ixonSettingService
 ) : BaseController
 {
     [HttpPost("datasource")]
@@ -18,6 +20,18 @@ public class IxonSettingsController(
         if (string.IsNullOrEmpty(result))
         {
             return BadRequest(new { message = "Failed to resolve data source ID." });
+        }
+
+        return Ok(result);
+    }
+
+    [HttpPost("pushConfiguration")]
+    public async Task<IActionResult> PushConfiguration()
+    {
+        var result = await ixonSettingService.PushDeviceConfig();
+        if (result != "success")
+        {
+            return BadRequest(new { message = "Failed to push device configuration." });
         }
 
         return Ok(result);

@@ -89,5 +89,10 @@ internal class ApiClient(
         const string uri = "/api/agents?fields=publicId,name,deviceId";
         return await Get<Response<Agent[]>>(uri);
     }
-    
+
+    public async Task<Response<string>> PushConfigurationAsync(string agentId)
+    {
+        const string uri = "/api/agents/configuration/push";
+        return await Post<Response<string>>(uri, new { publicId = agentId });
+    }
 }

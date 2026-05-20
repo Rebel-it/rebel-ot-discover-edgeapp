@@ -1,185 +1,242 @@
 [[section-runtime-view]]
 == Runtime View
 
-This section documents three representative runtime scenarios that cover the architecturally relevant behaviour of the system.
+This section documents the representative runtime scenarios of the system.
+The application is driven by a React wizard in the browser; the user completes each step in sequence before triggering the discovery run.
 
-=== 6.1 Normal Discovery Cycle
+=== 6.1 Per-Request Authentication
 
-This is the primary scenario: `Application` wakes up, delegates to `Scraper`, which browses the OPC UA server and synchronises new nodes into IXON.
+Every API call from the frontend carries the IXON service account credentials and context as HTTP headers. The `AuthenticationFilter` validates and propagates them before any controller logic executes.
 
 [mermaid]
 ....
 sequenceDiagram
-    participant App as Application
-    participant Sc as Scraper
-    participant UF as UAClientFactory
-    participant UA as UAClient
-    participant CS as ClientSamples
-    participant AC as ApiClient
-    participant IXON as IXON Cloud API v2
-    participant OPC as OPC UA Server
+    participant FE as WebApp (React)
+    participant AF as AuthenticationFilter
+    participant AC as IIxonAuthenticationContext
+    participant CT as Controller
 
-    loop Every 15 minutes
-        App->>Sc: ExecuteAsync(ct)
+    FE->>AF: HTTP request\nApi-Application, Api-Access-Token,\nApi-Company-Id, Api-Agent-Id,\nOpcUa-*, Source-Id
 
-        alt IXON_DataSourceId env var is set
-            Sc->>Sc: Use provided DataSourceId
-        else IXON_DataSourceId is absent
-            Sc->>AC: GetDevicesAsync(agentId)
-            AC->>IXON: GET /api/agents/{id}/devices
-            IXON-->>AC: Response<Device[]>
-            AC-->>Sc: matched Device
-
-            Sc->>AC: GetDataSourcesAsync(agentId)
-            AC->>IXON: GET /api/agents/{id}/data-sources
-            IXON-->>AC: Response<DataSource[]>
-
-            alt Existing data source found (device.publicId + slug "opcua" match)
-                AC-->>Sc: Existing DataSource
-                Sc->>Sc: Reuse existing DataSourceId (no POST)
-            else No matching data source exists
-                Sc->>AC: PostDataSourceAsync(agentId, newOpcUaDataSource)
-                AC->>IXON: POST /api/agents/{id}/data-sources
-                IXON-->>AC: Response<DataSource> (with publicId)
-                AC-->>Sc: Response<DataSource>
-                Sc->>Sc: Store created DataSourceId
-            end
-        end
-
-        Sc->>UF: Create(address, username, password)
-        UF->>UA: new UAClient(config, telemetry)
-        UA->>OPC: ConnectAsync (endpoint selection + UserIdentity auth)
-        OPC-->>UA: session established
-        UA-->>UF: UAClient
-        UF-->>Sc: UAClient
-
-        Sc->>CS: CreateAsync()
-        CS-->>Sc: ClientSamples
-
-        Sc->>CS: BrowseFullAddressSpaceAsync(client, RootFolder, ct)
-        CS->>OPC: Browse (recursive, max depth 128)
-        OPC-->>CS: ReferenceDescriptionCollection
-        CS-->>Sc: ReferenceDescriptionCollection
-
-        Sc->>AC: GetDataVariablesAsync(agentId)
-        AC->>IXON: GET /api/agents/{id}/data-variables?page-size=4000
-        IXON-->>AC: Response<Variable[]>
-        AC-->>Sc: Response<Variable[]>
-
-        Sc->>AC: GetTagsAsync(agentId)
-        AC->>IXON: GET /api/agents/{id}/data-tags?page-size=4000
-        IXON-->>AC: Response<Tag[]>
-        AC-->>Sc: Response<Tag[]>
-
-        Note over Sc: Build HashSet of existing addresses and tag IDs
-
-        loop For each ReferenceDescription not yet in IXON
-            Sc->>AC: PostVariableAsync(agentId, variable)
-            AC->>IXON: POST /api/agents/{id}/data-variables
-            IXON-->>AC: Response<Variable> (with publicId)
-            AC-->>Sc: Response<Variable>
-
-            Sc->>AC: PostTagAsync(agentId, tag)
-            AC->>IXON: POST /api/agents/{id}/data-tags
-            IXON-->>AC: Response<Tag>
-            AC-->>Sc: Response<Tag>
-        end
-
-        Sc-->>App: (completed)
-        App->>App: Task.Delay(15 min)
+    alt Api-Application or Api-Access-Token missing
+        AF-->>FE: 401 Unauthorized
+    else Headers present
+        AF->>AC: Populate IxonHeaders\n(ServiceAccount, CompanyId, AgentId,\nPlcUrl, PlcUsername, PlcPassword, SourceId)
+        AF->>CT: OnActionExecuting proceeds
+        CT->>CT: Execute action
+        CT-->>FE: Response
     end
 ....
 
-Key points:
+=== 6.2 Company and Agent Auto-Detection
 
-* `Application` does not know about OPC UA or IXON -- it simply calls `IScraper.ExecuteAsync`.
-* Before connecting to OPC UA, `Scraper` resolves the data source ID via `DataSourceResolver`: it uses the `IXON_DataSourceId` env var when set; otherwise it fetches existing data sources for the resolved device and reuses a matching one (slug `opcua`); only if no match exists does it POST a new OPC UA data source.
-* Variables and tags already present in IXON are skipped via `HashSet.Contains` before any POST is issued.
-* The delay occurs *after* the scraping completes (in the `finally` block), so a slow cycle does not cause drift.
-
-=== 6.2 Application Startup
-
-The bootstrap sequence that runs once before the first discovery cycle.
+The first wizard step after login. The frontend has only the service account credentials; this call resolves the company and the matching IXON agent automatically using the SecureEdge Pro serial number.
 
 [mermaid]
 ....
 sequenceDiagram
-    participant OS as Operating System
-    participant Prog as Program (Entry Point)
-    participant DI as ServiceProvider
-    participant App as Application
+    participant FE as WebApp (React)
+    participant API as CompanyConfigurationController
+    participant SVC as CompanyConfigurationService
+    participant IXON as IXON Cloud API v2
+    participant SEP as SecureEdge Pro Device
 
-    OS->>Prog: dotnet Rebelit.OT.Discover.EdgeApp.dll
-    Prog->>Prog: Read environment variables\n(IXON_* and OPCUA_*)
-    Note over Prog: Throws ArgumentNullException\nif any required variable is absent
+    FE->>API: GET /api/companyconfiguration\n(service account headers)
 
-    Prog->>Prog: Configure Serilog console logger
-    Prog->>DI: Build ServiceCollection\n(AddOPCUAClient, AddIXONClient,\nAddSingleton<Application>, AddSingleton<IScraper,Scraper>)
-    DI-->>Prog: ServiceProvider
+    API->>SVC: GetConfigurationAsync()
 
-    Prog->>DI: GetRequiredService<Application>()
-    DI-->>Prog: Application (with all dependencies injected)
+    SVC->>IXON: GET /api/companies\n(service account → single associated company)
+    IXON-->>SVC: Response<Company[]>
 
-    Prog->>App: Run(CancellationToken.None)
-    App->>App: Start scheduler loop (section 6.1)
+    alt No company returned
+        SVC-->>API: Result with error
+        API-->>FE: 400 Bad Request
+    end
+
+    SVC->>SVC: Set CompanyId on IIxonAuthenticationContext
+
+    SVC->>SEP: GET /api/v1/system/info\n(local device HTTP call)
+    SEP-->>SVC: SecureEdgeSystemInfo (serial number)
+
+    alt Serial number missing or unreachable
+        SVC-->>API: Result with error
+        API-->>FE: 400 Bad Request
+    end
+
+    SVC->>IXON: GET /api/agents\n(filtered by company)
+    IXON-->>SVC: Response<Agent[]>
+
+    SVC->>SVC: Match agent by serial number
+
+    SVC-->>API: Result<CompanyConfigurationDto>\n(companyId, agentId, agentName)
+    API-->>FE: 200 OK – company + agent details
+    FE->>FE: Store companyId + agentId\nin session storage
 ....
 
-The fail-fast behaviour on missing environment variables is intentional: the container will exit immediately with a descriptive message rather than failing silently during the first browse cycle.
+=== 6.3 OPC UA Connection Test
 
-=== 6.3 OPC UA Session Loss and Reconnection
-
-If the OPC UA server becomes unreachable mid-cycle, `UAClient` handles reconnection transparently via `SessionReconnectHandler`. If the cycle itself throws (e.g. the OPC UA server is down at the start), `Application` catches, logs, and waits for the next cycle.
+The wizard step where the user provides the PLC address and credentials. The API verifies the connection before allowing the user to proceed.
 
 [mermaid]
 ....
 sequenceDiagram
-    participant App as Application
+    participant FE as WebApp (React)
+    participant API as PlcController
+    participant UF as IUAClientFactory
+    participant UA as UAClient
+    participant OPC as OPC UA Server
+
+    FE->>API: POST /api/plc/connect\n{ opcUaServerAddress, opcUaUsername, opcUaPassword }
+
+    API->>UF: Create(address, username, password)
+    UF->>UA: new UAClient(config, telemetry)
+    UA->>OPC: ConnectAsync (endpoint selection + UserIdentity auth)
+
+    alt Connection succeeds
+        OPC-->>UA: Session established
+        UA-->>UF: UAClient
+        UF-->>API: UAClient (disposed immediately after check)
+        API-->>FE: 200 OK – { message: "OPC UA settings saved successfully." }
+        FE->>FE: Store OPC UA credentials in session storage
+    else Connection fails
+        OPC--xUA: Refused / timeout
+        UA-->>UF: null
+        UF-->>API: null
+        API-->>FE: 400 Bad Request – { message: "Failed to connect..." }
+    end
+....
+
+=== 6.4 Data Source Resolution
+
+Before discovery can run, the wizard resolves (or creates) the OPC UA data source on the IXON agent.
+
+[mermaid]
+....
+sequenceDiagram
+    participant FE as WebApp (React)
+    participant API as IxonSettingsController
+    participant DSR as DataSourceResolver
+    participant AC as IXON ApiClient
+    participant IXON as IXON Cloud API v2
+
+    FE->>API: POST /api/ixonsettings/datasource\n{ dataSourceName }
+
+    API->>DSR: ResolveAsync(dataSourceName)
+
+    DSR->>AC: GetDataSourcesAsync()
+    AC->>IXON: GET /api/agents/{agentId}/data-sources
+    IXON-->>AC: Response<DataSource[]>
+
+    alt Matching data source found (slug match)
+        DSR-->>API: existing DataSource.PublicId
+    else No match
+        DSR->>AC: PostDataSourceAsync(newOpcUaDataSource)
+        AC->>IXON: POST /api/agents/{agentId}/data-sources
+        IXON-->>AC: Response<DataSource> (with publicId)
+        DSR-->>API: new DataSource.PublicId
+    end
+
+    API-->>FE: 200 OK – dataSourceId
+    FE->>FE: Store dataSourceId in session storage
+....
+
+=== 6.5 Variable Discovery Run
+
+The primary scenario: the user triggers the scrape from the wizard. The scraper browses the full OPC UA address space and registers newly discovered nodes in IXON as data variables in batches.
+
+[mermaid]
+....
+sequenceDiagram
+    participant FE as WebApp (React)
+    participant API as ScraperController
+    participant Sc as Scraper
+    participant UF as IUAClientFactory
+    participant UA as UAClient
+    participant CS as ClientSamples
+    participant AC as IXON ApiClient
+    participant IXON as IXON Cloud API v2
+    participant OPC as OPC UA Server
+
+    FE->>API: POST /api/scraper/variables\n(service account + OPC UA + sourceId headers)
+
+    API->>Sc: ExecuteVariableScraperAsync(ct)
+
+    Sc->>UF: Create(plcUrl, username, password)
+    UF->>UA: ConnectAsync
+    UA->>OPC: Session established
+    UA-->>Sc: UAClient
+
+    Sc->>CS: CreateAsync()
+    Sc->>CS: BrowseFullAddressSpaceAsync(client, RootFolder, ct)
+    CS->>OPC: Browse recursive (max depth 128)
+    OPC-->>CS: ReferenceDescriptionCollection
+    CS-->>Sc: all nodes
+
+    Sc->>AC: GetDataVariablesAsync()
+    AC->>IXON: GET /api/agents/{agentId}/data-variables?page-size=4000
+    IXON-->>AC: Response<Variable[]>
+
+    Note over Sc: Filter nodes not yet present in IXON\nMap ReferenceDescription → Variable
+
+    loop For each batch of new variables (batch size 5)
+        Sc->>AC: PostVariablesAsync(batch)
+        AC->>IXON: POST /api/agents/{agentId}/data-variables (batch)
+        IXON-->>AC: Response<Variable[]>
+        AC-->>Sc: created Variables
+    end
+
+    Sc-->>API: ExecuteVariableScraperAsync completes
+    API-->>FE: 200 OK – { count: N }
+....
+
+=== 6.6 OPC UA Session Loss and Reconnection
+
+If the OPC UA server becomes unreachable mid-session, `UAClient` handles reconnection transparently via `SessionReconnectHandler`. If the initial connection attempt fails, the error is returned to the frontend.
+
+[mermaid]
+....
+sequenceDiagram
+    participant FE as WebApp (React)
     participant Sc as Scraper
     participant UA as UAClient
     participant RH as SessionReconnectHandler
     participant OPC as OPC UA Server
 
-    App->>Sc: ExecuteAsync(ct)
     Sc->>UA: ConnectAsync(address)
     UA->>OPC: Connect attempt
     OPC--xUA: Connection refused / timeout
-
     UA-->>Sc: returns null
-    Sc-->>App: returns early (logs error)
-
-    App->>App: catch(Exception ex)\nlogger.LogError(...)
-    App->>App: Task.Delay(15 min)
-    Note over App: Next cycle begins after 15 minutes.\nNo process restart required.
+    Sc-->>FE: (via controller) 400 – failed to create UAClient
 
     rect rgb(220,240,220)
         Note over UA,RH: If connection is lost DURING a session:
-        OPC--xUA: KeepAlive failure (after 5 s interval)
-        UA->>RH: Trigger reconnect (initial 1 s, backoff to 15 s)
+        OPC--xUA: KeepAlive failure (5 s interval)
+        UA->>RH: Trigger reconnect\n(initial 1 s, backoff to 15 s)
         RH->>OPC: Reconnect attempts
         OPC-->>RH: Session restored
         RH-->>UA: Session updated
     end
 ....
 
-The `Application`-level exception catch ensures that a full OPC UA outage never kills the process. The next cycle will attempt a fresh connection.
+=== 6.7 IXON Variable Mapping
 
-=== 6.4 IXON Variable mapping   
-We map the Node variables we get from a OPC UA server to IXON Variables and Tags. Ixon only supports specific variables types here is a overview how we do the mapping:
+OPC UA node types are mapped to IXON variable types as follows:
+
 [cols="3*", options="header"]
 |==================================================================
-| OPCUA Variable    | IXON Variable type | Width 
-| bool            | bool               | null  
-| uint8           | int                | 8       
-| uint16          | int                | 16      
-| uint32          | int                | 32     
-| uint64          | int                | 64      
-| int8            | int                | 8       
-| int16           | int                | 16    
-| int32           | int                | 32     
-| int64           | int                | 64   
-| string          | str             | null     
-| float           | float              | 32    
-| double          | float              | 64
+| OPC UA Variable   | IXON Variable Type | Width
+| bool              | bool               | null
+| uint8             | int                | 8
+| uint16            | int                | 16
+| uint32            | int                | 32
+| uint64            | int                | 64
+| int8              | int                | 8
+| int16             | int                | 16
+| int32             | int                | 32
+| int64             | int                | 64
+| string            | str                | null
+| float             | float              | 32
+| double            | float              | 64
 |==================================================================
 
 

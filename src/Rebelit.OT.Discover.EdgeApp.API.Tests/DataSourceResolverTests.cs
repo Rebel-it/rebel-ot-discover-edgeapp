@@ -258,6 +258,9 @@ public class DataSourceResolverTests
 
         public Task<Response<Agent[]>> GetAgentsAsync() =>
             throw new NotSupportedException();
+
+        public Task<Response<string>> PushConfigurationAsync(string agentId) =>
+            throw new NotSupportedException();
     }
 
     private sealed class FakeIxonAuthenticationContext : IIxonAuthenticationContext

@@ -3,174 +3,264 @@
 
 === Level 1 -- Whitebox Overall System
 
-The overall system is decomposed into three .NET projects.
-The core orchestration project depends only on interfaces; both connector projects implement those interfaces independently.
+The solution is composed of six projects: a React web application, an ASP.NET Core API, three protocol connector libraries, and a shared kernel.
+The API depends only on interfaces; each connector library implements those interfaces independently, keeping the orchestration logic protocol-agnostic.
 
 [mermaid]
 ....
-flowchart TD
+flowchart LR
     subgraph sys["Rebelit OT Discover Edge App (Solution)"]
-        core["**EdgeApp**\nOrchestration\n─────────────────\nApplication\nScraper\nIScraper"]
+        webapp["**WebApp**\nReact / TypeScript\nVite SPA"]
+        api["**API**\nASP.NET Core Web API\nControllers · Services · Scraper\nAuthenticationFilter"]
+        shared["**SharedKernel**\nIxonAuthenticationContext\nServiceAccount · Result&lt;T&gt;"]
 
         subgraph connectors["Protocol Connectors"]
-            ixon["**Connections.IXON**\nIXON Cloud Adapter\n─────────────────\nApiClient\nBaseAgent\nModels"]
-            opcua["**Connections.OPCUA**\nOPC UA Adapter\n─────────────────\nUAClient\nClientSamples\nFactories"]
+            ixon["**Connections.IXON**\nIXON Cloud Adapter\nBaseAgent · ApiClient"]
+            opcua["**Connections.OPCUA**\nOPC UA Adapter\nUAClient · ClientSamples"]
+            sep["**Connections.SecureEdgePro**\nSecureEdge Pro Adapter\nApiClient"]
         end
     end
 
     ext_opcua[/"OPC UA Server\n(PLC / SCADA)"/]
     ext_ixon[/"IXON Cloud\nAPI v2"/]
+    ext_sep[/"SecureEdge Pro\nDevice API"/]
 
-    core -->|"IApiClient"| ixon
-    core -->|"IUAClientFactory\nIClientSamplerFactory"| opcua
+    webapp -->|"HTTP REST\n(service account headers)"| api
+    api -->|"IXON IApiClient"| ixon
+    api -->|"IUAClientFactory\nIClientSamplerFactory"| opcua
+    api -->|"SecureEdge IApiClient"| sep
+    api --> shared
+    ixon --> shared
+
     opcua <-->|"opc.tcp://"| ext_opcua
     ixon <-->|"HTTPS REST"| ext_ixon
+    sep <-->|"HTTP REST\n(local network)"| ext_sep
 ....
-
-The motivation for this decomposition is stated in section 4: the orchestration logic in `EdgeApp` must remain protocol-agnostic so that new industrial connectors can be added without modifying the discovery or synchronisation code.
 
 [options="header", cols="2,3,3"]
 |===
 | Building Block | Responsibility | Key Interface(s)
 
-| *Rebelit.OT.Discover.EdgeApp*
-| Bootstraps the DI container, runs the 15-minute scheduler loop, and hosts the core discovery and synchronisation logic.
-| Consumes `IScraper`, `IApiClient`, `IUAClientFactory`, `IClientSamplerFactory`
+| *Rebelit.OT.Discover.EdgeApp.WebApp*
+| React/TypeScript SPA that provides a step-by-step wizard for connecting to IXON Cloud, discovering OPC UA nodes, and managing variables and tags.
+| — (UI client; calls the API via HTTP)
+
+| *Rebelit.OT.Discover.EdgeApp.API*
+| ASP.NET Core Web API. Hosts all controllers, services, the scraper, and the `AuthenticationFilter` that reads the IXON service account from request headers and populates `IIxonAuthenticationContext`.
+| Consumes `IXON.IApiClient`, `SecureEdgePro.IApiClient`, `IUAClientFactory`, `IClientSamplerFactory`, `IScraper`
 
 | *Rebelit.OT.Discover.EdgeApp.Connections.IXON*
-| Adapts the IXON Cloud REST API v2. Handles authentication headers, HTTP request/response lifecyle, JSON (de)serialisation, and error logging.
+| Adapts the IXON Cloud REST API v2. Builds authenticated `HttpClient` instances (service account headers), handles paging, JSON (de)serialisation, and error logging.
 | Exposes `IApiClient`; registers via `AddIXONClient()`
 
 | *Rebelit.OT.Discover.EdgeApp.Connections.OPCUA*
-| Wraps the OPC Foundation .NET Standard SDK. Manages OPC UA sessions, keep-alive, reconnection, and address-space traversal.
+| Wraps the OPC Foundation .NET Standard SDK. Manages OPC UA sessions, keep-alive, reconnection, and full address-space traversal.
 | Exposes `IUAClientFactory`, `IClientSamplerFactory`; registers via `AddOPCUAClient()`
+
+| *Rebelit.OT.Discover.EdgeApp.Connections.SecureEdgePro*
+| Calls the local SecureEdge Pro device REST API to retrieve device system information (serial number, firmware) needed to look up the correct IXON agent.
+| Exposes `IApiClient`; registers via `AddSecureEdgeProClient()`
+
+| *Rebelit.OT.Discover.EdgeApp.SharedKernel*
+| Cross-cutting types shared by the API and all connector projects: `IIxonAuthenticationContext`, `IxonHeaders`, `ServiceAccount`, and the `Result<T>` return wrapper.
+| `IIxonAuthenticationContext`, `Result<T>`
 |===
 
 === Level 2 -- Internal Structure of Building Blocks
 
-==== 5.2.1 Whitebox EdgeApp (Orchestration)
+==== 5.2.1 Whitebox WebApp (React Frontend)
+
+The frontend is a Vite/React SPA that guides the user through a multi-step wizard. Each page calls the backend API via a typed service layer; credentials from the login step are stored in session storage and attached as HTTP headers on every subsequent request.
 
 [mermaid]
 ....
-classDiagram
-    class Program {
-        <<entry point>>
-        +Main() Task
-        Reads env vars
-        Builds DI container
-        Resolves Application
-    }
+flowchart LR
+    subgraph pages["Pages (wizard steps)"]
+        p1["loginPage\n(service account credentials)"]
+        p2["startPage\n(company &amp; agent auto-detect)"]
+        p3["plcConnectPage\n(OPC UA endpoint + credentials)"]
+        p4["sourcePage\n(data source select / create)"]
+        p5["variablesPage\n(browse &amp; scrape variables)"]
+        p6["tagPage\n(review &amp; create tags)"]
+    end
 
-    class Application {
-        -IScraper scraper
-        -ILogger logger
-        +Run(CancellationToken) Task
-        15-min scheduler loop
-        Catches and logs exceptions
-    }
+    subgraph services["Services"]
+        s1["companyConfigurationService"]
+        s2["plcService"]
+        s3["dataSourceService"]
+        s4["scraperService"]
+        s5["variableService"]
+        s6["tagService"]
+        s7["sessionStorageService\n(stores service account headers)"]
+    end
 
-    class IScraper {
-        <<interface>>
-        +ExecuteAsync(CancellationToken) Task
-    }
-
-    class Scraper {
-        +Address string
-        +AgentId string
-        +Username string
-        +Password string
-        +DataSourceId string?
-        +ExistingAddresses HashSet~string~
-        +ExistingTags HashSet~string~
-        +ExecuteAsync(CancellationToken) Task
-        -ResolveDataSourceIdAsync(agentId) Task~string~
-        -FindDeviceByHost(devices) Device
-        -CreateIxonVariableAsync() Task~Variable~
-        -CreateTag() Task
-        -MapNodeToVariable() Variable
-    }
-
-    Program --> Application : resolves
-    Application --> IScraper : calls ExecuteAsync
-    IScraper <|.. Scraper : implements
-    Scraper --> IApiClient : POST / GET variables & tags
-    Scraper --> IUAClientFactory : creates UAClient
-    Scraper --> IClientSamplerFactory : creates ClientSamples
+    p1 --> s7
+    p2 --> s1
+    p3 --> s2
+    p4 --> s3
+    p5 --> s4
+    p5 --> s5
+    p6 --> s6
 ....
 
 [options="header", cols="2,4"]
 |===
 | Component | Responsibility
 
-| `Program`
-| Console entry point. Reads all required environment variables (throws `ArgumentNullException` on any missing value), configures Serilog, builds the DI `ServiceProvider`, and awaits `Application.Run()`.
+| Pages (`loginPage` … `tagPage`)
+| Each page corresponds to one wizard step. `loginPage` collects the IXON service account credentials and stores them via `sessionStorageService`. The remaining pages consume the typed services below, passing credentials as request headers via `httpClient`.
 
-| `Application`
-| Implements the 15-minute scheduling loop. Calls `IScraper.ExecuteAsync` on every cycle. Any exception thrown by the scraper is caught, logged, and discarded so the next cycle can start normally.
+| `sessionStorageService`
+| Persists the service account application ID, access token, company ID, agent ID, OPC UA endpoint, credentials, and data source ID in browser session storage so they survive page navigation without re-entry.
 
-| `IScraper`
-| Single-method interface that decouples `Application` from the concrete discovery logic. Enables the scraper implementation to be replaced or mocked in tests.
+| `companyConfigurationService`
+| Calls `GET /api/companyconfiguration`. Retrieves the company associated with the service account and the serial number of the SecureEdge Pro device, used to locate the corresponding IXON agent automatically.
 
-| `Scraper`
-| Core business logic. On each call: (1) resolves or auto-creates the IXON data source ID -- if absent, fetches the agent's devices, matches the device by OPC UA host IP (falling back to the first device), and POSTs a new OPC UA data source; (2) connects to the OPC UA server, (3) browses the full address space, (4) fetches existing IXON variables and tags into `HashSet` caches, (5) for each new OPC UA node, maps the node to an IXON `Variable` and POSTs it, then POSTs a `Tag` linked to that variable.
+| `plcService`
+| Calls `POST /api/plc/connect`. Verifies that an OPC UA connection can be established with the provided endpoint and credentials.
+
+| `dataSourceService`
+| Calls `POST /api/ixonsettings/datasource`. Resolves or creates the OPC UA data source on the selected IXON agent.
+
+| `scraperService`
+| Calls `POST /api/scraper/variables`. Triggers the variable discovery run and returns the count of newly created variables.
+
+| `variableService`
+| Calls `GET /api/variable`. Returns all IXON data variables for the configured agent.
+
+| `tagService`
+| Calls `GET /api/tags`, `GET /api/tags/prefilled`, `POST /api/tags`, `POST /api/tags/CreateTags`, and `PUT /api/tags`. Manages tag retrieval and creation/update.
 |===
 
-==== 5.2.2 Whitebox Connections.IXON
+==== 5.2.2 Whitebox API (ASP.NET Core)
+
+[mermaid]
+....
+flowchart TD
+    filter["AuthenticationFilter\n(IActionFilter)"]
+    authCtx["IIxonAuthenticationContext\n(scoped)"]
+
+    subgraph controllers["Controllers"]
+        cc["CompanyConfigurationController"]
+        ixs["IxonSettingsController"]
+        plc["PlcController"]
+        sc["ScraperController"]
+        tc["TagsController"]
+        vc["VariableController"]
+    end
+
+    subgraph services["Services"]
+        ccs["ICompanyConfigurationService"]
+        ts["ITagService"]
+        vs["IVariableService"]
+    end
+
+    filter -->|"populates"| authCtx
+    cc --> ccs
+    ixs --> dsr["IDataSourceResolver"]
+    plc --> uaf["IUAClientFactory"]
+    sc --> scraper["IScraper"]
+    tc --> ts
+    vc --> vs
+
+    ccs --> ixonApi["IXON IApiClient"]
+    ccs --> sepApi["SecureEdge IApiClient"]
+    ts --> ixonApi
+    vs --> ixonApi
+    dsr --> ixonApi
+    scraper --> uaf
+    scraper --> csf["IClientSamplerFactory"]
+    scraper --> ixonApi
+....
+
+[options="header", cols="2,4"]
+|===
+| Component | Responsibility
+
+| `AuthenticationFilter`
+| `IActionFilter` applied globally. Reads `Api-Application` and `Api-Access-Token` from the request headers (returns `401` if absent) and writes them into the scoped `IIxonAuthenticationContext` together with the optional `Api-Company-Id`, `Api-Agent-Id`, OPC UA, and `Source-Id` headers.
+
+| `CompanyConfigurationController`
+| `GET /api/companyconfiguration`. Delegates to `ICompanyConfigurationService` to auto-detect company ID from the service account and match the corresponding IXON agent via the SecureEdge Pro serial number.
+
+| `IxonSettingsController`
+| `POST /api/ixonsettings/datasource`. Delegates to `IDataSourceResolver` to find an existing OPC UA data source by name or create a new one on the agent.
+
+| `PlcController`
+| `POST /api/plc/connect`. Attempts an OPC UA connection using the supplied credentials; returns `200 OK` on success or `400 Bad Request` on failure.
+
+| `ScraperController`
+| `POST /api/scraper/variables`. Calls `IScraper.ExecuteVariableScraperAsync`, which browses the OPC UA address space and pushes newly discovered nodes to IXON as variables. Returns the count of created variables.
+
+| `TagsController`
+| `GET`, `POST`, and `PUT` endpoints under `/api/tags`. Delegates to `ITagService` for listing existing tags, generating pre-filled tag suggestions from discovered variables, creating individual or bulk tags, and updating tag settings.
+
+| `VariableController`
+| `GET /api/variable`. Delegates to `IVariableService` to retrieve all data variables for the configured agent from IXON.
+
+| `ICompanyConfigurationService`
+| Calls `IXON.IApiClient.GetAssociatedCompanyAsync()` and `SecureEdgePro.IApiClient.GetSystemInfoAsync()`. Sets the company ID on `IIxonAuthenticationContext` and finds the matching IXON agent by serial number.
+
+| `ITagService`
+| Wraps IXON tag read and write operations. `GetPrefilledTagsAsync` generates default tag configurations for all variables that do not yet have a tag.
+
+| `IVariableService`
+| Calls `IXON.IApiClient.GetDataVariablesAsync()` and maps the results to API response DTOs.
+
+| `IDataSourceResolver`
+| Looks up an existing data source on the agent by name (slug-matched). Creates a new OPC UA data source if none is found.
+
+| `IScraper` / `Scraper`
+| Core discovery logic. Reads OPC UA node address space, then for each discovered node that is not yet present in IXON: maps the node to a `Variable` and POSTs it in batches to the IXON API.
+|===
+
+==== 5.2.3 Whitebox Connections.IXON
 
 [mermaid]
 ....
 classDiagram
     class IApiClient {
         <<interface>>
-        +GetDataVariablesAsync(agentId) Task~Response~Variable[]~~
-        +GetTagsAsync(agentId) Task~Response~Tag[]~~
-        +PostVariableAsync(agentId, variable) Task~Response~Variable~~
-        +PostTagAsync(agentId, tag) Task~Response~Tag~~
-        +GetDataSourcesAsync(agentId) Task~Response~DataSource[]~~
-        +PostDataSourceAsync(agentId, dataSource) Task~Response~DataSource~~
-        +GetAgentAsync(agentId) Task~Response~Agent~~
-        +GetDevicesAsync(agentId) Task~Response~Device[]~~
+        +GetDataVariablesAsync() Task~Response~Variable[]~~
+        +GetTagsAsync() Task~Response~Tag[]~~
+        +PostVariableAsync(variable) Task~Response~Variable~~
+        +PostVariablesAsync(variables) Task~Response~Variable[]~~
+        +PostTagAsync(tag) Task~Response~Tag~~
+        +UpdateTagAsync(publicId, tag) Task~Response~Tag~~
+        +GetDataSourcesAsync() Task~Response~DataSource[]~~
+        +PostDataSourceAsync(dataSource) Task~Response~DataSource~~
+        +GetAgentAsync() Task~Response~Agent~~
+        +GetAgentsAsync() Task~Response~Agent[]~~
+        +GetDevicesAsync() Task~Response~Device[]~~
+        +GetAssociatedCompanyAsync() Task~Response~Company[]~~
     }
 
     class BaseAgent {
         <<abstract, internal>>
-        -IOptions~Configuration~ configuration
-        -ILogger logger
+        -IOptionsMonitor~Configuration~ configuration
+        -IIxonAuthenticationContext authContext
+        -ResiliencePipeline pipeline
         #Get~T~(uri) Task~T~
         #Post~T~(uri, body) Task~T~
-        #Post(uri, body) Task
-        #GetHttpMessageHandler() HttpMessageHandler
+        #Patch~T~(uri, body) Task~T~
+        #Put~T~(uri, body) Task~T~
         -CreateHttpClient() HttpClient
-        -HandleResponseErrors(response) Task
     }
 
     class ApiClient {
         <<internal>>
-        +GetDataVariablesAsync() Task
-        +GetTagsAsync() Task
-        +PostVariableAsync() Task
-        +PostTagAsync() Task
-        +GetDataSourcesAsync() Task
-        +PostDataSourceAsync() Task
+        implements all IApiClient operations
     }
 
     class Configuration {
         +BaseUrl string
-        +ApplicationId string
-        +BearerToken string
-        +CompanyId string
         +Version int
-    }
-
-    class ServiceCollectionExtensions {
-        <<static>>
-        +AddIXONClient(appId, companyId, token) IServiceCollection
     }
 
     IApiClient <|.. ApiClient : implements
     BaseAgent <|-- ApiClient : extends
-    BaseAgent --> Configuration : reads via IOptions
-    ServiceCollectionExtensions --> ApiClient : registers as IApiClient
+    BaseAgent --> Configuration : reads via IOptionsMonitor
+    BaseAgent --> IIxonAuthenticationContext : reads service account
 ....
 
 [options="header", cols="2,4"]
@@ -178,31 +268,29 @@ classDiagram
 | Component | Responsibility
 
 | `IApiClient`
-| Public interface consumed by `Scraper`. Declares eight operations: read variables, read tags, create variable, create tag, read data sources, create data source, read agent details, read devices.
+| Public interface consumed by the API services and scraper. Declares all IXON Cloud REST operations: variables, tags, data sources, agents, devices, and company lookup.
 
 | `BaseAgent`
-| Internal abstract base class. Creates a configured `HttpClient` per request (bearer token + `Api-Application`, `Api-Company`, `Api-Version` headers), sends GET/POST calls, logs `400 Bad Request` bodies, and calls `EnsureSuccessStatusCode` on every response.
+| Internal abstract base. On each request, reads the `ServiceAccount` (application ID + access token) and optional `CompanyId` from `IIxonAuthenticationContext` and creates a fresh `HttpClient` with the correct `Authorization: Bearer`, `Api-Application`, `Api-Company`, and `Api-Version` headers. All HTTP calls are wrapped in a Polly resilience pipeline (retry on transient errors). Logs `400 Bad Request` response bodies for debugging.
 
 | `ApiClient`
-| Concrete implementation of `IApiClient`. Constructs the four endpoint URIs and delegates to `BaseAgent.Get<T>` / `BaseAgent.Post<T>`.
+| Concrete implementation of `IApiClient`. Builds endpoint URIs from `Configuration.BaseUrl` and delegates every call to `BaseAgent.Get<T>`, `Post<T>`, `Patch<T>`, or `Put<T>`.
 
 | `Configuration`
-| Immutable settings record bound from `IOptions<Configuration>`. Holds `BaseUrl` (default `https://portal.ixon.cloud`), `ApplicationId`, `BearerToken`, `CompanyId`, and `Version` (default `2`).
+| Settings record bound from `IOptionsMonitor<Configuration>`. Holds `BaseUrl` (default `https://portal.ixon.cloud`) and `Version` (default `2`). Credentials are no longer stored here -- they arrive per-request via `IIxonAuthenticationContext`.
 
-| `ServiceCollectionExtensions`
-| `AddIXONClient(appId, companyId, token)` extension method. Registers `Configuration` via `IOptions<>` and `ApiClient` as a singleton `IApiClient`.
-
-| *Models* (`Variable`, `Tag`, `Source`, `DataSource`, `DataSourceProtocol`, `Device`, `Agent`, `Response<T>`)
-| Plain data transfer objects used as request/response bodies for the IXON API. `DataSourceProtocol` carries the OPC UA protocol identifier and optional authentication fields. `Device` exposes `PublicId`, `Name`, `IpAddress`, `MacAddress`, and `CustomAddress` -- used to resolve which device to link to a new data source. `Response<T>` wraps a `.Data` property used to extract the payload.
+| *Models* (`Variable`, `Tag`, `DataSource`, `DataSourceProtocol`, `Device`, `Agent`, `Company`, `Response<T>`)
+| DTOs for the IXON REST API. `Response<T>` wraps the `.Data` payload. `DataSourceProtocol` carries the OPC UA protocol identifier and credential fields. `Company` and `Agent` are used during the auto-detect flow.
 |===
 
-==== 5.2.3 Whitebox Connections.OPCUA
+==== 5.2.4 Whitebox Connections.OPCUA
 
 [mermaid]
 ....
 classDiagram
     class IUAClientFactory {
         <<interface>>
+        +Create(uri) Task~UAClient~
         +Create(uri, username, password) Task~UAClient~
     }
 
@@ -214,6 +302,7 @@ classDiagram
     class UAClientFactory {
         -ApplicationInstance applicationInstance
         -ITelemetryContext telemetryContext
+        +Create(uri) Task~UAClient~
         +Create(uri, username, password) Task~UAClient~
     }
 
@@ -225,22 +314,17 @@ classDiagram
     class UAClient {
         +AutoAccept bool
         +SessionLifeTime int
-        +UserIdentity UserIdentity
         +KeepAliveInterval int
         +ReconnectPeriod int
         +ReconnectPeriodExponentialBackoff int
         +Session ISession
         +ConnectAsync(uri) Task~bool~
         +DisconnectAsync() Task
-        +DurableSubscriptionTransferAsync() Task~bool~
         +Dispose()
     }
 
     class ClientSamples {
         +BrowseFullAddressSpaceAsync(client, node, ct) Task~ReferenceDescriptionCollection~
-        +BrowseAsync(session, ct) Task
-        +ReadNodesAsync(session, ct) Task
-        +SubscribeToDataChangesAsync(session, ct) Task~bool~
     }
 
     class ITelemetryContext {
@@ -259,14 +343,13 @@ classDiagram
     UAClientFactory --> ITelemetryContext : uses
     ClientSamplerFactory --> ITelemetryContext : uses
     ITelemetryContext <|.. ConsoleTelemetry : implements
-    UAClient --> OpcUaSDK : wraps
-    ClientSamples --> OpcUaSDK : wraps
 
     class OpcUaSDK {
         <<external library>>
         OPCFoundation.NetStandard.Opc.Ua
-        v1.5.378
     }
+    UAClient --> OpcUaSDK : wraps
+    ClientSamples --> OpcUaSDK : wraps
 ....
 
 [options="header", cols="2,4"]
@@ -274,23 +357,61 @@ classDiagram
 | Component | Responsibility
 
 | `IUAClientFactory`
-| Public interface consumed by `Scraper`. Single method `Create(uri, username, password)` returns a connected `UAClient` or `null` on failure.
+| Public interface consumed by `PlcController` and `Scraper`. Overloads for anonymous and username/password connections; returns a connected `UAClient` or `null` on failure.
 
 | `IClientSamplerFactory`
-| Public interface consumed by `Scraper`. Single method `CreateAsync()` returns a `ClientSamples` instance ready to browse.
+| Public interface consumed by `Scraper`. Returns a `ClientSamples` instance ready to browse.
 
 | `UAClientFactory`
-| Constructs a `UserIdentity` from credentials, instantiates `UAClient`, sets `AutoAccept = true` and `SessionLifeTime = 60 000 ms`, calls `ConnectAsync`, and returns the connected client.
+| Constructs a `UserIdentity` from the supplied credentials (or `AnonymousIdentity` when none are provided), instantiates `UAClient`, calls `ConnectAsync`, and returns the connected client.
 
 | `UAClient`
-| Wraps an OPC UA `ISession`. Handles session establishment (endpoint selection, certificate acceptance), keep-alive (5 s interval), and `SessionReconnectHandler` with 1 s initial period and 15 s exponential back-off cap. Implements `IDisposable`.
+| Wraps an OPC UA `ISession`. Manages session establishment, certificate acceptance (`AutoAccept = true`), keep-alive (5 s), and `SessionReconnectHandler` with 1 s initial period and 15 s exponential back-off cap. Implements `IDisposable`.
 
 | `ClientSamples`
-| Provides address-space traversal helpers over an `ISession`. The method used by `Scraper` is `BrowseFullAddressSpaceAsync`, which recursively walks the node tree from a root node up to depth 128 and returns all `ReferenceDescription` objects.
+| Address-space traversal over an `ISession`. `BrowseFullAddressSpaceAsync` recursively walks the node tree from a given root up to depth 128 and returns all `ReferenceDescription` objects.
 
 | `ITelemetryContext` / `ConsoleTelemetry`
-| Thin abstraction over `ILoggerFactory` used to feed log output from the OPC UA SDK into the Serilog pipeline without coupling the SDK directly to any concrete logger.
+| Thin abstraction over `ILoggerFactory` that routes OPC UA SDK log output into the Serilog pipeline without coupling the SDK to a concrete logger.
 
 | `ServiceCollectionExtensions`
-| `AddOPCUAClient(applicationName)` extension method. Configures `ApplicationInstance` as an OPC UA client (security policy, `AutoAcceptUntrustedCertificates = true`, min key size 1024), registers all factories and telemetry as singletons.
+| `AddOPCUAClient(applicationName)` registers `ApplicationInstance` (auto-accept certificates, min key size 1024) and all factories and telemetry as singletons.
+|===
+
+==== 5.2.5 Whitebox Connections.SecureEdgePro
+
+[options="header", cols="2,4"]
+|===
+| Component | Responsibility
+
+| `IApiClient`
+| Public interface with a single operation: `GetSystemInfoAsync()`. Returns a `Result<SecureEdgeSystemInfo>` containing the device serial number and firmware details.
+
+| `ApiClient`
+| Uses a named `IHttpClientFactory` client (`"SecureEdgePro"`) to call `GET /api/v1/system/info` on the local SecureEdge Pro. Handles HTTP errors and network failures by returning a `Result` with an error message rather than throwing.
+
+| `SecureEdgeSystemInfo`
+| DTO containing the device serial number and other system properties returned by the SecureEdge Pro local API.
+
+| `ServiceCollectionExtensions`
+| Registers `ApiClient` as the scoped `IApiClient` and configures the named `HttpClient` with the device base address.
+|===
+
+==== 5.2.6 Whitebox SharedKernel
+
+[options="header", cols="2,4"]
+|===
+| Component | Responsibility
+
+| `IIxonAuthenticationContext` / `IxonAuthenticationContext`
+| Scoped carrier for the per-request `IxonHeaders`. The `AuthenticationFilter` writes into it once per request; all connectors and services read from it throughout the same request lifetime.
+
+| `IxonHeaders`
+| Groups all per-request context: `ServiceAccount` (application ID + access token), optional `CompanyId`, `AgentId`, OPC UA endpoint (`PlcUrl`), OPC UA credentials (`PlcUsername`, `PlcPassword`), and `SourceId`.
+
+| `ServiceAccount`
+| Immutable record holding `ApiApplicationId` and `AccessToken` -- the two credentials that identify the IXON service account.
+
+| `Result<T>`
+| Generic return wrapper used by `SecureEdgePro.IApiClient` and service layer methods to convey success (`Data`) or failure (`ErrorMessage`) without throwing exceptions across layer boundaries.
 |===

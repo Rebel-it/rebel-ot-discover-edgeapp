@@ -51,6 +51,7 @@ builder.Services.AddSingleton<IOpcUaVariableMapper, OpcUaVariableMapper>();
 builder.Services.AddScoped<IDataSourceResolver, DataSourceResolver>();
 builder.Services.AddScoped<INodeSynchronizer, NodeSynchronizer>();
 builder.Services.AddScoped<ICompanyConfigurationService, CompanyConfigurationService>();
+builder.Services.AddScoped<IIxonSettingService, IxonSettingService>();
 builder.Services.AddOPCUAClient("Rebelit.OT.Scraper");
 builder.Services.AddIXONClient();
 

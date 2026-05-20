@@ -1,110 +1,117 @@
 = Getting Started
 :toc:
-To install this EdgeApp onto a SecureEdge Pro, you will need to build the EdgeApp image and push it to a container registry. You can then deploy the EdgeApp through the internal SecureEdge Pro interface.
+This guide walks you through installing the *Rebelit OT Discover Edge App* on an IXON SecureEdge Pro and completing your first variable discovery run.
 
+The application consists of two Docker containers deployed on the SecureEdge Pro:
+
+* A *backend* (ASP.NET Core API) that talks to IXON Cloud, the OPC UA server, and the SecureEdge Pro device API.
+* A *frontend* (React web app served by nginx) accessible in your browser at `http://<device-ip>:3000`.
 
 == Prerequisites
-- link:https://docs.docker.com/get-docker/[Docker] with link:https://docs.docker.com/buildx/working-with-buildx/[BuildKit / `docker buildx`] enabled.
-- An IXON SecureEdge Pro device accessible on your local network (or with VPN connection through the portal).
-- An IXON Cloud account with the *API Integrations* module enabled.
 
-== Building the EdgeApp Image
-The script link:docker/push_ixon.sh[`docker/push_ixon.sh`] builds a `linux/arm64/v8` image and pushes it directly to the container registry on the SecureEdge Pro. Run it from the `docker/` directory:
+* link:https://docs.docker.com/get-docker/[Docker] with link:https://docs.docker.com/buildx/working-with-buildx/[BuildKit / `docker buildx`] enabled.
+* An IXON SecureEdge Pro device accessible on your local network (or via VPN through the IXON portal).
+* An IXON Cloud account with the *API Integrations* module enabled.
+* An IXON service account with an *Application ID* and *Access Token* (see <<service-account,Setting up an IXON Service Account>> below).
+
+== Installation
+
+Run the install script from the `docker/` directory. It builds both images, pushes them to the SecureEdge Pro's local registry, and creates and starts the containers — all in one step.
 
 [source,bash]
 ----
 cd docker
-./push_ixon.sh
+./install_discover_edgeapp.sh
 ----
 
-The script will prompt for eight required values and one optional value:
+The script will prompt for:
 
-[cols="1,2,2", options="header"]
+[cols="1,3", options="header"]
 |===
-| Prompt | Description | How to obtain
+| Prompt | Description
 
 | *SecureEdge IP address*
-| The LAN IP address of your IXON SecureEdge Pro (e.g. `172.27.21.1`).
-| Check your network configuration or the IXON portal under the device's network settings.
+| The LAN IP of your SecureEdge Pro (e.g. `172.27.21.1`). Check your network configuration or the IXON portal under the device's network settings.
 
-| *IXON Application ID*
-| Identifies the client application calling the IXON API.
-| Contact your IXON Sales representative or account manager to request an Application ID.
+| *Username SecureEdge Pro*
+| Admin username for the SecureEdge Pro web interface (default: `admin`). Found on the label on the device.
 
-| *IXON Company ID*
-| The `publicId` of your IXON company.
-| Retrieve it via the IXON API link:https://developer.ixon.cloud/reference/get_companies[`CompanyList`] endpoint, or find it in the IXON portal URL when you navigate to your company settings.
-
-| *IXON Bearer Token*
-| A temporary API access token used to authenticate all API calls.
-| Generate one via the IXON API link:https://developer.ixon.cloud/reference/post_access-tokens[`AccessTokenList`] endpoint (see below).
-
-| *IXON Agent ID*
-| The `publicId` of the IXON agent (machine) to associate discovered data with.
-| Find it in the IXON portal under the device's agent settings, or via the IXON API.
-
-| *IXON Data Source ID* _(optional)_
-| The `publicId` of an existing OPC UA data source on the IXON agent. Leave blank to let the app create a new OPC UA data source automatically using the OPC UA credentials supplied below.
-| Find it in the IXON portal under the agent's data sources, or via the IXON API. Leave empty on a first-time setup.
-
-| *OPC UA Server Address*
-| The OPC UA endpoint URL of the server to connect to (e.g. `opc.tcp://172.27.21.3:4840`).
-| Check the configuration of your OPC UA server or PLC.
-
-| *OPC UA Username*
-| Username for authenticating with the OPC UA server.
-| Check the credentials configured on your OPC UA server or PLC.
-
-| *OPC UA Password*
-| Password for authenticating with the OPC UA server.
-| Check the credentials configured on your OPC UA server or PLC.
+| *Password SecureEdge Pro*
+| Admin password for the SecureEdge Pro web interface. Found on the label on the device.
 
 | *Log level* _(optional)_
-| Minimum log level written to the container output. Accepted values: `Verbose`, `Debug`, `Information`, `Warning`, `Error`, `Fatal`. Defaults to `Information`.
-| Choose based on your scenario. Use `Warning` for normal production operation; use `Information` to also see creation events; use `Debug` or `Verbose` only for troubleshooting.
+| Minimum log level for the backend container output. Accepted values: `Verbose`, `Debug`, `Information`, `Warning`, `Error`, `Fatal`. Defaults to `Information`.
 |===
 
-The credentials and log level are baked into the Docker image as environment variables at build time, so no secrets need to be managed on the device after deployment. To change the log level, rebuild the image with a different value.
+Once complete, the script prints:
 
-=== Generating an IXON Bearer Token
-A bearer token is obtained by calling the `AccessTokenList` endpoint with your IXON email and password using HTTP Basic Auth. The token expires after the duration you specify (`expiresIn`, in seconds; maximum 60 days / 5 184 000 seconds).
+----
+=== Installation complete ===
+Please visit the application on your Secure Edge Pro: http://<device-ip>:3000
+----
+
+[NOTE]
+====
+The SecureEdge Pro registry (`<device-ip>:5000`) must be configured as an *insecure registry* in Docker Desktop before running the script. +
+Add it via *Docker Desktop → Settings → Docker Engine*:
+[source,json]
+----
+{ "insecure-registries": ["<device-ip>:5000"] }
+----
+Then restart Docker and re-run the script.
+====
+
+== End-User Deployment (Release Zip)
+
+If you received a release zip instead of the source code, extract it and run:
+
+[source,bash]
+----
+./deploy_discover_edgeapp.sh
+----
+
+This script loads the pre-built Docker images from the zip, pushes them to the device, and starts the containers. The same insecure registry prerequisite applies.
+
+== Using the Wizard
+
+Open `http://<device-ip>:3000` in your browser. The wizard guides you through the following steps:
+
+. *Login* — Enter your IXON service account Application ID and Access Token.
+. *Company & Agent detection* — The app automatically retrieves your IXON company and matches the SecureEdge Pro device to the correct IXON agent using its serial number.
+. *OPC UA connection* — Enter the OPC UA server address and credentials. The app verifies the connection before you proceed.
+. *Data source* — Select an existing OPC UA data source on the agent, or let the app create one automatically.
+. *Variable discovery* — Trigger the discovery run. The app browses the OPC UA address space and registers all new nodes as IXON data variables.
+. *Tags* — Review the discovered variables and create data tags with your preferred logging configuration.
+
+[[service-account]]
+== Setting up an IXON Service Account
+
+The wizard requires an IXON service account *Application ID* and *Access Token*. These are different from your personal IXON login.
+
+=== Application ID
+Contact your IXON account manager or sales representative to request an API Application ID for your integration.
+
+=== Access Token
+Generate an access token by calling the IXON `AccessTokenList` endpoint with your IXON credentials using HTTP Basic Auth:
 
 [source,bash]
 ----
 # 1. Base64-encode your credentials (email::password)
 CIPHER=$(echo -n 'your@email.com::YourPassword' | base64)
 
-# 2. Request a bearer token (here valid for 24 hours)
+# 2. Request an access token (here valid for 60 days)
 curl --request POST \
     --url 'https://portal.ixon.cloud/api/access-tokens?fields=secretId' \
     --header 'Api-Version: 2' \
     --header "Api-Application: YOUR_APPLICATION_ID" \
     --header 'Content-Type: application/json' \
     --header "Authorization: Basic $CIPHER" \
-    --data '{"expiresIn": 86400}'
+    --data '{"expiresIn": 5184000}'
 ----
 
-The `secretId` value in the response is your bearer token. Enter only the token value when prompted by `push_ixon.sh` (without the `Bearer` prefix).
+The `secretId` value in the response is your access token. Enter it in the wizard login step.
 
 [NOTE]
 ====
 If your account uses Two-Factor Authentication, encode your credentials as `email:otp:password` instead.
 ====
-
-== Deploying the EdgeApp
-After the image is built and pushed to the SecureEdge Pro, you can deploy it through the internal interface:
-
-. Log in to the SecureEdge Pro's web interface (credentials are located on the device).
-. Navigate to the *Docker* section and click *Add* button of the left of the `rebel-ot-discover-edgeapp` image.
-
-image::docs/assets/sourceedge_docker_image.png[]
-
-[start="3"]
-. Add a container name and click *Create* to deploy the EdgeApp.
-
-image::docs/assets/sourceedge_docker_container.png[]
-
-[start="4"]
-. Press the *Run* (1) button to start the container. You can view the logs by clicking the *Logs* (2) button.
-
-image::docs/assets/sourceedge_docker_run.png[]
