@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import StartPage from './pages/startPage/StartPage'
-import PlcConnect from './components/plcConnect/PlcConnect'
+import PlcConnect from './pages/plcConnectPage/PlcConnect'
 import ProtectedRoute from './components/shared/ProtectedRoute.'
 import LoginPage from './pages/loginPage/LoginPage'
 import TagPage from './pages/tagPage/TagPage'

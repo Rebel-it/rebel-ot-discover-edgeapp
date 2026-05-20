@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { savePlcAuth } from '../../services/sessionStorageService.ts'
 import { connectToPlc } from '../../services/plcService.ts'
-import type { PlcAuthObject } from '../../models/PlcAuthObject'
+import type { PlcAuthObject } from '../../models/PlcAuthObject.ts'
 import { useState, type ComponentProps } from 'react'
 import FormField from '../atoms/formField/FormField.tsx'
 import styles from './PlcConnect.module.css'
