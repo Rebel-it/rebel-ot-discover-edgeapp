@@ -3,8 +3,8 @@ import { useState, type ComponentProps } from 'react'
 import { saveSourceId } from '../../services/sessionStorageService.ts'
 import Loginstyles from '../loginPage/LoginPage.module.css'
 import type { SourceObject } from '../../models/SourceObject.ts'
-import { createSource } from '../../services/DataSourceService.ts'
-import FormField from '../../components/Atoms/FormField/FormField.tsx'
+import { createSource } from '../../services/dataSourceService.ts'
+import FormField from '../../components/atoms/formField/FormField.tsx'
 
 type SourceFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 

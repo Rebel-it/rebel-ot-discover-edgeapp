@@ -5,7 +5,7 @@ import ProtectedRoute from './components/shared/ProtectedRoute.'
 import LoginPage from './pages/loginPage/LoginPage'
 import TagPage from './pages/tagPage/TagPage'
 import SourcePage from './pages/sourcePage/SourcePage'
-import VariablesPage from './pages/VariablesPage/VariablesPage'
+import VariablesPage from './pages/variablesPage/VariablesPage'
 
 
 function App() {

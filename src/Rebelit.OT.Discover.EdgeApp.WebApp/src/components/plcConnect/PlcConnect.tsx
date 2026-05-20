@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom'
 import { savePlcAuth } from '../../services/sessionStorageService.ts'
-import { connectToPlc } from '../../services/PlcService.ts'
+import { connectToPlc } from '../../services/plcService.ts'
 import type { PlcAuthObject } from '../../models/PlcAuthObject'
 import { useState, type ComponentProps } from 'react'
-import FormField from '../Atoms/FormField/FormField.tsx'
+import FormField from '../atoms/formField/FormField.tsx'
 import styles from './PlcConnect.module.css'
 
 type PlcFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
