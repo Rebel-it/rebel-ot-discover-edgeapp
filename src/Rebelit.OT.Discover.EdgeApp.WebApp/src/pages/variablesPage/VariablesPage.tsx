@@ -43,7 +43,7 @@ function VariablesPage() {
     }, [])
 
     return (
-        <div className={sharedStyles.loginWrapper}>
+        <div className={sharedStyles.wrapper}>
             <div className={sharedStyles.loginForm}>
                 <h1>Synchronize variables</h1>
 
