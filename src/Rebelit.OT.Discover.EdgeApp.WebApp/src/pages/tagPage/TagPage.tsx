@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useRef } from 'react'
 import styles from './TagPage.module.css'
+import sharedStyles from '../loginPage/LoginPage.module.css'
 import { createTags, getFilledTags, type Tag as ApiTag } from '../../services/tagService'
 import { useNavigate } from 'react-router-dom';
 
@@ -161,7 +162,7 @@ function TagPage() {
       )}
       
       {initialTagsCreated && (
-        <button type="button" className={styles.nextButton} onClick={() => navigate('/final')}>
+        <button type="button" className={sharedStyles.nextButton}  onClick={() => navigate('/final')}>
           Finish
         </button>
       )}
