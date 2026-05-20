@@ -3,41 +3,57 @@
 
 === 7.1 Infrastructure Level 1 -- Production Environment
 
-In production the application runs as a Docker container on the *IXON SecureEdge Pro*, a Linux ARM64 edge gateway installed in or near the OT control cabinet.
+In production the application runs as two Docker containers on the *IXON SecureEdge Pro*, a Linux ARM64 edge gateway installed in or near the OT control cabinet.
+The frontend container is the sole entry point for the browser; it proxies all API calls to the backend container over the shared internal Docker network.
 
 [mermaid]
 ....
 flowchart TD
-    subgraph dev["Developer Workstation\n(macOS / Linux / Windows)"]
-        builder["docker buildx\n(push_ixon.sh)"]
+    subgraph browser["Engineer Browser"]
+        ui["React SPA\nhttp://&lt;device-ip&gt;:3000"]
     end
 
     subgraph edge["IXON SecureEdge Pro\nLinux ARM64"]
         registry["Container Registry\nHTTP · port 5000"]
-        subgraph container["Docker Container\nlinux/arm64/v8"]
-            runtime[".NET 10 Runtime"]
-            app["Rebelit.OT.Discover.EdgeApp.dll\n+ Connections.IXON.dll\n+ Connections.OPCUA.dll"]
-            runtime --> app
+
+        subgraph network["Docker bridge network: machine-builder"]
+            subgraph fe["Frontend Container\nrebel-ot-discover-edgeapp-react"]
+                nginx["nginx\nport 80 (→ ext 3000)\nserves React SPA\nproxies /api/ → backend"]
+            end
+
+            subgraph be["Backend Container\nrebel-ot-discover-edgeapp"]
+                api["ASP.NET Core API\nport 8080 (internal only)"]
+            end
         end
-        registry -->|"image pull on container start"| container
+
+        registry -->|"image pull on start"| fe
+        registry -->|"image pull on start"| be
     end
 
-    subgraph otnet["OT Network\n(isolated plant network)"]
-        plc["OPC UA Server\nPLC / SCADA\nopc.tcp://<ip>:4840"]
+    subgraph otnet["OT Network"]
+        plc["OPC UA Server\nPLC / SCADA"]
     end
 
     subgraph cloud["Internet"]
         ixoncloud["IXON Cloud\nhttps://portal.ixon.cloud"]
     end
 
-    builder -->|"docker buildx push\nHTTP · port 5000\nlinux/arm64/v8 image"| registry
-    app <-->|"OPC UA binary\nopc.tcp://"| plc
-    app <-->|"HTTPS REST\nJSON"| ixoncloud
+    subgraph sep["SecureEdge Pro Host"]
+        sepapi["SecureEdge Pro\nLocal API · port 80"]
+    end
+
+    ui -->|"HTTP port 3000"| nginx
+    nginx -->|"proxy /api/\nHTTP port 8080"| api
+    api <-->|"opc.tcp://"| plc
+    api <-->|"HTTPS REST"| ixoncloud
+    api <-->|"HTTP REST\n(via default gateway)"| sepapi
 ....
 
 ==== Motivation
 
-The SecureEdge Pro acts as a network junction between the isolated OT network (where the OPC UA server lives) and the public internet (where the IXON Cloud API is reachable). Running the container on the device makes both networks simultaneously accessible without opening inbound firewall rules.
+The SecureEdge Pro bridges the isolated OT network and the public internet.
+The frontend container makes the web UI reachable on port 3000; the nginx reverse proxy avoids CORS issues by forwarding all `/api/` requests to the backend on the same Docker bridge network.
+The backend auto-detects the SecureEdge Pro host address at startup via the container's default gateway, so no address configuration is required.
 
 ==== Infrastructure Nodes
 
@@ -47,23 +63,27 @@ The SecureEdge Pro acts as a network junction between the isolated OT network (w
 
 | Developer Workstation
 | macOS / Linux / Windows, Docker Desktop with buildx
-| Builds the `linux/arm64/v8` image and pushes it to the device registry. Credentials are injected at build time via `--build-arg`.
+| Builds both `linux/arm64/v8` images and pushes them to the device registry. No secrets are baked into the images; credentials are supplied per-request by the browser.
 
 | IXON SecureEdge Pro
 | Linux ARM64, limited CPU/RAM, local Docker daemon
-| Hosts the container registry on HTTP port 5000. Pulls and runs the application container. Connected to both the plant OT network (via LAN) and the internet (via WAN/LTE).
+| Hosts the container registry on HTTP port 5000 and the local device API on port 80. Connected to both the plant OT network (LAN) and the internet (WAN/LTE).
 
-| Docker Container
-| .NET 10 Runtime image (`mcr.microsoft.com/dotnet/runtime:10.0`) base
-| Multi-stage build: SDK stage compiles to a self-contained publish folder; runtime stage copies only the binaries. Image is `linux/arm64/v8`.
+| Frontend Container (`rebel-ot-discover-edgeapp-react`)
+| nginx + React SPA (`nginx:alpine` base)
+| Exposes port 80 inside the bridge network, mapped to port 3000 on the device. Serves the static SPA and reverse-proxies all `/api/` requests to the backend. `BACKEND_URL` defaults to `http://rebel-ot-discover-edgeapp:8080`.
+
+| Backend Container (`rebel-ot-discover-edgeapp`)
+| .NET 10 ASP.NET Core (`mcr.microsoft.com/dotnet/aspnet:10.0` base)
+| Listens on port 8080, internal to the bridge network only. `entrypoint.sh` auto-detects `SECUREEDGEPRO_BaseAddress` from the container's default gateway at startup.
 
 | OPC UA Server
 | PLC / SCADA / industrial controller
-| Accessible only inside the OT network. Communicates over the native OPC UA binary protocol.
+| Accessible only inside the OT network. Communicates over the native OPC UA binary protocol (`opc.tcp://`).
 
 | IXON Cloud API v2
 | SaaS platform at `https://portal.ixon.cloud`
-| Publicly accessible HTTPS REST API. Authentication via bearer token.
+| Publicly accessible HTTPS REST API. Authenticated via IXON service account (application ID + access token supplied per-request by the browser).
 |===
 
 ==== Artifact-to-Node Mapping
@@ -72,62 +92,84 @@ The SecureEdge Pro acts as a network junction between the isolated OT network (w
 |===
 | Software Artifact | Deployed To
 
-| `Rebelit.OT.Discover.EdgeApp.dll` (orchestration)
-| Docker Container on SecureEdge Pro
+| React SPA (static build output from `npm run build`)
+| Frontend Container on SecureEdge Pro
 
-| `Rebelit.OT.Discover.EdgeApp.Connections.IXON.dll`
-| Docker Container on SecureEdge Pro
+| nginx configuration (`default.conf.template`)
+| Frontend Container on SecureEdge Pro
 
-| `Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.dll`
-| Docker Container on SecureEdge Pro
+| `Rebelit.OT.Discover.EdgeApp.API.dll` + all connector DLLs
+| Backend Container on SecureEdge Pro
 
-| NuGet dependencies (`OPCFoundation.NetStandard.Opc.Ua`, `Serilog`, etc.)
-| Compiled into the Docker image publish output
+| NuGet dependencies (`OPCFoundation.NetStandard.Opc.Ua`, `Serilog`, Polly, etc.)
+| Compiled into the backend Docker image publish output
 |===
 
-=== 7.2 Infrastructure Level 2 -- Docker Image Build Pipeline
+=== 7.2 Developer Deployment -- `install_discover_edgeapp.sh`
+
+This is the primary deployment scenario: a developer builds and pushes both images from source and creates the containers on the device in a single script run.
 
 [mermaid]
 ....
-flowchart LR
-    subgraph buildstage["Build Stage\n(mcr.microsoft.com/dotnet/sdk:10.0)"]
-        restore["dotnet restore"]
-        publish["dotnet publish -c Release\n→ /app/publish"]
-        restore --> publish
-    end
+sequenceDiagram
+    participant Dev as Developer
+    participant Script as install_discover_edgeapp.sh
+    participant SEP as SecureEdge Pro\n(Docker + local API)
+    participant BX as docker buildx
 
-    subgraph runtimestage["Runtime Stage\n(mcr.microsoft.com/dotnet/runtime:10.0)"]
-        copy["COPY --from=build /app/publish ."]
-        envvars["ENV IXON_* and OPCUA_*\n(from ARG build args)"]
-        entrypoint["ENTRYPOINT dotnet\nRebelit.OT.Discover.EdgeApp.dll"]
-        copy --> envvars --> entrypoint
-    end
+    Dev->>Script: ./install_discover_edgeapp.sh
+    Script->>Dev: Prompt: SecureEdge IP address
+    Dev-->>Script: e.g. 172.27.21.1
 
-    buildstage -->|"published binaries"| runtimestage
+    Script->>SEP: POST /auth/login (admin credentials)
+    SEP-->>Script: session cookie
+
+    Script->>BX: docker buildx create --config buildkitd-secure-edge-pro.toml\n(marks device registry as insecure HTTP)
+
+    Script->>BX: docker buildx build backend\n--platform linux/arm64/v8\n--push → {IP}:5000/rebel-ot-discover-edgeapp:latest\n-f docker/Dockerfile
+    BX-->>SEP: push linux/arm64/v8 image
+
+    Script->>BX: docker buildx build frontend\n--platform linux/arm64/v8\n--push → {IP}:5000/rebel-ot-discover-edgeapp-react:latest\n-f src/WebApp/docker/DockerFile
+    BX-->>SEP: push linux/arm64/v8 image
+
+    Script->>SEP: POST /api/v1/docker/containers (backend)\nnetwork: machine-builder, no external ports
+    Script->>SEP: POST /api/v1/docker/containers (frontend)\nnetwork: machine-builder, port 3000→80
+
+    Script->>SEP: POST /api/v1/docker/containers/rebel-ot-discover-edgeapp/start
+    Script->>SEP: POST /api/v1/docker/containers/rebel-ot-discover-edgeapp-react/start
+
+    Script->>Dev: "Visit http://{IP}:3000"
 ....
 
-The multi-stage Dockerfile ensures that the final image contains only the .NET runtime and the compiled application binaries -- no SDK, no source code, and no NuGet cache. The resulting image is significantly smaller than a single-stage SDK-based image.
+Key points:
 
-All nine secrets and addresses are passed as Docker `ARG` values in `push_ixon.sh` and surfaced as `ENV` inside the container. They are never written to any file on disk or printed in logs.
+* The build stage uses `--platform=$BUILDPLATFORM` to run the .NET SDK natively on the developer's machine and cross-compiles to `linux-arm64` via `dotnet publish -r linux-arm64 --no-self-contained`. No QEMU emulation is needed.
+* No credentials or secrets are baked into the images. The frontend nginx config only stores the backend container hostname (`BACKEND_URL`). All IXON and OPC UA credentials are supplied by the browser at runtime.
+* Containers are created and started via the SecureEdge Pro local Docker API using a session cookie obtained at login -- no SSH access to the device is needed.
 
-=== 7.3 Development Environment
+=== 7.3 End-User Deployment -- `deploy_discover_edgeapp.sh`
 
-Developers can run the application locally without Docker by setting the required environment variables and calling `dotnet run` from the `src/` directory. The same .NET 10 SDK is used in both environments.
+For end-user installations, Rebelit ships a release zip containing pre-built Docker image tarballs. The user runs a single script that loads, tags, and pushes the images and then creates and starts the containers -- identical result to the developer scenario but without a build step.
 
-[mermaid]
-....
-flowchart LR
-    subgraph devws["Developer Workstation (local)"]
-        dotnetrun["dotnet run\n(Rebelit.OT.Discover.EdgeApp)"]
-    end
+[options="header", cols="2,4"]
+|===
+| Step | Action
 
-    subgraph localenv["Local / VPN environment"]
-        simopc["Simulated / real OPC UA Server\n(accessible via network)"]
-        ixoncloud["IXON Cloud API v2\n(via internet)"]
-    end
+| Prerequisites
+| Extract the release zip. Ensure `{device-ip}:5000` is listed as an insecure registry in Docker Desktop settings.
 
-    dotnetrun <-->|"opc.tcp://"| simopc
-    dotnetrun <-->|"HTTPS"| ixoncloud
-....
+| Load & push images
+| `docker load` reads `rebel-ot-discover-edgeapp.tar` and `rebel-ot-discover-edgeapp-react.tar`, tags each image for the device registry, and pushes them to `{device-ip}:5000`.
 
-There is no environment-specific build flag or configuration file. Switching between development and production is entirely controlled by which environment variables are set.
+| Create & start containers
+| Identical to the developer scenario: containers are created via the SecureEdge Pro Docker API on the `machine-builder` bridge network, then started.
+
+| Access
+| Browser navigates to `http://{device-ip}:3000`.
+|===
+
+=== 7.4 Development Environment
+
+Developers can run the backend locally with `dotnet run` from `src/Rebelit.OT.Discover.EdgeApp.API/`. The frontend is served by the Vite dev server (`npm run dev` from `src/Rebelit.OT.Discover.EdgeApp.WebApp/`). The `SECUREEDGEPRO_BaseAddress` environment variable must be set manually to point at the device (or a mock).
+
+There are no environment-specific build flags or configuration files. Switching to production is purely a matter of deploying via the install script.
