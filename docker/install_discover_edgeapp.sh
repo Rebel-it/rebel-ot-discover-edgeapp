@@ -4,19 +4,23 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+BACKEND_CONTAINER="rebel-ot-discover-edgeapp"
+FRONTEND_CONTAINER="rebel-ot-discover-edgeapp-react"
+NETWORK="machine-builder"
+LOG_LEVEL="Information"
 
 # ── Prompt for configuration ───────────────────────────────────────────────────
 read -rp "SecureEdge IP address (e.g. 172.27.21.1): " SECURE_EDGE_IP
-echo
 
 if [[ -z "$SECURE_EDGE_IP" ]]; then
     echo "Error: SecureEdge IP address is required." >&2
     exit 1
 fi
 
-read -rp "Log level (Verbose/Debug/Information/Warning/Error/Fatal) [Information]: " LOG_LEVEL
-LOG_LEVEL=${LOG_LEVEL:-Information}
-echo
+
+# ── Authenticate with SecureEdge Pro ──────────────────────────────────────────
+# shellcheck source=auth_secure_edge_pro.sh
+source "${SCRIPT_DIR}/auth_secure_edge_pro.sh"
 
 # ── Configure buildkit for the IXON registry ──────────────────────────────────
 cat > "${SCRIPT_DIR}/buildkitd-secure-edge-pro.toml" <<EOF
@@ -35,7 +39,7 @@ docker buildx use secure-edge-pro
 # ── Build and push the backend image ──────────────────────────────────────────
 docker buildx build \
     --platform linux/arm64/v8 \
-    --tag "${SECURE_EDGE_IP}:5000/rebel-ot-discover-edgeapp:latest" \
+    --tag "${SECURE_EDGE_IP}:5000/${BACKEND_CONTAINER}:latest" \
     --no-cache \
     --push \
     --build-arg LOG_LEVEL="$LOG_LEVEL" \
@@ -45,8 +49,20 @@ docker buildx build \
 # ── Build and push the frontend image ─────────────────────────────────────────
 docker buildx build \
     --platform linux/arm64/v8 \
-    --tag "${SECURE_EDGE_IP}:5000/rebel-ot-discover-edgeapp-react:latest" \
+    --tag "${SECURE_EDGE_IP}:5000/${FRONTEND_CONTAINER}:latest" \
     --no-cache \
     --push \
     -f "${SCRIPT_DIR}/../src/Rebelit.OT.Discover.EdgeApp.WebApp/docker/DockerFile" \
     "${SCRIPT_DIR}/../src/Rebelit.OT.Discover.EdgeApp.WebApp"
+
+set +x
+
+# ── Create and start containers ───────────────────────────────────────────────
+# shellcheck source=create_and_start_containers.sh
+source "${SCRIPT_DIR}/create_and_start_containers.sh"
+
+rm -f "${COOKIE_JAR}"
+
+echo
+echo "=== Installation complete ==="
+echo "Please visit the application on your Secure Edge Pro: http://${SECURE_EDGE_IP}:3000"

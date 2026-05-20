@@ -9,14 +9,13 @@ public class ApiClient(
     ILogger<ApiClient> logger) : IApiClient
 {
     public const string HttpClientName = "SecureEdgePro";
+    private readonly HttpClient _client = httpClientFactory.CreateClient(HttpClientName);
 
     public async Task<Result<SecureEdgeSystemInfo>> GetSystemInfoAsync()
     {
-        var client = httpClientFactory.CreateClient(HttpClientName);
-
         try
         {
-            using var response = await client.GetAsync("/api/v1/system/info");
+            using var response = await _client.GetAsync("/api/v1/system/info");
             var content = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
@@ -35,7 +34,7 @@ public class ApiClient(
             logger.LogError(ex, "Could not reach SecureEdge Pro");
             return new Result<SecureEdgeSystemInfo>
             {
-                ErrorMessage = $"Could not reach SecureEdge Pro to retrieve system information."
+                ErrorMessage = "Could not reach SecureEdge Pro to retrieve system information. Are you connected with the VPN?"
             };
         }
     }

@@ -55,8 +55,8 @@ builder.Services.AddOPCUAClient("Rebelit.OT.Scraper");
 builder.Services.AddIXONClient();
 
 var secureEdgeProBaseAddress = builder.Configuration["SECUREEDGEPRO_BaseAddress"]
-    ?? throw new InvalidOperationException("SECUREEDGEPRO_BaseAddress is not configured. " +
-                                           "Set it in appsettings.Development.json for development or as an environment variable in production.");
+                               ?? throw new InvalidOperationException("SECUREEDGEPRO_BaseAddress is not configured. " +
+                                                                      "Set it in appsettings.Development.json for development or as an environment variable in production.");
 builder.Services.AddSecureEdgeProClient(secureEdgeProBaseAddress);
 
 var app = builder.Build();
