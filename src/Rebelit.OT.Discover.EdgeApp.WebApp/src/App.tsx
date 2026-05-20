@@ -6,6 +6,7 @@ import LoginPage from './pages/loginPage/LoginPage'
 import TagPage from './pages/tagPage/TagPage'
 import SourcePage from './pages/sourcePage/SourcePage'
 import VariablesPage from './pages/VariablesPage/VariablesPage'
+import DeviceConfigPage from './pages/deviceConfigPage/DeviceConfigPage'
 
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
           <Route path="/source" element={<SourcePage />} />
           <Route path="/variables" element={<VariablesPage />} />
           <Route path="/tags" element={<TagPage />} />
+          <Route path="/deviceconfig" element={<DeviceConfigPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

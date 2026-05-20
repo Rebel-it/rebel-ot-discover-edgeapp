@@ -90,9 +90,9 @@ internal class ApiClient(
         return await Get<Response<Agent[]>>(uri);
     }
 
-    public Task<Response<string>> PushConfiguration(string agentId)
+    public async Task<Response<string>> PushConfiguration(string agentId)
     {
         const string uri = "/api/agents/configuration/push";
-        throw new NotImplementedException();
+        return await Post<Response<string>>(uri, new { publicId = agentId });
     }
 }
