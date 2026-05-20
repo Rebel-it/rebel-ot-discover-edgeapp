@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    name: Build Images & Publish Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ── Build backend image ──────────────────────────────────────────────────
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: linux/arm64/v8
+          outputs: type=oci,dest=rebel-ot-discover-edgeapp.tar
+          no-cache: true
+          build-args: |
+            LOG_LEVEL=Information
+
+      # ── Build frontend image ─────────────────────────────────────────────────
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: src/Rebelit.OT.Discover.EdgeApp.WebApp
+          file: src/Rebelit.OT.Discover.EdgeApp.WebApp/docker/DockerFile
+          platforms: linux/arm64/v8
+          outputs: type=oci,dest=rebel-ot-discover-edgeapp-react.tar
+          no-cache: true
+
+      # ── Package release zip ──────────────────────────────────────────────────
+      - name: Package release zip
+        run: |
+          mkdir -p release
+          cp rebel-ot-discover-edgeapp.tar              release/
+          cp rebel-ot-discover-edgeapp-react.tar        release/
+          cp docker/deploy_discover_edgeapp.sh          release/
+          cp docker/auth_secure_edge_pro.sh             release/
+          cp docker/create_and_start_containers.sh      release/
+          chmod +x release/deploy_discover_edgeapp.sh
+          chmod +x release/auth_secure_edge_pro.sh
+          cd release
+          zip -r ../rebel-ot-discover-edgeapp-${{ github.ref_name }}.zip .
+
+      # ── Create GitHub Release ────────────────────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: rebel-ot-discover-edgeapp-${{ github.ref_name }}.zip
+          generate_release_notes: true
