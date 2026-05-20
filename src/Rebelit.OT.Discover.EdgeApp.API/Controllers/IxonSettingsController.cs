@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Opc.Ua.Server;
 using Rebelit.OT.Discover.EdgeApp.API.Resolvers;
 using Rebelit.OT.Discover.EdgeApp.API.Services;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
