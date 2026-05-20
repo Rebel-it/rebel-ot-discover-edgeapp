@@ -6,6 +6,7 @@ import LoginPage from './pages/loginPage/LoginPage'
 import TagPage from './pages/tagPage/TagPage'
 import SourcePage from './pages/sourcePage/SourcePage'
 import VariablesPage from './pages/variablesPage/VariablesPage'
+import FinalPage from './pages/finalPage/FinalPage'
 
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
       <Routes>
         <Route path="/" element={<StartPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/final" element={<FinalPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/plc" element={<PlcConnect />} />
           <Route path="/source" element={<SourcePage />} />
