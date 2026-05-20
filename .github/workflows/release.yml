@@ -53,6 +53,7 @@ jobs:
           cp docker/deploy_discover_edgeapp.sh          release/
           cp docker/auth_secure_edge_pro.sh             release/
           cp docker/create_and_start_containers.sh      release/
+          cp docker/remove_discover_edgeapp.sh      release/
           chmod +x release/deploy_discover_edgeapp.sh
           chmod +x release/auth_secure_edge_pro.sh
           cd release
