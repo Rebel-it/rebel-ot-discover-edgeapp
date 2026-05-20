@@ -29,7 +29,7 @@ jobs:
           context: .
           file: docker/Dockerfile
           platforms: linux/arm64/v8
-          outputs: type=oci,dest=rebel-ot-discover-edgeapp.tar
+          outputs: type=docker,dest=rebel-ot-discover-edgeapp.tar
           no-cache: true
           build-args: |
             LOG_LEVEL=Information
@@ -41,7 +41,7 @@ jobs:
           context: src/Rebelit.OT.Discover.EdgeApp.WebApp
           file: src/Rebelit.OT.Discover.EdgeApp.WebApp/docker/DockerFile
           platforms: linux/arm64/v8
-          outputs: type=oci,dest=rebel-ot-discover-edgeapp-react.tar
+          outputs: type=docker,dest=rebel-ot-discover-edgeapp-react.tar
           no-cache: true
 
       # ── Package release zip ──────────────────────────────────────────────────
