@@ -11,7 +11,7 @@ It reads the existing variable and tag configurations from connected industrial 
 
 ==== Essential Features
 
-* Connect to the *IXON cloud platform* using bearer token authentication to retrieve agent configurations.
+* Connect to the *IXON cloud platform* using a service account (application ID + access token) to retrieve agent configurations.
 * Discover *data variables* (OPC-UA node addresses, types, and metadata) from IXON agents.
 * Discover *data tags* (logging configuration, retention policies, aggregation settings) from IXON agents.
 * Create new variables and tags in IXON to register newly discovered data points.
@@ -43,7 +43,7 @@ These goals have the most significant influence on architectural decisions.
 
 | 3
 | *Security*
-| Authentication credentials (bearer tokens, application IDs) are never hard-coded or logged. All communication with external APIs uses HTTPS. Input from external APIs is treated as untrusted and deserialised defensively.
+| Authentication credentials (service account access tokens, application IDs) are never hard-coded or logged. All communication with external APIs uses HTTPS. Input from external APIs is treated as untrusted and deserialised defensively.
 
 | 4
 | *Portability*

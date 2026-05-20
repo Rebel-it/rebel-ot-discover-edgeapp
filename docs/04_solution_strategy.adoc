@@ -12,10 +12,6 @@ The following table summarises the fundamental decisions that shape the architec
 | A top-level `try/catch` around each 15-minute cycle ensures a transient failure -- network outage, OPC UA disconnect, API rate limit -- is logged and discarded without terminating the process. The next cycle starts normally.
 
 | *Reliability*
-| Idempotent synchronisation via HashSet deduplication (`Scraper.cs`)
-| Before writing anything, the app fetches all existing variables and tags and stores their addresses in `HashSet<string>`. POSTs are only issued for genuinely new nodes. Re-running after a partial failure therefore never creates duplicates.
-
-| *Reliability*
 | OPC UA session keep-alive and exponential back-off reconnect (`UAClient.cs`)
 | The OPC UA session uses a 5-second keep-alive. On loss, reconnection retries with exponential back-off up to 15 seconds. This recovers from short PLC reboots or network glitches without operator intervention.
 
@@ -73,9 +69,12 @@ The system is divided into three independently deployable projects, each with a 
 [mermaid]
 ....
 flowchart LR
-    subgraph core["Rebelit.OT.Discover.EdgeApp\n(Orchestration)"]
-        app["Application\n15-min scheduler"]
-        scraper["Scraper\nDiscovery logic"]
+    subgraph webApp["Rebelit.OT.Discover.EdgeApp.WebApp"]
+        frontendNode["Web UI wizard\ndiscovery &amp; configuration"]
+    end
+
+    subgraph apiProject["Rebelit.OT.Discover.EdgeApp.API"]
+        backendNode["ASP.NET Core API\ncontrollers + scraper"]
     end
 
     subgraph ixon["Rebelit.OT.Discover.EdgeApp\n.Connections.IXON"]
@@ -84,13 +83,16 @@ flowchart LR
 
     subgraph opcua["Rebelit.OT.Discover.EdgeApp\n.Connections.OPCUA"]
         uaClient["UAClient\nOPC UA session"]
-        samples["ClientSamples\nAddress space browse"]
     end
 
-    app --> scraper
-    scraper -->|"IApiClient"| apiClient
-    scraper -->|"IUAClientFactory\nIClientSamplerFactory"| uaClient
-    uaClient --> samples
+    subgraph secureedge["Rebelit.OT.Discover.EdgeApp\n.Connections.SecureEdgePro"]
+        edgeDeviceApiClient["ApiClient\nHTTPS REST"]
+    end
+
+    frontendNode -->|"HTTP REST"| backendNode
+    backendNode -->|"IApiClient"| apiClient
+    backendNode -->|"IUAClientFactory"| uaClient
+    backendNode -->|"IApiClient"| edgeDeviceApiClient
 ....
 
 The core project depends only on the *interfaces* (`IApiClient`, `IUAClientFactory`, `IClientSamplerFactory`). The two connection projects implement those interfaces in isolation. This means either connector can be replaced or tested independently without recompiling the orchestration layer.
