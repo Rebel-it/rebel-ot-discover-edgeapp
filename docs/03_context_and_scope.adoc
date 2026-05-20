@@ -51,7 +51,7 @@ flowchart LR
 | New variable definitions and tag configurations for all OT nodes not yet present in the cloud
 
 | *OT Engineer* (operator)
-| Deployment parameters: OPC UA endpoint address and credentials, IXON API token, company ID, application ID, agent ID, and optionally a data source ID (auto-created when absent)
+| Deployment parameters: OPC UA endpoint address and credentials, IXON service account credentials (application ID and access token), company ID, agent ID, and optionally a data source ID (auto-created when absent)
 | — (no interactive runtime output; structured logs are available via the container console)
 |===
 
@@ -94,9 +94,9 @@ flowchart LR
 
 | OT Discover App → IXON Cloud API v2
 | HTTPS / REST (JSON)
-| Every request carries three mandatory headers: `Authorization: Bearer <token>`, `Api-Application: <applicationId>`, and `Api-Company: <companyId>`. API version is pinned to `2`. Page size for list endpoints is capped at 4,000 entries by the platform.
+| Every request is authenticated using an IXON service account. Two mandatory headers carry the identity: `Api-Application: <applicationId>` and `Authorization: Bearer <accessToken>` (the access token of the service account). An optional `Api-Company: <companyId>` header scopes the request to the correct company. API version is pinned to `2`. Page size for list endpoints is capped at 4,000 entries by the platform.
 
 | OT Engineer → SecureEdge Container Registry
 | HTTP (Docker Registry v2, port 5000)
-| The `push_ixon.sh` script builds a `linux/arm64/v8` Docker image, bakes all credentials and addresses into the image as environment variables via `--build-arg`, and pushes to the device-local registry. The SecureEdge Pro pulls and starts the container from that registry.
+| The `push_ixon.sh` script builds a `linux/arm64/v8` Docker image, bakes all credentials and addresses into the image as environment variables via `--build-arg`, and pushes to the device-local registry. The SecureEdge Pro pulls and starts the container from that registry. The end user can download a .zip release package containing the required deploy scripts and a pre-built image, but pushing from a local registry allows for faster iterative development.
 |===

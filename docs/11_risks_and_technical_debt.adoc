@@ -8,11 +8,11 @@ The following table lists identified risks and areas of technical debt, ordered 
 | ID | Title | Likelihood | Impact | Description | Mitigation
 
 | R-01
-| *Credentials baked into the Docker image*
+| *Credentials stored in browser session storage*
+| Low
 | Medium
-| High
-| Eight secrets (bearer token, OPC UA password, etc.) are embedded as `ENV` layers in the Docker image via `--build-arg`. Anyone with pull access to the SecureEdge Pro registry at port 5000 or a copy of the image can inspect those values with `docker inspect` or layer extraction tools.
-| Short term: restrict access to the SecureEdge Pro registry to authorised operators only. Long term: investigate whether the SecureEdge Pro supports runtime environment variable injection or a secrets volume so that credentials can be rotated without rebuilding the image.
+| The IXON access token, application ID, and OPC UA password are no longer baked into the Docker image. They are entered by the user in the wizard and stored in browser `sessionStorage` for the duration of the session. `sessionStorage` is readable by any JavaScript running on the same origin, so a stored XSS vulnerability in the React application could expose these values. Credentials are cleared when the browser tab or window is closed.
+| Ensure the React application has no XSS vulnerabilities (avoid `dangerouslySetInnerHTML`, sanitise any user-controlled content rendered to the DOM). The application only serves static assets and does not accept user-generated content, which significantly limits the attack surface.
 
 | R-02
 | *OPC UA certificates auto-accepted*
@@ -29,11 +29,11 @@ The following table lists identified risks and areas of technical debt, ordered 
 | Add pagination support to `ApiClient.GetDataVariablesAsync` and `ApiClient.GetTagsAsync` using the IXON API cursor or offset mechanism. Track a `next-page` token and accumulate all pages before building the deduplication `HashSet`.
 
 | R-04
-| *Single-agent scope per container instance*
+| *Single-agent scope per wizard session*
 | Low
-| Medium
-| `IXON_AgentId` is a single value, so one container instance manages exactly one agent. `IXON_DataSourceId` is optional -- the app auto-creates a data source when absent -- but the created source is still scoped to a single agent. Customers with many agents must run one container per agent, each with its own image build.
-| Extend `Scraper` to accept a list of agent/source pairs and loop over them in a single cycle. Supply the list as a JSON-encoded environment variable or a mounted configuration file.
+| Low
+| The wizard guides a user through a single agent per session. There is no bulk or multi-agent workflow; a user who needs to configure multiple agents must complete the wizard separately for each one.
+| Acceptable for the current use case where configuration of a single agent is the primary workflow. If multi-agent bulk discovery becomes a requirement, extend the wizard with an agent selection step or add a batch API endpoint.
 
 | R-05
 | *`HttpClient` instances created per API request*
@@ -50,9 +50,9 @@ The following table lists identified risks and areas of technical debt, ordered 
 | Add integration tests using the OPC UA reference server (`OPCFoundation.NetStandard.Opc.Ua.Server`) running in-process or in a Docker container with a known address space. Cover at least: successful connection, browse depth, and graceful handling of connection failure.
 
 | R-07
-| *Cycle duration not bounded*
+| *Discovery run duration not bounded*
 | Low
 | Low
-| If a full browse and synchronisation of a large address space takes longer than 15 minutes (e.g. due to slow IXON API responses), the next cycle is simply delayed. There is no watchdog or timeout.
-| Add a `CancellationTokenSource` with a configurable timeout (e.g. 14 minutes) passed to `scraper.ExecuteAsync`. If the cycle does not complete in time, cancel it and log a warning, ensuring the scheduler can start the next cycle on schedule.
+| A discovery run over a very large address space (thousands of nodes, slow IXON API responses) can take an arbitrarily long time. There is no timeout, so the user is left waiting at the wizard with no upper bound on when the run will complete or fail.
+| Pass a `CancellationTokenSource` with a configurable timeout to `scraper.ExecuteVariableScraperAsync`. If the run does not complete in time, cancel it and return a structured timeout error to the frontend.
 |===
