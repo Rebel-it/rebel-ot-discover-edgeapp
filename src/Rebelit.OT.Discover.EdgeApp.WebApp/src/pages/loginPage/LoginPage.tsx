@@ -4,7 +4,7 @@ import styles from './LoginPage.module.css'
 import { useNavigate } from 'react-router-dom'
 import { getCompanyConfiguration } from '../../services/companyConfigurationService.ts'
 import type { ServiceAccountObject } from '../../models/ServiceAccountObject.ts'
-import FormField from '../../components/Atoms/FormField/FormField.tsx'
+import FormField from '../../components/atoms/formField/FormField.tsx'
 
 type LoginFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 

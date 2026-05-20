@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useRef } from 'react'
 import styles from './TagPage.module.css'
-import { createTags, getFilledTags, type Tag as ApiTag } from '../../services/TagService'
+import { createTags, getFilledTags, type Tag as ApiTag } from '../../services/tagService'
 
 function TagPage() {
     const [tags, setTags] = useState<ApiTag[]>([])

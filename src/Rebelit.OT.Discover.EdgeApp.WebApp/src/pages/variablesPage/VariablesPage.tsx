@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { synchronizeVariables as synchronizeVariablesRequest } from '../../services/ScraperService'
+import { synchronizeVariables as synchronizeVariablesRequest } from '../../services/scraperService'
 import sharedStyles from '../loginPage/LoginPage.module.css'
 import styles from './VariablesPage.module.css'
 
