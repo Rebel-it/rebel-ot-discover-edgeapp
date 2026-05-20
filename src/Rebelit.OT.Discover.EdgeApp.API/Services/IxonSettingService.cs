@@ -13,6 +13,6 @@ public class IxonSettingService(
     public async Task<string?> PushDeviceConfig()
     {
         var response = await apiClient.PushConfiguration(authenticationContext.IxonHeaders.AgentId);
-        return response?.Data;
+        return response?.Status;
     }
 }
