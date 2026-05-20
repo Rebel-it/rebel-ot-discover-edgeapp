@@ -10,10 +10,9 @@ FRONTEND_CONTAINER="rebel-ot-discover-edgeapp-react"
 NETWORK="machine-builder"
 
 # ── Check dependencies ────────────────────────────────────────────────────────
-if ! command -v crane &>/dev/null; then
-    echo "Error: 'crane' is required but not installed." >&2
-    echo "  macOS:  brew install crane" >&2
-    echo "  Linux:  https://github.com/google/go-containerregistry/releases" >&2
+if ! command -v docker &>/dev/null; then
+    echo "Error: 'docker' is required but not installed." >&2
+    echo "  https://docs.docker.com/get-docker/" >&2
     exit 1
 fi
 
@@ -25,22 +24,35 @@ if [[ -z "$SECURE_EDGE_IP" ]]; then
     exit 1
 fi
 
+# ── Check insecure registry configuration ────────────────────────────────────
+if ! docker info 2>/dev/null | grep -q "${SECURE_EDGE_IP}:5000"; then
+    echo "Error: '${SECURE_EDGE_IP}:5000' is not configured as an insecure registry in Docker." >&2
+    echo "  Add it via Docker Desktop → Settings → Docker Engine:" >&2
+    echo "    { \"insecure-registries\": [\"${SECURE_EDGE_IP}:5000\"] }" >&2
+    echo "  Then restart Docker and re-run this script." >&2
+    exit 1
+fi
+
 # ── Authenticate with SecureEdge Pro ─────────────────────────────────────────
 # shellcheck source=auth_secure_edge_pro.sh
 source "${SCRIPT_DIR}/auth_secure_edge_pro.sh"
 
 set -x
 
-# ── Push images to SecureEdge Pro registry ────────────────────────────────────
+# ── Load and push images to SecureEdge Pro registry ──────────────────────────
+echo "Loading backend image..."
+BACKEND_IMAGE=$(docker load -i "${SCRIPT_DIR}/rebel-ot-discover-edgeapp.tar" | awk '/Loaded image/ {print $NF}')
+docker tag "${BACKEND_IMAGE}" "${SECURE_EDGE_IP}:5000/${BACKEND_CONTAINER}:latest"
 echo "Pushing backend image..."
-crane push --insecure \
-    "${SCRIPT_DIR}/rebel-ot-discover-edgeapp.tar" \
-    "${SECURE_EDGE_IP}:5000/${BACKEND_CONTAINER}:latest"
+docker push "${SECURE_EDGE_IP}:5000/${BACKEND_CONTAINER}:latest"
+docker rmi "${BACKEND_IMAGE}" "${SECURE_EDGE_IP}:5000/${BACKEND_CONTAINER}:latest" 2>/dev/null || true
 
+echo "Loading frontend image..."
+FRONTEND_IMAGE=$(docker load -i "${SCRIPT_DIR}/rebel-ot-discover-edgeapp-react.tar" | awk '/Loaded image/ {print $NF}')
+docker tag "${FRONTEND_IMAGE}" "${SECURE_EDGE_IP}:5000/${FRONTEND_CONTAINER}:latest"
 echo "Pushing frontend image..."
-crane push --insecure \
-    "${SCRIPT_DIR}/rebel-ot-discover-edgeapp-react.tar" \
-    "${SECURE_EDGE_IP}:5000/${FRONTEND_CONTAINER}:latest"
+docker push "${SECURE_EDGE_IP}:5000/${FRONTEND_CONTAINER}:latest"
+docker rmi "${FRONTEND_IMAGE}" "${SECURE_EDGE_IP}:5000/${FRONTEND_CONTAINER}:latest" 2>/dev/null || true
 
 set +x
 
