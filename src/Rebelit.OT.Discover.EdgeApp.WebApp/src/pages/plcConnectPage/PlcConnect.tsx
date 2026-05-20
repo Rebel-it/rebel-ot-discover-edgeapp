@@ -59,7 +59,7 @@ function PlcConnect() {
     }
 
     return (
-        <div className={styles.loginWrapper}>
+        <div className={styles.wrapper}>
             <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
                 <h1>PLC Connect</h1>
 

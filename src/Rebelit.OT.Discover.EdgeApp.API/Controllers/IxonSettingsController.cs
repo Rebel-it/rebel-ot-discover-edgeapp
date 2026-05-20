@@ -29,7 +29,7 @@ public class IxonSettingsController(
     public async Task<IActionResult> PushConfiguration()
     {
         var result = await ixonSettingService.PushDeviceConfig();
-        if (string.IsNullOrEmpty(result))
+        if (result != "success")
         {
             return BadRequest(new { message = "Failed to push device configuration." });
         }

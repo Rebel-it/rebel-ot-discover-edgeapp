@@ -29,7 +29,7 @@ function DeviceConfigPage() {
     }
 
     return (
-        <div className={sharedStyles.loginWrapper}>
+        <div className={sharedStyles.wrapper}>
             <div className={styles.card}>
                 <h1>Device Configuration</h1>
                 <p>

@@ -46,7 +46,7 @@ function SourcePage() {
     }
 
     return (
-        <div className={Loginstyles.loginWrapper}>
+        <div className={Loginstyles.wrapper}>
             <form className={Loginstyles.loginForm} onSubmit={handleSubmit} noValidate>
                 <h1>Create data source</h1>
                 <FormField
