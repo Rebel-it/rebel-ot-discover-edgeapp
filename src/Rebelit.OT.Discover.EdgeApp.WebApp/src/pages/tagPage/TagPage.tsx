@@ -163,7 +163,7 @@ function TagPage() {
       
       {initialTagsCreated && (
         <button type="button" className={sharedStyles.nextButton}  onClick={() => navigate('/final')}>
-          Finish
+          I'm done creating tags
         </button>
       )}
 
