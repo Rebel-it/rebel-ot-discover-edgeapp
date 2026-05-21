@@ -27,6 +27,10 @@ internal sealed class TagService(
 
         foreach (var variable in variables)
         {
+            if(string.IsNullOrWhiteSpace(variable.PublicId))
+            {
+                continue;
+            }
             var tag = new Tag
             {
                 Name = variable.Name,
