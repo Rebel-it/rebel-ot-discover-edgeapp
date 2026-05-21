@@ -15,7 +15,10 @@ public interface ITagService
     /// </summary>
     Task<IReadOnlyList<Tag>> GetPrefilledTagsAsync();
 
-
+    /// <summary>
+    /// Returns a list of tags that are already on the given data source
+    /// </summary>
+    Task<IReadOnlyList<Tag>> GetExistingTagsAsync();
     Task<Tag?> UploadTagAsync(Tag tag);
 
     /// <summary>
