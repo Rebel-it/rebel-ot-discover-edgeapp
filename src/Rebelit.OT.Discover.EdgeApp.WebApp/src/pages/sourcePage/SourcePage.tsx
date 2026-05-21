@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useState, type ComponentProps } from 'react'
-import { saveSourceId } from '../../services/sessionStorageService.ts'
+import { loadPlcServerAddress, saveSourceId } from '../../services/sessionStorageService.ts'
 import Loginstyles from '../loginPage/LoginPage.module.css'
 import type { SourceObject } from '../../models/SourceObject.ts'
 import { createSource } from '../../services/dataSourceService.ts'
@@ -8,8 +8,23 @@ import FormField from '../../components/atoms/formField/FormField.tsx'
 
 type SourceFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
+function getDefaultDataSourceName(): string {
+    const opcAddress = loadPlcServerAddress().trim()
+    if (!opcAddress) {
+        return ''
+    }
+
+    try {
+        const hostname = new URL(opcAddress).hostname
+        return hostname ? `Datasource_${hostname}` : ''
+    } catch {
+        const rawHost = opcAddress.replace(/^opc\.tcp:\/\//i, '').split(/[/:]/)[0]
+        return rawHost ? `Datasource_${rawHost}` : ''
+    }
+}
+
 const defaultSourceObject: SourceObject = {
-    DataSourceName: '',
+    DataSourceName: getDefaultDataSourceName(),
 }
 
 function SourcePage() {
