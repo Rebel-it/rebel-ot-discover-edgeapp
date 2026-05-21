@@ -37,7 +37,7 @@ internal sealed class TagService(
                 EdgeAggregator = "last",
                 Variable = new TagVariable { PublicId = variable.PublicId },
             };
-            if(existingTags.Any(t => t.Variable.PublicId == variable.PublicId))
+            if(existingTags.Any(t => t.Variable.PublicId == variable.PublicId || !variable.Address.Contains("ns=")))
             {
                 continue; 
             }
