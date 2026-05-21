@@ -1,0 +1,57 @@
+name: Release Installation Wizard
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-wizard:
+    name: Build Wizard (${{ matrix.rid }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    strategy:
+      matrix:
+        include:
+          - rid: win-x64
+            artifact: rebel-ot-installation-wizard-win-x64.exe
+            binary: Rebelit.OT.InstallationWizard.exe
+          - rid: linux-x64
+            artifact: rebel-ot-installation-wizard-linux-x64
+            binary: Rebelit.OT.InstallationWizard
+          - rid: osx-x64
+            artifact: rebel-ot-installation-wizard-osx-x64
+            binary: Rebelit.OT.InstallationWizard
+          - rid: osx-arm64
+            artifact: rebel-ot-installation-wizard-osx-arm64
+            binary: Rebelit.OT.InstallationWizard
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish wizard (${{ matrix.rid }})
+        run: |
+          dotnet publish src/Rebelit.OT.InstallationWizard/Rebelit.OT.InstallationWizard.csproj \
+            --configuration Release \
+            --runtime ${{ matrix.rid }} \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            --output publish/${{ matrix.rid }}
+
+      - name: Rename output to release artifact name
+        run: mv publish/${{ matrix.rid }}/${{ matrix.binary }} publish/${{ matrix.rid }}/${{ matrix.artifact }}
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: publish/${{ matrix.rid }}/${{ matrix.artifact }}
+          fail_on_unmatched_files: true
