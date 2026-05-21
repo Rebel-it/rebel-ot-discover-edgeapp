@@ -22,10 +22,15 @@ internal sealed class TagService(
     public async Task<IReadOnlyList<Tag>> GetPrefilledTagsAsync()
     {
         var variables = await variableService.GetVariablesAsync();
-        List<Tag> tags = new List<Tag>();
+        var existingTags = await GetExistingTagsAsync();
+        List<Tag> tags = [];
 
         foreach (var variable in variables)
         {
+            if(string.IsNullOrWhiteSpace(variable.PublicId))
+            {
+                continue;
+            }
             var tag = new Tag
             {
                 Name = variable.Name,
@@ -36,8 +41,19 @@ internal sealed class TagService(
                 EdgeAggregator = "last",
                 Variable = new TagVariable { PublicId = variable.PublicId },
             };
+            if(existingTags.Any(t => t.Variable.PublicId == variable.PublicId || !variable.Address.Contains("ns=")))
+            {
+                continue; 
+            }
             tags.Add(tag);
         }
+
+        return tags;
+    }
+    public async Task<IReadOnlyList<Tag>> GetExistingTagsAsync()
+    {
+        var response = await apiClient.GetTagsAsync();
+        var tags = response.Data ?? [];
 
         return tags;
     }

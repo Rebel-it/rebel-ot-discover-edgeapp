@@ -15,7 +15,10 @@ public interface ITagService
     /// </summary>
     Task<IReadOnlyList<Tag>> GetPrefilledTagsAsync();
 
-
+    /// <summary>
+    /// Returns a list of tags that already exist in the current authentication context
+    /// </summary>
+    Task<IReadOnlyList<Tag>> GetExistingTagsAsync();
     Task<Tag?> UploadTagAsync(Tag tag);
 
     /// <summary>
