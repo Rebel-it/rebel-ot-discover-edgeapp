@@ -59,6 +59,7 @@ internal sealed class DataSourceResolver(
 
         var newDataSource = BuildDataSource(device.PublicId, sourceName);
         var result = await apiClient.PostDataSourceAsync(newDataSource);
+
         var createdId =
             result?.Data.PublicId
             ?? throw new InvalidOperationException("Failed to create a new data source in IXON.");
@@ -76,7 +77,7 @@ internal sealed class DataSourceResolver(
         var dataSources = dataSourcesResponse.Data ?? [];
         return dataSources.FirstOrDefault(ds =>
             ds.Device?.PublicId == devicePublicId
-            && string.Equals(ds.Slug, sourceName, StringComparison.OrdinalIgnoreCase)
+            && ds.Name == sourceName
         );
     }
 

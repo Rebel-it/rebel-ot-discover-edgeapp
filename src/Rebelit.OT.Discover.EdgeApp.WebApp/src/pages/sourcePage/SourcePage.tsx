@@ -19,10 +19,10 @@ function getDefaultDataSourceName(): string {
         return hostname ? `Datasource_${hostname}` : ''
     } catch {
         const rawHost = opcAddress.replace(/^opc\.tcp:\/\//i, '').split(/[/:]/)[0]
-        return rawHost ? `Datasource_${rawHost}` : ''
+        return rawHost ? `DataSource_${rawHost}` : ''
     }
 }
-
+    
 const defaultSourceObject: SourceObject = {
     DataSourceName: getDefaultDataSourceName(),
 }
