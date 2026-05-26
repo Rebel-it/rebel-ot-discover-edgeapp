@@ -24,10 +24,23 @@ BASE_URL="http://${SECURE_EDGE_IP}:80"
 COOKIE_JAR="$(mktemp)"
 
 echo "Authenticating with SecureEdge Pro..."
-curl --silent --fail-with-body \
-     --request POST \
-     --url "${BASE_URL}/auth/login" \
-     --cookie-jar "${COOKIE_JAR}" \
-     --data "username=${USERNAME}" \
-     --data "password=${PASSWORD}"
+echo "SecureEdge IP: ${SECURE_EDGE_IP}"
+echo "Username: ${USERNAME}"
+echo "Password: ${PASSWORD}"
+curl --silent --show-error \
+    --cookie-jar "${COOKIE_JAR}" \
+    "${BASE_URL}/auth/login" >/dev/null
+
+AUTH_RESPONSE="$(curl --silent --show-error --location \
+    --request POST \
+    --url "${BASE_URL}/auth/login" \
+    --cookie "${COOKIE_JAR}" \
+    --cookie-jar "${COOKIE_JAR}" \
+    --data-urlencode "username=${USERNAME}" \
+    --data-urlencode "password=${PASSWORD}")"
+
+if echo "${AUTH_RESPONSE}" | grep -qi "Invalid credentials"; then
+    echo "Error: authentication failed." >&2
+    exit 1
+fi
 echo

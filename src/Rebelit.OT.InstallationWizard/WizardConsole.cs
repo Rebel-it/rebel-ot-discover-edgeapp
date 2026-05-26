@@ -7,7 +7,7 @@ public static class WizardConsole
     public static string PromptLine(string message)
     {
         Console.WriteLine(message);
-        return Console.ReadLine() ?? string.Empty;
+        return (Console.ReadLine() ?? string.Empty).Trim();
     }
 
     public static WizardAction PromptAction()
