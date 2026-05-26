@@ -29,6 +29,10 @@ export function saveSourceId(sourceId: string): void {
   sessionStorage.setItem(SOURCE_ID, sourceId);
 }
 
+export function loadPlcServerAddress(): string {
+  return sessionStorage.getItem(PLC_URL) ?? '';
+}
+
 export function loadIxonAuthenticationHeaders(): IxonAuthenticationHeaders | null {
   const apiApplicationId = sessionStorage.getItem(API_APPLICATION_ID_KEY);
   const accessToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);

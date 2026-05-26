@@ -118,7 +118,7 @@ public class DataSourceResolverTests
             NullLogger<DataSourceResolver>.Instance
         );
 
-        var result = await resolver.ResolveAsync("opc-ua");
+        var result = await resolver.ResolveAsync("OPC UA");
 
         Assert.Multiple(() =>
         {

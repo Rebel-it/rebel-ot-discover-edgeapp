@@ -9,7 +9,7 @@ function StartPage() {
       <div className={styles.content}>
         <h1 className={styles.title}>EdgeApp</h1>
         <p className={styles.description}>
-          Rebelit EdgeApp helps you connect, configure, and manage edge devices so operators can
+          Rebel:it EdgeApp helps you connect, configure, and manage edge devices so operators can
           quickly start discovery workflows and keep the environment under control.
         </p>
       </div>
