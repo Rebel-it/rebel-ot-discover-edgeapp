@@ -9,18 +9,13 @@ import FormField from '../../components/atoms/formField/FormField.tsx'
 type SourceFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
 function getDefaultDataSourceName(): string {
-    const opcAddress = loadPlcServerAddress().trim()
+    const opcAddress = loadPlcServerAddress().trim();
     if (!opcAddress) {
-        return ''
+        return '';
     }
-
-    try {
-        const hostname = new URL(opcAddress).hostname
-        return hostname ? `Datasource_${hostname}` : ''
-    } catch {
-        const rawHost = opcAddress.replace(/^opc\.tcp:\/\//i, '').split(/[/:]/)[0]
-        return rawHost ? `Datasource_${rawHost}` : ''
-    }
+    const addressWithoutProtocol = opcAddress.replace(/^opc\.tcp:\/\//i, '');
+    const host = addressWithoutProtocol.split(/[/:]/)[0];
+    return host ? `Datasource_${host}` : '';
 }
 
 const defaultSourceObject: SourceObject = {
