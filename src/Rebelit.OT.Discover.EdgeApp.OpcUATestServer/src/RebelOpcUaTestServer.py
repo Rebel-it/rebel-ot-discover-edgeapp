@@ -1,7 +1,82 @@
 import asyncio
-from http import server
+import math
+
 from asyncua import Server, ua
 from asyncua.server.user_managers import UserManager
+
+#Simulate a realistic motor temperature profile.
+def calculate_motor_temperature(counter: int) -> float:
+    
+    warmup = min(counter / 120.0, 1.0) * 4.0
+    load_wave = 6.0 * math.sin(2.0 * math.pi * counter / 120.0)
+    ripple = 1.2 * math.sin(2.0 * math.pi * counter / 17.0)
+
+    phase = counter % 180
+    if 130 <= phase < 138:
+        spike = (phase - 130) * 1.2
+    elif 138 <= phase < 146:
+        spike = (146 - phase) * 1.2
+    else:
+        spike = 0.0
+
+    cooldown = -3.0 if 165 <= phase < 175 else 0.0
+    temp_value = max(45.0, min(110.0, 72.0 + warmup + load_wave + ripple + spike + cooldown))
+    return float(round(temp_value, 2))
+
+def calculate_machine_cleanliness(counter: int) -> float:
+    base_cleanliness = 100.0
+    # Faster dirt accumulation: 40 points lost over 2 minutes (120s)
+    dirt_accumulation = min(counter / 120.0, 1.0) * 40.0
+    # Smaller oscillation
+    cleaning_cycle = 0.5 * math.sin(2.0 * math.pi * counter / 60.0)
+    cleanliness_value = base_cleanliness - dirt_accumulation + cleaning_cycle
+    cleanliness_value = min(100.0, cleanliness_value)  # Clamp to max 100
+    cleanliness_value = max(55.0, cleanliness_value)   # Clamp to min 55
+    return float(round(cleanliness_value, 2))
+
+
+async def update_nodes_loop(
+    uint_variable_16,
+    uint_variable_32,
+    uint_variable_64,
+    int_variable_16,
+    int_variable_32,
+    int_variable_64,
+    bool_variable_true,
+    bool_variable_false,
+    string_variable,
+    float_variable,
+    double_variable,
+    motor_temperature,
+    machine_cleanliness,
+
+):
+    counter = 0
+    while True:
+        await uint_variable_16.write_value(ua.Variant(counter % 65536, ua.VariantType.UInt16))
+
+        await uint_variable_32.write_value(ua.Variant((counter * 1000) % (2**32), ua.VariantType.UInt32))
+        await uint_variable_64.write_value(ua.Variant((12345678901234567890 + counter) % (2**64), ua.VariantType.UInt64))
+
+        await int_variable_16.write_value(ua.Variant((counter % 2000) - 1000, ua.VariantType.Int16))
+        await int_variable_32.write_value(ua.Variant((counter % 200000) - 100000, ua.VariantType.Int32))
+        await int_variable_64.write_value(ua.Variant((counter % 2000000) - 1000000, ua.VariantType.Int64))
+
+        toggle = (counter % 2) == 0
+        await bool_variable_true.write_value(ua.Variant(toggle, ua.VariantType.Boolean))
+        await bool_variable_false.write_value(ua.Variant(not toggle, ua.VariantType.Boolean))
+
+        await string_variable.write_value(ua.Variant(f"Hello, OPC UA! Tick {counter}", ua.VariantType.String))
+        await float_variable.write_value(ua.Variant(3.14 + ((counter % 100) / 100.0), ua.VariantType.Float))
+        await double_variable.write_value(ua.Variant(3.141592653589793 + (counter / 1000.0), ua.VariantType.Double))
+
+        temp_value = calculate_motor_temperature(counter)
+        await motor_temperature.write_value(ua.Variant(temp_value, ua.VariantType.Float))
+        cleanliness_value = calculate_machine_cleanliness(counter)
+        await machine_cleanliness.write_value(ua.Variant(cleanliness_value, ua.VariantType.Float))
+
+        counter += 1
+        await asyncio.sleep(1)
 
 async def main():
     server = Server()
@@ -56,6 +131,11 @@ async def main():
     # double variable
     double_variable = await myobj.add_variable(ua.NodeId("DoubleVariable", idx), "MyDoubleVariable", 3.141592653589793, ua.VariantType.Double)  
 
+    #temperature variables
+    motor_temperature = await myobj.add_variable(ua.NodeId("MotorTemperature", idx), "MotorTemperature", 75.0, ua.VariantType.Float)
+
+    #cleanliness variable
+    machine_cleanliness = await myobj.add_variable(ua.NodeId("MachineCleanliness", idx), "MachineCleanliness", 99.0, ua.VariantType.Float)
 
     await uint_variable_16.set_writable()
     await uint_variable_32.set_writable()
@@ -69,11 +149,26 @@ async def main():
     await float_variable.set_writable()
     await double_variable.set_writable()
 
+    await motor_temperature.set_writable()
+    await machine_cleanliness.set_writable()
     print("✅ Server running at: opc.tcp://127.0.0.1:53530/rebelit/server/")
 
     async with server:
-        while True:
-            await asyncio.sleep(1)
+        await update_nodes_loop(
+            uint_variable_16,
+            uint_variable_32,
+            uint_variable_64,
+            int_variable_16,
+            int_variable_32,
+            int_variable_64,
+            bool_variable_true,
+            bool_variable_false,
+            string_variable,
+            float_variable,
+            double_variable,
+            motor_temperature,
+            machine_cleanliness,
+        )
 
 if __name__ == "__main__":
     asyncio.run(main())
