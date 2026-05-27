@@ -91,6 +91,10 @@ function Get-LoadedImageReference {
     )
 
     $loadOutput = docker load -i $TarPath 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "docker load failed for '$TarPath'."
+        exit 1
+    }
     $loadText = ($loadOutput | Out-String)
 
     if ($loadText -match "Loaded image:\s*(.+)") {
@@ -114,10 +118,12 @@ if (-not $BACKEND_IMAGE) {
     Write-Error "Could not determine backend image reference from docker load output."
     
 }
-docker tag $BACKEND_IMAGE "$($SECURE_EDGE_IP):5000/$BACKEND_CONTAINER:latest"
+docker tag $BACKEND_IMAGE "$($SECURE_EDGE_IP):5000/${BACKEND_CONTAINER}:latest"
+if ($LASTEXITCODE -ne 0) { exit 1 }
 Write-Output "Pushing backend image..."
-docker push "$($SECURE_EDGE_IP):5000/$BACKEND_CONTAINER:latest"
-docker rmi $BACKEND_IMAGE "$($SECURE_EDGE_IP):5000/$BACKEND_CONTAINER:latest" 2>$null | Out-Null
+docker push "$($SECURE_EDGE_IP):5000/${BACKEND_CONTAINER}:latest"
+if ($LASTEXITCODE -ne 0) { exit 1 }
+docker rmi $BACKEND_IMAGE "$($SECURE_EDGE_IP):5000/${BACKEND_CONTAINER}:latest" 2>$null | Out-Null
 
 Write-Output "Loading frontend image..."
 $FRONTEND_IMAGE = Get-LoadedImageReference -TarPath "$SCRIPT_DIR/rebel-ot-discover-edgeapp-react.tar"
@@ -125,13 +131,22 @@ if (-not $FRONTEND_IMAGE) {
     Write-Error "Could not determine frontend image reference from docker load output."
    
 }
-docker tag $FRONTEND_IMAGE "$($SECURE_EDGE_IP):5000/$FRONTEND_CONTAINER:latest"
+docker tag $FRONTEND_IMAGE "$($SECURE_EDGE_IP):5000/${FRONTEND_CONTAINER}:latest"
+if ($LASTEXITCODE -ne 0) { exit 1 }
 Write-Output "Pushing frontend image..."
-docker push "$($SECURE_EDGE_IP):5000/$FRONTEND_CONTAINER:latest"
-docker rmi $FRONTEND_IMAGE "$($SECURE_EDGE_IP):5000/$FRONTEND_CONTAINER:latest" 2>$null | Out-Null
+docker push "$($SECURE_EDGE_IP):5000/${FRONTEND_CONTAINER}:latest"
+if ($LASTEXITCODE -ne 0) { exit 1 }
+docker rmi $FRONTEND_IMAGE "$($SECURE_EDGE_IP):5000/${FRONTEND_CONTAINER}:latest" 2>$null | Out-Null
 
 # Create and start containers
-. "$SCRIPT_DIR/create_and_start_containers.ps1"
+. "$SCRIPT_DIR/create_and_start_containers.ps1" `
+    -BASE_URL $BASE_URL `
+    -COOKIE_JAR $COOKIE_JAR `
+    -BACKEND_CONTAINER $BACKEND_CONTAINER `
+    -FRONTEND_CONTAINER $FRONTEND_CONTAINER `
+    -NETWORK $NETWORK `
+    -SECURE_EDGE_IP $SECURE_EDGE_IP `
+    -Session $session
 
 Remove-Item -Path "$COOKIE_JAR" -ErrorAction SilentlyContinue
 
