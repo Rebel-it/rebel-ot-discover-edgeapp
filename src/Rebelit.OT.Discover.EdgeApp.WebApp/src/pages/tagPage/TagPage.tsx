@@ -127,13 +127,10 @@ function TagPage() {
                     aria-label="Select all tags"
                   />
                 </th>
-                <th>PublicId</th>
                 <th>Name</th>
-                <th>Identifier</th>
                 <th>Logging on</th>
                 <th>Interval</th>
                 <th>Formula</th>
-                <th>Retention</th>
               </tr>
             </thead>
             <tbody>
@@ -147,13 +144,10 @@ function TagPage() {
                       aria-label={`Select tag ${tag.name || tag.slug}`}
                     />
                   </td>
-                  <td>{tag.variable.publicId}</td>
                   <td>{tag.name}</td>
-                  <td>{tag.slug}</td>
                   <td>{tag.logEvent}</td>
                   <td>{tag.loggingInterval}</td>
                   <td>{getFormulaLabel(tag)}</td>
-                  <td>{tag.retentionPolicy}</td>
                 </tr>
               ))}
             </tbody>
@@ -162,7 +156,7 @@ function TagPage() {
       )}
       
       {initialTagsCreated && (
-        <button type="button" className={sharedStyles.nextButton}  onClick={() => navigate('/final')}>
+        <button type="button" className={sharedStyles.nextButton}  onClick={() => navigate('/deviceconfig')}>
           I'm done creating tags
         </button>
       )}
