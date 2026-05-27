@@ -10,27 +10,43 @@ public class ScriptRunner(string edgeIp, string username, string password)
         MakeExecutable(scriptPath);
 
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-        var resolvedScriptPath = isWindows ? ToWslPath(scriptPath) : scriptPath;
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = isWindows ? "powershell.exe" : "/bin/bash",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            Environment =
+            {
+                ["EDGE_IP"] = edgeIp,
+                ["EDGE_USER"] = username,
+                ["EDGE_PASSWORD"] = password
+            }
+        };
+
+        if (isWindows)
+        {
+            startInfo.ArgumentList.Add("-NoProfile");
+            startInfo.ArgumentList.Add("-ExecutionPolicy");
+            startInfo.ArgumentList.Add("Bypass");
+            startInfo.ArgumentList.Add("-File");
+            startInfo.ArgumentList.Add(scriptPath);
+            startInfo.ArgumentList.Add(edgeIp);
+            startInfo.ArgumentList.Add(username);
+            startInfo.ArgumentList.Add(password);
+        }
+        else
+        {
+            startInfo.ArgumentList.Add(scriptPath);
+            startInfo.ArgumentList.Add(edgeIp);
+            startInfo.ArgumentList.Add(username);
+            startInfo.ArgumentList.Add(password);
+        }
 
         var scriptProcess = new Process
         {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = isWindows ? "wsl.exe" : "/bin/bash",
-                Arguments = isWindows
-                    ? $"-- bash \"{resolvedScriptPath}\" \"{edgeIp}\" \"{username}\" \"{password}\""
-                    : $"\"{resolvedScriptPath}\" \"{edgeIp}\" \"{username}\" \"{password}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                Environment =
-                {
-                    ["EDGE_IP"] = edgeIp,
-                    ["EDGE_USER"] = username,
-                    ["EDGE_PASSWORD"] = password
-                }
-            }
+            StartInfo = startInfo
         };
 
         scriptProcess.OutputDataReceived += (_, e) =>
@@ -72,18 +88,5 @@ public class ScriptRunner(string edgeIp, string username, string password)
         };
         chmod.Start();
         chmod.WaitForExit();
-    }
-
-    private static string ToWslPath(string path)
-    {
-        var fullPath = Path.GetFullPath(path);
-        var root = Path.GetPathRoot(fullPath);
-
-        if (string.IsNullOrEmpty(root) || root.Length < 2 || root[1] != ':')
-            return fullPath.Replace('\\', '/');
-
-        var driveLetter = char.ToLowerInvariant(root[0]);
-        var rest = fullPath[root.Length..].Replace('\\', '/');
-        return $"/mnt/{driveLetter}/{rest}";
     }
 }
