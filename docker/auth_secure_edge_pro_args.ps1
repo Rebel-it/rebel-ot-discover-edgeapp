@@ -21,14 +21,48 @@ $BASE_URL = "http://${env:SECURE_EDGE_IP}:80"
 $COOKIE_JAR = [System.IO.Path]::GetTempFileName()
 
 # Authenticate with SecureEdge Pro
+Write-Host "SecureEdge IP: ${env:SECURE_EDGE_IP}"
+Write-Host "Username: ${env:USERNAME}"
+Write-Host "Password: ${env:PASSWORD}"
 Write-Host "Authenticating with SecureEdge Pro..."
-$response = Invoke-WebRequest -Uri "$BASE_URL/auth/login" `
-    -Method Post `
-    -SessionVariable session `
-    -Body @{ username = $env:USERNAME; password = $env:PASSWORD } `
-    -ErrorAction Stop
+
+# Step 1: GET to /auth/login to set initial cookies (mimic curl)
+try {
+    Invoke-WebRequest -Uri "$BASE_URL/auth/login" -Method GET -WebSession $session -TimeoutSec 10 -ErrorAction Stop | Out-Null
+} catch {
+    Write-Warning "Initial GET to /auth/login failed: $($_.Exception.Message)"
+}
+
+# Step 2: POST credentials as form data
+$form = @{
+    username = $env:USERNAME
+    password = $env:PASSWORD
+}
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+try {
+    $authResponse = Invoke-WebRequest -Uri "$BASE_URL/auth/login" `
+        -Method POST `
+        -WebSession $session `
+        -Body $form `
+        -TimeoutSec 20 `
+        -ErrorAction Stop
+} catch {
+    Write-Error "Authentication POST failed: $($_.Exception.Message)"
+    exit 1
+}
 
 # Save cookies to the temporary file
-$response.RawContentStream | Set-Content -Path $COOKIE_JAR
+try {
+    $session.Cookies.GetCookies($BASE_URL) | ForEach-Object {
+        $_.ToString() | Out-File -FilePath $COOKIE_JAR -Append
+    }
+    Write-Host "Authentication successful. Cookies saved to $COOKIE_JAR."
+} catch {
+    Write-Warning "Could not save cookies: $($_.Exception.Message)"
+}
 
-Write-Host "Authentication successful. Cookies saved to $COOKIE_JAR."
+# Check for authentication failure in response content
+if ($authResponse.Content -match "Invalid credentials") {
+    Write-Error "Error: authentication failed."
+    exit 1
+}
