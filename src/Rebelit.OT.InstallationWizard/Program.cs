@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using Rebelit.OT.InstallationWizard;
+using System.Runtime.InteropServices;
 
 const string githubRepo = "Rebel-it/rebel-ot-discover-edgeapp";
 const string extractDir = "/tmp/ot-wizard-release";
@@ -8,6 +9,12 @@ var scriptNames = new Dictionary<WizardAction, string>
 {
     [WizardAction.Install] = "deploy_discover_edgeapp_args.sh",
     [WizardAction.Uninstall] = "remove_discover_edgeapp_args.sh"
+};
+
+var scriptNamesWindows = new Dictionary<WizardAction, string>
+{
+    [WizardAction.Install] = "deploy_discover_edgeapp_args.ps1",
+    [WizardAction.Uninstall] = "remove_discover_edgeapp_args.ps1"
 };
 
 Console.WriteLine("Welcome to the OT Discover Edge App Installation Wizard!");
@@ -34,7 +41,16 @@ try
 
     // 4. Ask what to do
     var action = WizardConsole.PromptAction();
-    var targetScript = scriptNames[action];
+
+    string targetScript;
+    if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+    {
+        targetScript = scriptNamesWindows[action];
+    }
+    else
+    {
+        targetScript = scriptNames[action];
+    }
 
     var scriptPath = Directory.GetFiles(extractDir, targetScript, SearchOption.AllDirectories).FirstOrDefault();
     if (scriptPath is null)
