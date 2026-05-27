@@ -31,27 +31,36 @@ param (
 
     [Parameter(Mandatory = $true)]
     [string]$SECURE_EDGE_IP
+
+    ,
+    [Parameter(Mandatory = $true)]
+    [Microsoft.PowerShell.Commands.WebRequestSession]$Session
 )
 
 Write-Output "Creating backend container..."
-Invoke-RestMethod -Method Post -Uri "$BASE_URL/api/v1/docker/containers" -WebSession $session -Body @{
-    container = @{ name = $BACKEND_CONTAINER };
-    image = @{ name = $BACKEND_CONTAINER; tag = "latest" };
-    ports = @();
-    mounts = @();
-    networks = @(@{ name = $NETWORK; driver = "bridge" });
+$backendBody = @{
+    container = @{ name = $BACKEND_CONTAINER }
+    image = @{ name = $BACKEND_CONTAINER; tag = "latest" }
+    ports = @()
+    mounts = @()
+    networks = @(@{ name = $NETWORK; driver = "bridge" })
     environment_variables = @()
 } | ConvertTo-Json -Depth 10
+Invoke-RestMethod -Method Post -Uri "$BASE_URL/api/v1/docker/containers" -WebSession $Session -ContentType "application/json" -Body $backendBody | Out-Null
 
 Write-Output "Creating frontend container..."
-Invoke-RestMethod -Method Post -Uri "$BASE_URL/api/v1/docker/containers" -WebSession $session -Body @{
-    container = @{ name = $FRONTEND_CONTAINER };
-    image = @{ name = $FRONTEND_CONTAINER; tag = "latest" };
-    ports = @(@{ source = 80; destination = 3000; protocol = "tcp" });
-    mounts = @();
-    networks = @(@{ name = $NETWORK; driver = "bridge" });
+$frontendBody = @{
+    container = @{ name = $FRONTEND_CONTAINER }
+    image = @{ name = $FRONTEND_CONTAINER; tag = "latest" }
+    ports = @(@{ source = 80; destination = 3000; protocol = "tcp" })
+    mounts = @()
+    networks = @(@{ name = $NETWORK; driver = "bridge" })
     environment_variables = @()
 } | ConvertTo-Json -Depth 10
+Invoke-RestMethod -Method Post -Uri "$BASE_URL/api/v1/docker/containers" -WebSession $Session -ContentType "application/json" -Body $frontendBody | Out-Null
 
 Write-Output "Starting backend container..."
-Invoke-RestMethod -Method Post -Uri "$BASE_URL/api/v1/docker/containers/$BACKEND_CONTAINER/start" -WebSession $session
+Invoke-RestMethod -Method Post -Uri "$BASE_URL/api/v1/docker/containers/$BACKEND_CONTAINER/start" -WebSession $Session | Out-Null
+
+Write-Output "Starting frontend container..."
+Invoke-RestMethod -Method Post -Uri "$BASE_URL/api/v1/docker/containers/$FRONTEND_CONTAINER/start" -WebSession $Session | Out-Null
