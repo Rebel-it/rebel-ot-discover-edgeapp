@@ -84,19 +84,47 @@ $env:SECURE_EDGE_IP = $SECURE_EDGE_IP
 $env:USERNAME = $USERNAME
 $env:PASSWORD = $PASSWORD
 
+function Get-LoadedImageReference {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TarPath
+    )
+
+    $loadOutput = docker load -i $TarPath 2>&1
+    $loadText = ($loadOutput | Out-String)
+
+    if ($loadText -match "Loaded image:\s*(.+)") {
+        return $matches[1].Trim()
+    }
+
+    if ($loadText -match "Loaded image ID:\s*(.+)") {
+        return $matches[1].Trim()
+    }
+
+    return $null
+}
+
 # Authenticate with SecureEdge Pro
 . "$SCRIPT_DIR/auth_secure_edge_pro_args.ps1" -SECURE_EDGE_IP $SECURE_EDGE_IP -USERNAME $USERNAME -PASSWORD $PASSWORD
 
 # Load and push images to SecureEdge Pro registry
 Write-Output "Loading backend image..."
-$BACKEND_IMAGE = docker load -i "$SCRIPT_DIR/rebel-ot-discover-edgeapp.tar" | ForEach-Object { if ($_ -match "Loaded image: (.+)") { $matches[1] } }
+$BACKEND_IMAGE = Get-LoadedImageReference -TarPath "$SCRIPT_DIR/rebel-ot-discover-edgeapp.tar"
+if (-not $BACKEND_IMAGE) {
+    Write-Error "Could not determine backend image reference from docker load output."
+    
+}
 docker tag $BACKEND_IMAGE "$($SECURE_EDGE_IP):5000/$BACKEND_CONTAINER:latest"
 Write-Output "Pushing backend image..."
 docker push "$($SECURE_EDGE_IP):5000/$BACKEND_CONTAINER:latest"
 docker rmi $BACKEND_IMAGE "$($SECURE_EDGE_IP):5000/$BACKEND_CONTAINER:latest" 2>$null | Out-Null
 
 Write-Output "Loading frontend image..."
-$FRONTEND_IMAGE = docker load -i "$SCRIPT_DIR/rebel-ot-discover-edgeapp-react.tar" | ForEach-Object { if ($_ -match "Loaded image: (.+)") { $matches[1] } }
+$FRONTEND_IMAGE = Get-LoadedImageReference -TarPath "$SCRIPT_DIR/rebel-ot-discover-edgeapp-react.tar"
+if (-not $FRONTEND_IMAGE) {
+    Write-Error "Could not determine frontend image reference from docker load output."
+   
+}
 docker tag $FRONTEND_IMAGE "$($SECURE_EDGE_IP):5000/$FRONTEND_CONTAINER:latest"
 Write-Output "Pushing frontend image..."
 docker push "$($SECURE_EDGE_IP):5000/$FRONTEND_CONTAINER:latest"
