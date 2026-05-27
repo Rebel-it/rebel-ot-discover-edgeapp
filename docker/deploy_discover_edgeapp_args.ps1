@@ -1,0 +1,75 @@
+#requires -Version 5.1
+
+<#
+.SYNOPSIS
+    Non-interactive variant of deploy_discover_edgeapp.sh.
+    Deploys pre-built images from the release zip to a SecureEdge Pro device.
+.DESCRIPTION
+    Run this script from the directory where you extracted the release zip.
+.PARAMETER SECURE_EDGE_IP
+    The IP address of the SecureEdge Pro device.
+.PARAMETER USERNAME
+    The username for authentication.
+.PARAMETER PASSWORD
+    The password for authentication.
+.EXAMPLE
+    .\deploy_discover_edgeapp_args.ps1 -SECURE_EDGE_IP 192.168.1.1 -USERNAME admin -PASSWORD password
+#>
+
+param (
+    [Parameter(Mandatory = $true)]
+    [string]$SECURE_EDGE_IP,
+
+    [Parameter(Mandatory = $true)]
+    [string]$USERNAME,
+
+    [Parameter(Mandatory = $true)]
+    [string]$PASSWORD
+)
+
+$SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$BACKEND_CONTAINER = "rebel-ot-discover-edgeapp"
+$FRONTEND_CONTAINER = "rebel-ot-discover-edgeapp-react"
+$NETWORK = "machine-builder"
+
+# Check dependencies
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    Write-Error "Error: 'docker' is required but not installed."
+    Write-Error "  https://docs.docker.com/get-docker/"
+    exit 1
+}
+
+# Check insecure registry configuration
+if (-not (docker info 2>$null | Select-String -Quiet "$SECURE_EDGE_IP:5000")) {
+    Write-Error "Error: '$SECURE_EDGE_IP:5000' is not configured as an insecure registry in Docker."
+    Write-Error "  Add it via Docker Desktop → Settings → Docker Engine:"
+    Write-Error "    { \"insecure-registries\": [\"$SECURE_EDGE_IP:5000\"] }"
+    Write-Error "  Then restart Docker and re-run this script."
+    exit 1
+}
+
+# Authenticate with SecureEdge Pro
+. "$SCRIPT_DIR/auth_secure_edge_pro_args.ps1"
+
+# Load and push images to SecureEdge Pro registry
+Write-Output "Loading backend image..."
+$BACKEND_IMAGE = docker load -i "$SCRIPT_DIR/rebel-ot-discover-edgeapp.tar" | ForEach-Object { if ($_ -match "Loaded image: (.+)") { $matches[1] } }
+docker tag $BACKEND_IMAGE "$SECURE_EDGE_IP:5000/$BACKEND_CONTAINER:latest"
+Write-Output "Pushing backend image..."
+docker push "$SECURE_EDGE_IP:5000/$BACKEND_CONTAINER:latest"
+docker rmi $BACKEND_IMAGE "$SECURE_EDGE_IP:5000/$BACKEND_CONTAINER:latest" 2>$null | Out-Null
+
+Write-Output "Loading frontend image..."
+$FRONTEND_IMAGE = docker load -i "$SCRIPT_DIR/rebel-ot-discover-edgeapp-react.tar" | ForEach-Object { if ($_ -match "Loaded image: (.+)") { $matches[1] } }
+docker tag $FRONTEND_IMAGE "$SECURE_EDGE_IP:5000/$FRONTEND_CONTAINER:latest"
+Write-Output "Pushing frontend image..."
+docker push "$SECURE_EDGE_IP:5000/$FRONTEND_CONTAINER:latest"
+docker rmi $FRONTEND_IMAGE "$SECURE_EDGE_IP:5000/$FRONTEND_CONTAINER:latest" 2>$null | Out-Null
+
+# Create and start containers
+. "$SCRIPT_DIR/create_and_start_containers.ps1"
+
+Remove-Item -Path "$COOKIE_JAR" -ErrorAction SilentlyContinue
+
+Write-Output "`n=== Deployment complete ==="
+Write-Output "Please visit the application on your Secure Edge Pro: http://$SECURE_EDGE_IP:3000"
