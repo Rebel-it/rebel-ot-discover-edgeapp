@@ -27,8 +27,9 @@ Write-Host "Password: ${env:PASSWORD}"
 Write-Host "Authenticating with SecureEdge Pro..."
 
 # Step 1: GET to /auth/login to set initial cookies (mimic curl)
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 try {
-    Invoke-WebRequest -Uri "$BASE_URL/auth/login" -Method GET -WebSession $session -TimeoutSec 10 -ErrorAction Stop | Out-Null
+    Invoke-WebRequest -Uri "$BASE_URL/auth/login" -Method GET -WebSession $session -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop | Out-Null
 } catch {
     Write-Warning "Initial GET to /auth/login failed: $($_.Exception.Message)"
 }
@@ -38,11 +39,11 @@ $form = @{
     username = $env:USERNAME
     password = $env:PASSWORD
 }
-$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 try {
     $authResponse = Invoke-WebRequest -Uri "$BASE_URL/auth/login" `
         -Method POST `
         -WebSession $session `
+        -UseBasicParsing `
         -Body $form `
         -TimeoutSec 20 `
         -ErrorAction Stop
