@@ -53,7 +53,7 @@ function DeviceConfigPage() {
                 </button>
             </div>
              {pushDeviceSuccess && (
-                <button type="button" className={sharedStyles.nextButton} onClick={() => navigate('/finish')}>
+                <button type="button" className={sharedStyles.nextButton} onClick={() => navigate('/final')}>
                     Finish
                 </button>
             )}
