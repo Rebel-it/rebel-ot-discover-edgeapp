@@ -32,6 +32,10 @@ $BACKEND_CONTAINER = "rebel-ot-discover-edgeapp"
 $FRONTEND_CONTAINER = "rebel-ot-discover-edgeapp-react"
 $NETWORK = "machine-builder"
 
+$env:SECURE_EDGE_IP = $SECURE_EDGE_IP
+$env:USERNAME = $USERNAME
+$env:PASSWORD = $PASSWORD
+
 # Check dependencies
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
     Write-Error "Error: 'docker' is required but not installed."
@@ -40,31 +44,31 @@ if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
 }
 
 # Check insecure registry configuration
-if (-not (docker info 2>$null | Select-String -Quiet "$SECURE_EDGE_IP:5000")) {
-    Write-Error "Error: '$SECURE_EDGE_IP:5000' is not configured as an insecure registry in Docker."
+if (-not (docker info 2>$null | Select-String -Quiet ([regex]::Escape("$($SECURE_EDGE_IP):5000")))) {
+    Write-Error "Error: '$($SECURE_EDGE_IP):5000' is not configured as an insecure registry in Docker."
     Write-Error "  Add it via Docker Desktop → Settings → Docker Engine:"
-    Write-Error "    { \"insecure-registries\": [\"$SECURE_EDGE_IP:5000\"] }"
+    Write-Error "    { \"insecure-registries\": [\"$($SECURE_EDGE_IP):5000\"] }"
     Write-Error "  Then restart Docker and re-run this script."
     exit 1
 }
 
 # Authenticate with SecureEdge Pro
-. "$SCRIPT_DIR/auth_secure_edge_pro_args.ps1"
+. "$SCRIPT_DIR/auth_secure_edge_pro_args.ps1" -SECURE_EDGE_IP $SECURE_EDGE_IP -USERNAME $USERNAME -PASSWORD $PASSWORD
 
 # Load and push images to SecureEdge Pro registry
 Write-Output "Loading backend image..."
 $BACKEND_IMAGE = docker load -i "$SCRIPT_DIR/rebel-ot-discover-edgeapp.tar" | ForEach-Object { if ($_ -match "Loaded image: (.+)") { $matches[1] } }
-docker tag $BACKEND_IMAGE "$SECURE_EDGE_IP:5000/$BACKEND_CONTAINER:latest"
+docker tag $BACKEND_IMAGE "$($SECURE_EDGE_IP):5000/$BACKEND_CONTAINER:latest"
 Write-Output "Pushing backend image..."
-docker push "$SECURE_EDGE_IP:5000/$BACKEND_CONTAINER:latest"
-docker rmi $BACKEND_IMAGE "$SECURE_EDGE_IP:5000/$BACKEND_CONTAINER:latest" 2>$null | Out-Null
+docker push "$($SECURE_EDGE_IP):5000/$BACKEND_CONTAINER:latest"
+docker rmi $BACKEND_IMAGE "$($SECURE_EDGE_IP):5000/$BACKEND_CONTAINER:latest" 2>$null | Out-Null
 
 Write-Output "Loading frontend image..."
 $FRONTEND_IMAGE = docker load -i "$SCRIPT_DIR/rebel-ot-discover-edgeapp-react.tar" | ForEach-Object { if ($_ -match "Loaded image: (.+)") { $matches[1] } }
-docker tag $FRONTEND_IMAGE "$SECURE_EDGE_IP:5000/$FRONTEND_CONTAINER:latest"
+docker tag $FRONTEND_IMAGE "$($SECURE_EDGE_IP):5000/$FRONTEND_CONTAINER:latest"
 Write-Output "Pushing frontend image..."
-docker push "$SECURE_EDGE_IP:5000/$FRONTEND_CONTAINER:latest"
-docker rmi $FRONTEND_IMAGE "$SECURE_EDGE_IP:5000/$FRONTEND_CONTAINER:latest" 2>$null | Out-Null
+docker push "$($SECURE_EDGE_IP):5000/$FRONTEND_CONTAINER:latest"
+docker rmi $FRONTEND_IMAGE "$($SECURE_EDGE_IP):5000/$FRONTEND_CONTAINER:latest" 2>$null | Out-Null
 
 # Create and start containers
 . "$SCRIPT_DIR/create_and_start_containers.ps1"
