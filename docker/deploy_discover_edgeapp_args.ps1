@@ -32,6 +32,10 @@ $BACKEND_CONTAINER = "rebel-ot-discover-edgeapp"
 $FRONTEND_CONTAINER = "rebel-ot-discover-edgeapp-react"
 $NETWORK = "machine-builder"
 
+$env:SECURE_EDGE_IP = $SECURE_EDGE_IP
+$env:USERNAME = $USERNAME
+$env:PASSWORD = $PASSWORD
+
 # Check dependencies
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
     Write-Error "Error: 'docker' is required but not installed."
@@ -40,7 +44,7 @@ if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
 }
 
 # Check insecure registry configuration
-if (-not (docker info 2>$null | Select-String -Quiet "$SECURE_EDGE_IP:5000")) {
+if (-not (docker info 2>$null | Select-String -Quiet ([regex]::Escape("$SECURE_EDGE_IP:5000")))) {
     Write-Error "Error: '$SECURE_EDGE_IP:5000' is not configured as an insecure registry in Docker."
     Write-Error "  Add it via Docker Desktop → Settings → Docker Engine:"
     Write-Error "    { \"insecure-registries\": [\"$SECURE_EDGE_IP:5000\"] }"
@@ -49,7 +53,7 @@ if (-not (docker info 2>$null | Select-String -Quiet "$SECURE_EDGE_IP:5000")) {
 }
 
 # Authenticate with SecureEdge Pro
-. "$SCRIPT_DIR/auth_secure_edge_pro_args.ps1"
+. "$SCRIPT_DIR/auth_secure_edge_pro_args.ps1" -SECURE_EDGE_IP $SECURE_EDGE_IP -USERNAME $USERNAME -PASSWORD $PASSWORD
 
 # Load and push images to SecureEdge Pro registry
 Write-Output "Loading backend image..."
