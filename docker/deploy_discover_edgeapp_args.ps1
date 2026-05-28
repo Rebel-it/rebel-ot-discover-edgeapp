@@ -89,9 +89,9 @@ if (-not $BACKEND_IMAGE) {
 docker tag $BACKEND_IMAGE "$($SECURE_EDGE_IP):5000/${BACKEND_CONTAINER}:latest"
 if ($LASTEXITCODE -ne 0) { exit 1 }
 Write-Output "Pushing backend image..."
-docker push "$($SECURE_EDGE_IP):5000/${BACKEND_CONTAINER}:latest"
+docker push -q "$($SECURE_EDGE_IP):5000/${BACKEND_CONTAINER}:latest" *> $null
 if ($LASTEXITCODE -ne 0) { exit 1 }
-docker rmi $BACKEND_IMAGE "$($SECURE_EDGE_IP):5000/${BACKEND_CONTAINER}:latest" 2>$null | Out-Null
+docker rmi $BACKEND_IMAGE "$($SECURE_EDGE_IP):5000/${BACKEND_CONTAINER}:latest" *> $null
 
 Write-Output "Loading frontend image..."
 $FRONTEND_IMAGE = Get-LoadedImageReference -TarPath "$SCRIPT_DIR/rebel-ot-discover-edgeapp-react.tar"
@@ -102,9 +102,9 @@ if (-not $FRONTEND_IMAGE) {
 docker tag $FRONTEND_IMAGE "$($SECURE_EDGE_IP):5000/${FRONTEND_CONTAINER}:latest"
 if ($LASTEXITCODE -ne 0) { exit 1 }
 Write-Output "Pushing frontend image..."
-docker push "$($SECURE_EDGE_IP):5000/${FRONTEND_CONTAINER}:latest"
+docker push -q "$($SECURE_EDGE_IP):5000/${FRONTEND_CONTAINER}:latest" *> $null
 if ($LASTEXITCODE -ne 0) { exit 1 }
-docker rmi $FRONTEND_IMAGE "$($SECURE_EDGE_IP):5000/${FRONTEND_CONTAINER}:latest" 2>$null | Out-Null
+docker rmi $FRONTEND_IMAGE "$($SECURE_EDGE_IP):5000/${FRONTEND_CONTAINER}:latest" *> $null
 
 # Create and start containers
 . "$SCRIPT_DIR/create_and_start_containers.ps1" `

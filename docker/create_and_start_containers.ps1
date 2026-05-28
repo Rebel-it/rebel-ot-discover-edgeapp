@@ -30,9 +30,8 @@ param (
     [string]$NETWORK,
 
     [Parameter(Mandatory = $true)]
-    [string]$SECURE_EDGE_IP
+    [string]$SECURE_EDGE_IP,
 
-    ,
     [Parameter(Mandatory = $true)]
     [Microsoft.PowerShell.Commands.WebRequestSession]$Session
 )
