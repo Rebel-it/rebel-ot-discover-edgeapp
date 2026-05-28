@@ -12,16 +12,16 @@ public class ScriptRunner(string edgeIp, string username, string password)
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         var startInfo = new ProcessStartInfo
         {
-            FileName = isWindows ? "powershell.exe" : "/bin/bash",
+            FileName = isWindows ? ResolvePowerShell() : "/bin/bash",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true,
             Environment =
             {
-                ["EDGE_IP"] = edgeIp,
-                ["EDGE_USER"] = username,
-                ["EDGE_PASSWORD"] = password
+                ["SECURE_EDGE_IP"] = edgeIp,
+                ["USERNAME"] = username,
+                ["PASSWORD"] = password
             }
         };
 
@@ -70,6 +70,37 @@ public class ScriptRunner(string edgeIp, string username, string password)
         await scriptProcess.WaitForExitAsync();
 
         return scriptProcess.ExitCode == 0;
+    }
+
+    /// <summary>
+    /// Resolves the available PowerShell executable by attempting to execute pwsh.exe and powershell.exe in order.
+    /// </summary>
+    /// <returns>The name of the first PowerShell executable that successfully runs, or "powershell.exe" as a fallback.</returns>
+    private static string ResolvePowerShell()
+    {
+        foreach (var candidate in new[] { "pwsh.exe", "powershell.exe" })
+        {
+            try
+            {
+                using var probe = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = candidate,
+                        Arguments = "-NoProfile -Command exit",
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
+                    }
+                };
+                probe.Start();
+                probe.WaitForExit();
+                return candidate;
+            }
+            catch (Exception) { }
+        }
+        return "powershell.exe";
     }
 
     private static void MakeExecutable(string scriptPath)

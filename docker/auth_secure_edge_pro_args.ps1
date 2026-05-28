@@ -21,9 +21,6 @@ $BASE_URL = "http://${env:SECURE_EDGE_IP}:80"
 $COOKIE_JAR = [System.IO.Path]::GetTempFileName()
 
 # Authenticate with SecureEdge Pro
-Write-Host "SecureEdge IP: ${env:SECURE_EDGE_IP}"
-Write-Host "Username: ${env:USERNAME}"
-Write-Host "Password: ${env:PASSWORD}"
 Write-Host "Authenticating with SecureEdge Pro..."
 
 # Step 1: GET to /auth/login to set initial cookies (mimic curl)
