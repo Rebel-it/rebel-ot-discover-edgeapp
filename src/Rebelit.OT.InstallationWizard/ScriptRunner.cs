@@ -75,7 +75,9 @@ public class ScriptRunner(string edgeIp, string username, string password)
     private static void MakeExecutable(string scriptPath)
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
             return;
+        }
 
         var chmod = new Process
         {

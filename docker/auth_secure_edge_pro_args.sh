@@ -24,9 +24,6 @@ BASE_URL="http://${SECURE_EDGE_IP}:80"
 COOKIE_JAR="$(mktemp)"
 
 echo "Authenticating with SecureEdge Pro..."
-echo "SecureEdge IP: ${SECURE_EDGE_IP}"
-echo "Username: ${USERNAME}"
-echo "Password: ${PASSWORD}"
 curl --silent --show-error \
     --cookie-jar "${COOKIE_JAR}" \
     "${BASE_URL}/auth/login" >/dev/null
