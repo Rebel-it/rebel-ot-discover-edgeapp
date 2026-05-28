@@ -16,7 +16,7 @@ public class GitHubReleaseDownloader(string repo, string accessToken)
         return http;
     }
 
-    public async Task<string> DownloadAndExtractLatestReleaseAsync(string extractDir)
+    public async Task DownloadAndExtractLatestReleaseAsync(string extractDir)
     {
         using var http = CreateHttpClient();
 
@@ -38,8 +38,6 @@ public class GitHubReleaseDownloader(string repo, string accessToken)
 
         ExtractZip(zipPath, extractDir);
         Console.WriteLine($"✓ Extracted to {extractDir}");
-
-        return extractDir;
     }
 
     private async Task<(string downloadUrl, string assetName)> FindLatestZipAssetAsync(HttpClient http)

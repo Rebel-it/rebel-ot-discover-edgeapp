@@ -82,23 +82,24 @@ public class ScriptRunner(string edgeIp, string username, string password)
         {
             try
             {
-                using var probe = new Process
+                using var probe = new Process();
+                probe.StartInfo = new ProcessStartInfo
                 {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = candidate,
-                        Arguments = "-NoProfile -Command exit",
-                        UseShellExecute = false,
-                        CreateNoWindow = true,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true
-                    }
+                    FileName = candidate,
+                    Arguments = "-NoProfile -Command exit",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
                 };
                 probe.Start();
                 probe.WaitForExit();
                 return candidate;
             }
-            catch (Exception) { }
+            catch (Exception)
+            {
+                // ignored
+            }
         }
         return "powershell.exe";
     }

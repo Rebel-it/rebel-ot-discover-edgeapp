@@ -24,7 +24,10 @@ Console.WriteLine("\nChecking prerequisites...");
 if (!DockerChecker.IsDockerInstalled())
     Environment.Exit(1);
 
-// 2. Gather credentials
+// 2. Ask what to do
+var action = WizardConsole.PromptAction();
+
+// 3. Gather credentials
 var edgeIp        = WizardConsole.PromptLine("Please enter your SecureEdge Pro IP address (e.g. 192.168.140.1)");
 var adminUser     = WizardConsole.PromptLine("Please enter your SecureEdge Pro admin username");
 var adminPassword = WizardConsole.PromptLine("Please enter your SecureEdge Pro admin password");
@@ -32,15 +35,12 @@ var adminPassword = WizardConsole.PromptLine("Please enter your SecureEdge Pro a
 // TODO remove this once the repository is made public.
 var accessToken   = WizardConsole.PromptLine("Please enter your GitHub access token");
 
-// 3. Download & extract latest GitHub release
+// 4. Download & extract latest GitHub release
 Console.WriteLine("\nFetching latest release from GitHub...");
 try
 {
     var downloader = new GitHubReleaseDownloader(githubRepo, accessToken);
     await downloader.DownloadAndExtractLatestReleaseAsync(extractDir);
-
-    // 4. Ask what to do
-    var action = WizardConsole.PromptAction();
 
     string targetScript;
     if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
