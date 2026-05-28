@@ -25,8 +25,16 @@ public class GitHubReleaseDownloader(string repo, string accessToken)
         Console.WriteLine($"✓ Found release asset: {assetName}");
         Console.WriteLine("  Downloading...");
 
-        var zipPath = await DownloadAssetAsync(http, downloadUrl, assetName);
-        Console.WriteLine($"✓ Downloaded to {zipPath}");
+        var zipPath = Path.Combine(Path.GetTempPath(), assetName);
+        if (File.Exists(zipPath))
+        {
+            Console.WriteLine($"✓ Using cached download: {zipPath}");
+        }
+        else
+        {
+            zipPath = await DownloadAssetAsync(http, downloadUrl, assetName);
+            Console.WriteLine($"✓ Downloaded to {zipPath}");
+        }
 
         ExtractZip(zipPath, extractDir);
         Console.WriteLine($"✓ Extracted to {extractDir}");
