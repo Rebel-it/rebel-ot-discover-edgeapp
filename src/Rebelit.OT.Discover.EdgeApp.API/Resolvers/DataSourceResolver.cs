@@ -21,6 +21,7 @@ internal sealed class DataSourceResolver(
     ILogger<DataSourceResolver> logger
 ) : IDataSourceResolver
 {
+    private const int OpcUaDefaultPort = 4840;
   
     public async Task<string> ResolveAsync( string sourceName)
     {
@@ -97,6 +98,7 @@ internal sealed class DataSourceResolver(
                 Username = string.IsNullOrEmpty(authenticationContext.IxonHeaders.PlcUsername) ? null : authenticationContext.IxonHeaders.PlcUsername,
                 Password = string.IsNullOrEmpty(authenticationContext.IxonHeaders.PlcPassword) ? null : authenticationContext.IxonHeaders.PlcPassword,
             },
+            Port = OpcUaDefaultPort
         };
     }
 
