@@ -10,7 +10,6 @@ namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 internal abstract class BaseAgent
 {
     private readonly IOptionsMonitor<Configuration> _configuration;
-    private readonly ILogger<BaseAgent> _logger;
     private readonly ResiliencePipeline<HttpResponseMessage> _pipeline;
     private readonly IIxonAuthenticationContext _ixonAuthenticationContext;
 

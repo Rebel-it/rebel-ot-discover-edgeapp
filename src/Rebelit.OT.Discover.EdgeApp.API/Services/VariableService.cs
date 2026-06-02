@@ -25,16 +25,24 @@ internal sealed class VariableService(
         ArgumentNullException.ThrowIfNull(variable);
 
         if (string.IsNullOrWhiteSpace(variable.Name))
+        {
             throw new ArgumentException("Variable name is required.", nameof(variable));
+        }
 
         if (string.IsNullOrWhiteSpace(variable.Address))
+        {
             throw new ArgumentException("Variable address is required.", nameof(variable));
+        }
 
         if (string.IsNullOrWhiteSpace(variable.Type))
+        {
             throw new ArgumentException("Variable type is required.", nameof(variable));
+        }
 
         if (variable.Source is null || string.IsNullOrWhiteSpace(variable.Source.PublicId))
+        {
             throw new ArgumentException("Variable source public id is required.", nameof(variable));
+        }
 
         var response = await apiClient.PostVariableAsync(variable);
         var createdVariable = response?.Data;
@@ -53,7 +61,9 @@ internal sealed class VariableService(
 
         var variableList = variables.ToList();
         if (variableList.Count == 0)
+        {
             return [];
+        }
 
         var response = await apiClient.PostVariablesAsync(variableList);
         var createdVariables = response?.Data ?? [];

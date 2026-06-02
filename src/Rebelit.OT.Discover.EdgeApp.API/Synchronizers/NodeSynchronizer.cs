@@ -30,17 +30,12 @@ internal sealed class NodeSynchronizer(
 ) : INodeSynchronizer
 {
     private HashSet<string> _existingAddresses = [];
-    private HashSet<string> _existingTags = [];
 
     public async Task InitializeAsync(string agentId)
     {
         _existingAddresses =
         [
             .. (await apiClient.GetDataVariablesAsync()).Data.Select(v => v.Address),
-        ];
-        _existingTags =
-        [
-            .. (await apiClient.GetTagsAsync()).Data.Select(t => t.Variable.PublicId),
         ];
     }
 
