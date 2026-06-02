@@ -21,7 +21,9 @@ export default function WizardPage({ children, wizardStep, continueButtonText, o
           )}
         </div>
       </div>
-      <ProgressPanel wizardStep={wizardStep} />
+      <div className={styles.progressPanelWrapper}>
+        <ProgressPanel wizardStep={wizardStep} />
+      </div>
     </div>
   );
 }
