@@ -39,6 +39,8 @@ public interface IApiClient
 
     Task<Response<Tag>?> PostTagAsync(Tag tag);
 
+    Task<Response<Tag[]>?> PostTagsAsync(IEnumerable<Tag> tags);
+
     Task<Response<Tag>?> UpdateTagAsync(string publicId, Tag tag);
     /// <summary>
     ///     Gets all data sources for the specified agent.

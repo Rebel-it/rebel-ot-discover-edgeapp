@@ -1,4 +1,5 @@
 using Rebelit.OT.Discover.EdgeApp.API.Models;
+using Rebelit.OT.Discover.EdgeApp.API.Utilities;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
@@ -34,7 +35,7 @@ internal sealed class TagService(
             var tag = new Tag
             {
                 Name = variable.Name,
-                Slug = variable.Name.ToLower().Replace(" ", "-"),
+                Slug = SlugGenerator.CreateFromNameAndAddress(variable.Name, variable.Address),
                 LogEvent = "interval",
                 LoggingInterval = "500ms",
                 RetentionPolicy = "260w",
@@ -72,19 +73,28 @@ internal sealed class TagService(
 
         return createdTag;
     }
-    public async Task<List<Tag>?> CreateTagsAsync(List<Tag> requests)
+    public async Task CreateTagsAsync(List<Tag> requests)
     {
         ArgumentNullException.ThrowIfNull(requests);
-        List<Tag> createdTags = [];
-        foreach(var tag in requests)
+
+        logger.LogInformation("Posting {Count} tags for agent {AgentId}.", requests.Count, ixonAuthenticationContext.IxonHeaders.AgentId);
+        var result = await apiClient.PostTagsAsync(requests);
+
+        if (result is not null && result.Data is not null)
         {
-            var createdTag = await UploadTagAsync(tag);
-            if (createdTag != null)
-            {
-                createdTags.Add(createdTag);
-            }
-        } 
-        return createdTags;
+            logger.LogInformation(
+                "Successfully posted {Count} tags for agent {AgentId}.",
+                result.Data.Length,
+                ixonAuthenticationContext.IxonHeaders.AgentId
+            );
+            return;
+        }
+
+        logger.LogWarning(
+            "Posting tags for agent {AgentId} returned an unexpected empty response. Attempted to post {Count} tags.",
+            ixonAuthenticationContext.IxonHeaders.AgentId,
+            requests.Count
+            );   
     }
 
     public async Task<Tag?> UpdateTagAsync(Tag tag, string publicId)
