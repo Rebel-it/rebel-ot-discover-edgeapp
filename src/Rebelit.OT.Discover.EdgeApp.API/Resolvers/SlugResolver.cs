@@ -14,7 +14,9 @@ internal static class SlugResolver
     public static string Resolve(string input)
     {
         if (string.IsNullOrEmpty(input))
+        {
             return "opcua";
+        }
         var slug = input.ToLowerInvariant()
             .Replace(" ", "-")
             .Replace("_", "-")

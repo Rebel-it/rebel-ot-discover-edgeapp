@@ -1,5 +1,4 @@
 ﻿using Rebelit.OT.Discover.EdgeApp.API;
-using Rebelit.OT.Discover.EdgeApp.API.Exporters;
 using Rebelit.OT.Discover.EdgeApp.API.Filters;
 using Rebelit.OT.Discover.EdgeApp.API.Mappers;
 using Rebelit.OT.Discover.EdgeApp.API.Resolvers;
@@ -45,7 +44,6 @@ if (builder.Environment.IsDevelopment())
 
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IVariableService, VariableService>();
-builder.Services.AddSingleton<ICsvExporters, CsvExporters>();
 builder.Services.AddScoped<IScraper, Scraper>();
 builder.Services.AddSingleton<IOpcUaVariableMapper, OpcUaVariableMapper>();
 builder.Services.AddScoped<IDataSourceResolver, DataSourceResolver>();

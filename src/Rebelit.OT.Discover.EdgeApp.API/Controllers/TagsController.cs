@@ -35,7 +35,9 @@ public class TagsController(ITagService tagService) : BaseController
     public async Task<IActionResult> CreateTagAsync([FromBody] Tag model)
     {
         if (string.IsNullOrWhiteSpace(model.Name))
+        {
             return BadRequest(new { message = "Tag name is required." });
+        }
 
         var createdTag = await _tagService.CreateTagAsync(model);
         return Ok(createdTag);
@@ -57,7 +59,9 @@ public class TagsController(ITagService tagService) : BaseController
     public async Task<IActionResult> UpdateTagAsync([FromBody] UpdateTagRequest model)
     {
         if (string.IsNullOrWhiteSpace(model.PublicId))
+        {
             return BadRequest(new { message = "Tag public ID is required." });
+        }
 
         var updatedTag = await _tagService.UpdateTagAsync(model);
         return Ok(updatedTag);

@@ -1,5 +1,4 @@
 using Opc.Ua;
-using Rebelit.OT.Discover.EdgeApp.API.Exporters;
 using Rebelit.OT.Discover.EdgeApp.API.Resolvers;
 using Rebelit.OT.Discover.EdgeApp.API.Synchronizers;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
@@ -11,7 +10,6 @@ namespace Rebelit.OT.Discover.EdgeApp.API;
 
 public class Scraper(
     IUAClientFactory clientFactory,
-    ICsvExporters csvExporters,
     IClientSamplerFactory clientSamplerFactory,
     IDataSourceResolver dataSourceResolver,
     INodeSynchronizer nodeSynchronizer,
