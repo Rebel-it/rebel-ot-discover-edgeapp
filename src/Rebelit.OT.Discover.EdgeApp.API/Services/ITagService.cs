@@ -29,7 +29,7 @@ public interface ITagService
     /// <summary>
     /// Create multiple tags at once
     /// </summary>
-    Task<List<Tag>?> CreateTagsAsync(List<Tag> requests);
+    Task CreateTagsAsync(List<Tag> requests);
 
     /// <summary>
     /// Update an existing tag on the Ixon fleet manager

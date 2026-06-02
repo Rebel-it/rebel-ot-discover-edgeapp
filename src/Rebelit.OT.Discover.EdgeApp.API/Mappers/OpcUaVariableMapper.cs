@@ -1,4 +1,5 @@
 using Opc.Ua;
+using Rebelit.OT.Discover.EdgeApp.API.Utilities;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 
 namespace Rebelit.OT.Discover.EdgeApp.API.Mappers;
@@ -60,16 +61,16 @@ internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
                 builtInType);
         }
 
+        var address = referenceDescription.NodeId.ToString();
+
         return new Variable
         {
             Name = referenceDescription.DisplayName.ToString(),
-            Address = referenceDescription.NodeId.ToString(),
+            Address = address,
             Type = type,
             Width = width ?? null,
             MaxStringLength = MaxStringLength ?? null,
-            Slug = new string([
-                .. referenceDescription.DisplayName.ToString().Where(char.IsLetterOrDigit),
-            ]).ToLower(),
+            Slug = SlugGenerator.CreateFromNameAndAddress(referenceDescription.DisplayName.ToString(), address),
             Source = new Source { PublicId = dataSourceId },
             Signed = true,
         };

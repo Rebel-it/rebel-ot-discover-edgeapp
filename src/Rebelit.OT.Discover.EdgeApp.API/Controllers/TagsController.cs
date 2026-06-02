@@ -11,6 +11,9 @@ public class TagsController(ITagService tagService) : BaseController
 {
     private readonly ITagService _tagService = tagService;
 
+    /// <summary>
+    /// Retrieves all available tags.
+    /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -20,15 +23,22 @@ public class TagsController(ITagService tagService) : BaseController
         return Ok(tags);
     }
 
+    /// <summary>
+    /// Retrieves prefilled tags.
+    /// </summary>
     [HttpGet("prefilled")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetPrefilledTagsAsync()
     {
         var tags = await _tagService.GetPrefilledTagsAsync();
-        return Ok(tags); 
+        return Ok(tags);
     }
 
+    /// <summary>
+    /// Creates a single new tag.
+    /// </summary>
+    /// <param name="model">The tag payload to create.</param>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -43,16 +53,24 @@ public class TagsController(ITagService tagService) : BaseController
         return Ok(createdTag);
     }
 
+    /// <summary>
+    /// Creates multiple tags.
+    /// </summary>
+    /// <param name="model">The list of tag payloads to create.</param>
     [HttpPost("CreateTags")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateTagsAsync([FromBody] List<Tag> model)
     {
-        var createdTags = await _tagService.CreateTagsAsync(model); 
+        await _tagService.CreateTagsAsync(model);
 
-        return Ok(createdTags);
+        return Ok();
     }
 
+    /// <summary>
+    /// Updates an existing tag.
+    /// </summary>
+    /// <param name="model">The tag update payload.</param>
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
