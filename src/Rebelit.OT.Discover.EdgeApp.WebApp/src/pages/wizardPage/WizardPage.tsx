@@ -6,15 +6,19 @@ import styles from "./WizardPage.module.css";
 type Props = {
   children: React.ReactNode;
   wizardStep: WizardStep;
+  continueButtonText?: string;
+  onContinue?: () => void;
 }
 
-export default function WizardPage({ children, wizardStep }: Readonly<Props>) {
+export default function WizardPage({ children, wizardStep, continueButtonText, onContinue }: Readonly<Props>) {
   return (
     <div className={styles.wizardPage}>
-      <div>
+      <div className={styles.content}>
         {children}
         <div className={styles.buttonWrapper}>
-          <Button text="Back" onClick={() => window.history.back()} />
+          {continueButtonText && onContinue && (
+            <Button text={continueButtonText} onClick={onContinue} />
+          )}
         </div>
       </div>
       <ProgressPanel wizardStep={wizardStep} />
