@@ -32,6 +32,13 @@ internal class ApiClient(
         var uri = $"/api/agents/{ixonAuthenticationContext.IxonHeaders.AgentId}/data-tags";
         return await Post<Response<Tag>>(uri, tag);
     }
+
+    public async Task<Response<Tag[]>?> PostTagsAsync(IEnumerable<Tag> tags)
+    {
+        var uri = $"/api/agents/{ixonAuthenticationContext.IxonHeaders.AgentId}/data-tags";
+        return await Post<Response<Tag[]>>(uri, tags);
+    }
+
     public async Task<Response<Tag>?> UpdateTagAsync(string publicId, Tag tag)
     {
         var uri = $"/api/agents/{ixonAuthenticationContext.IxonHeaders.AgentId}/data-tags/{publicId}";
@@ -48,6 +55,12 @@ internal class ApiClient(
     {
         var uri = $"/api/agents/{ixonAuthenticationContext.IxonHeaders.AgentId}/data-variables";
         return await Post<Response<Variable[]>>(uri, variables);
+    }
+
+    public async Task<Response<Variable[]>?> PostVariablesCsvAsync(string csv)
+    {
+        var uri = $"/api/agents/{ixonAuthenticationContext.IxonHeaders.AgentId}/data-variables";
+        return await Post<Response<Variable[]>>(uri, csv);
     }
 
     public async Task<Response<Agent>> GetAgentAsync()

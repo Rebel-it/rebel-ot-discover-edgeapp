@@ -38,6 +38,7 @@ internal abstract class BaseAgent
 
     protected async Task<T?> Post<T>(string uri, object body)
     {
+        var json = CreateJsonContent(body);
         var response = await ExecuteRequestAsync(http =>
             http.PostAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
         );

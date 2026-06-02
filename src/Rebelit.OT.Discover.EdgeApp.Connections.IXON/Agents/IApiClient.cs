@@ -15,6 +15,11 @@ public interface IApiClient
     Task<Response<Variable>?> PostVariableAsync(Variable newVariable);
 
     /// <summary>
+    /// Bulk variable creation trough CSV upload
+    /// </summary>
+    Task<Response<Variable[]>> PostVariablesCsvAsync(string csv); 
+
+    /// <summary>
     /// Posts a collection of variables to the specified agent asynchronously.
     /// </summary>
     /// <param name="agentId">The unique identifier of the agent to which the variables will be posted. Cannot be null or empty.</param>
@@ -38,6 +43,8 @@ public interface IApiClient
     Task<Response<Tag[]>> GetTagsAsync();
 
     Task<Response<Tag>?> PostTagAsync(Tag tag);
+
+    Task<Response<Tag[]>?> PostTagsAsync(IEnumerable<Tag> tags);
 
     Task<Response<Tag>?> UpdateTagAsync(string publicId, Tag tag);
     /// <summary>

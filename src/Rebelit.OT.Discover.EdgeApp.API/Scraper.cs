@@ -88,7 +88,7 @@ public class Scraper(
 
         var filteredNodes = nodes.Where(rd =>
         {
-            if (rd.NodeId.NamespaceIndex == 0)
+            if (rd.NodeId.NamespaceIndex == 0 || rd.NodeId.NamespaceIndex == 1)
             {
                 logger.LogDebug("Skipping node {NodeId} in namespace 0.", rd.NodeId);
                 return false;

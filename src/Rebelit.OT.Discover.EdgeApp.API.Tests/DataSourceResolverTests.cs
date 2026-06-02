@@ -250,6 +250,12 @@ public class DataSourceResolverTests
         public Task<Response<Variable[]>?> PostVariablesAsync(IEnumerable<Variable> variables) =>
             throw new NotSupportedException();
 
+        public Task<Response<Variable[]>> PostVariablesCsvAsync(string csv) =>
+            throw new NotSupportedException();
+
+        public Task<Response<Tag[]>?> PostTagsAsync(IEnumerable<Tag> tags) =>
+            throw new NotSupportedException();
+
         public Task<Response<Agent>> GetAgentAsync() =>
             throw new NotSupportedException();
 
