@@ -1,5 +1,6 @@
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
+using Rebelit.OT.Discover.EdgeApp.API.Utilities;
 using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.API.Resolvers;
@@ -21,6 +22,7 @@ internal sealed class DataSourceResolver(
     ILogger<DataSourceResolver> logger
 ) : IDataSourceResolver
 {
+    private const int OpcUaDefaultPort = 4840;
   
     public async Task<string> ResolveAsync( string sourceName)
     {
@@ -84,6 +86,8 @@ internal sealed class DataSourceResolver(
     private DataSource BuildDataSource(string devicePublicId, string sourceName)
     {
         var authenticationType = string.IsNullOrEmpty(authenticationContext.IxonHeaders.PlcUsername) ? "anonymous" : "username";
+        var port = PortExtractor.ExtractPort(authenticationContext.IxonHeaders.PlcUrl) ?? OpcUaDefaultPort;
+
         return new DataSource
         {
             Name = sourceName,
@@ -97,6 +101,7 @@ internal sealed class DataSourceResolver(
                 Username = string.IsNullOrEmpty(authenticationContext.IxonHeaders.PlcUsername) ? null : authenticationContext.IxonHeaders.PlcUsername,
                 Password = string.IsNullOrEmpty(authenticationContext.IxonHeaders.PlcPassword) ? null : authenticationContext.IxonHeaders.PlcPassword,
             },
+            Port = port
         };
     }
 
