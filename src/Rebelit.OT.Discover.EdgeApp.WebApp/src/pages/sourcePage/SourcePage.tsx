@@ -9,23 +9,21 @@ import FormField from '../../components/atoms/formField/FormField.tsx'
 type SourceFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
 function getDefaultDataSourceName(): string {
-    const opcAddress = loadPlcServerAddress().trim();
+    const opcAddress = loadPlcServerAddress().trim()
     if (!opcAddress) {
-        return '';
+        return ''
     }
-    const addressWithoutProtocol = opcAddress.replace(/^opc\.tcp:\/\//i, '');
-    const host = addressWithoutProtocol.split(/[/:]/)[0];
-    return host ? `Datasource_${host}` : '';
-}
-
-const defaultSourceObject: SourceObject = {
-    DataSourceName: getDefaultDataSourceName(),
+    const addressWithoutProtocol = opcAddress.replace(/^opc\.tcp:\/\//i, '')
+    const host = addressWithoutProtocol.split(/[/:]/)[0]
+    return host ? `Datasource_${host}` : ''
 }
 
 function SourcePage() {
 
     const navigate = useNavigate()
-    const [sourceObject, setSourceObject] = useState<SourceObject>(defaultSourceObject)
+    const [sourceObject, setSourceObject] = useState<SourceObject>(() => ({
+        DataSourceName: getDefaultDataSourceName(),
+    }))
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [sourceCreationSucceeded, setSourceCreationSucceeded] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
