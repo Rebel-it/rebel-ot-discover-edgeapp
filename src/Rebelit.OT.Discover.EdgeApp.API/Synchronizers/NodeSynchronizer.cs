@@ -26,7 +26,6 @@ public interface INodeSynchronizer
 internal sealed class NodeSynchronizer(
     IApiClient apiClient,
     IOpcUaVariableMapper variableMapper,
-    ICsvExporters csvExporters,
     IConfiguration configuration,
     ILogger<NodeSynchronizer> logger
 ) : INodeSynchronizer

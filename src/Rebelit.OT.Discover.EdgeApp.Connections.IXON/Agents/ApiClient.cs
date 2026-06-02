@@ -57,12 +57,6 @@ internal class ApiClient(
         return await Post<Response<Variable[]>>(uri, variables);
     }
 
-    public async Task<Response<Variable[]>?> PostVariablesCsvAsync(string csv)
-    {
-        var uri = $"/api/agents/{ixonAuthenticationContext.IxonHeaders.AgentId}/data-variables";
-        return await Post<Response<Variable[]>>(uri, csv);
-    }
-
     public async Task<Response<Agent>> GetAgentAsync()
     {
         var uri = $"/api/agents/{ixonAuthenticationContext.IxonHeaders.AgentId}?fields=publicId,name,deviceId";

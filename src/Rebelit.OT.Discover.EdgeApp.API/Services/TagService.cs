@@ -83,7 +83,7 @@ internal sealed class TagService(
         if (result is not null && result.Data is not null)
         {
             logger.LogInformation(
-                "Successfully posted {Count} variables for agent {AgentId}.",
+                "Successfully posted {Count} tags for agent {AgentId}.",
                 result.Data.Length,
                 ixonAuthenticationContext.IxonHeaders.AgentId
             );
@@ -91,7 +91,7 @@ internal sealed class TagService(
         }
 
         logger.LogWarning(
-            "Posting variables for agent {AgentId} returned an unexpected empty response. Attempted to post {Count} variables.",
+            "Posting tags for agent {AgentId} returned an unexpected empty response. Attempted to post {Count} tags.",
             ixonAuthenticationContext.IxonHeaders.AgentId,
             requests.Count
             );   

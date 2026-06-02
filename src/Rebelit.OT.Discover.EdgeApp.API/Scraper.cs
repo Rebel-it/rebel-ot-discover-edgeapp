@@ -90,7 +90,7 @@ public class Scraper(
         {
             if (rd.NodeId.NamespaceIndex == 0 || rd.NodeId.NamespaceIndex == 1)
             {
-                logger.LogDebug("Skipping node {NodeId} in namespace 0.", rd.NodeId);
+                logger.LogDebug("Skipping node {NodeId} in namespace {NamespaceIndex}.", rd.NodeId, rd.NodeId.NamespaceIndex);
                 return false;
             }
             return true;
