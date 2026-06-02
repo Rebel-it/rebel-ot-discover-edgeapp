@@ -5,6 +5,10 @@
   box-sizing: border-box;
 }
 
+body {
+  line-height: 1.5;
+}
+
 html {
   /* this makes calculating font sizes using the rem property a lot easier.
      If you want the font size to be 24 px for example you can set it to

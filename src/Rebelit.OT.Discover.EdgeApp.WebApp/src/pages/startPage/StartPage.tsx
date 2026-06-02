@@ -9,7 +9,7 @@ function StartPage() {
 
   return (
     <WizardPage 
-      wizardStep={WizardStep.Introduction}
+      wizardStep={WizardStep.login}
       continueButtonText="Start"
       onContinue={() => navigate('/login')}
     >
