@@ -45,7 +45,7 @@ function LoginPage() {
   }
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.loginWrapper}>
       <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
         <h1>Sign in</h1>
 

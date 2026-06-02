@@ -1,4 +1,8 @@
 export const WizardStep = {
+    Introduction: {
+      Title: "",
+      Description: "",
+    },
     Login: {
       Title: "Log in",
       Description: "For security reasons, it is strongly recommended not to use personal user credentials. Instead, create a dedicated service account. This is required because the application will write data to your cloud environment and needs appropriate access.\n\nAfter setup, you can delete this service account if needed.\n\nGo to: Admin → Integrations → Service Accounts → Add New Service Account.\n\nOnce you create the service account, you will receive an access token. Make sure to copy both required values immediately — if you close or navigate away, you will not be able to retrieve the access token again.",
