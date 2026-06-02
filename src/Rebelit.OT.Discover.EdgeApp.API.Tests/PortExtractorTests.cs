@@ -8,9 +8,9 @@ public class PortExtractorTests
     [Test]
     public void ExtractPort_WithValidOpcUaUrlWithCustomPort_ReturnsPort()
     {
-        var result = PortExtractor.ExtractPort("opc.tcp://172.27.21.3:4840");
+        var result = PortExtractor.ExtractPort("opc.tcp://172.27.21.3:4841");
 
-        Assert.That(result, Is.EqualTo(4840));
+        Assert.That(result, Is.EqualTo(4841));
     }
 
     [Test]
