@@ -21,7 +21,6 @@ internal abstract class BaseAgent
     )
     {
         _configuration = configuration;
-        _logger = logger;
         _pipeline = IxonResiliencePipelineFactory.Create(timeProvider, logger);
         _ixonAuthenticationContext = ixonAuthenticationContext;
     }
