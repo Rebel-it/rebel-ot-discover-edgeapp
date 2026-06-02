@@ -1,5 +1,4 @@
 using Opc.Ua;
-using Rebelit.OT.Discover.EdgeApp.API.Exporters;
 using Rebelit.OT.Discover.EdgeApp.API.Mappers;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
