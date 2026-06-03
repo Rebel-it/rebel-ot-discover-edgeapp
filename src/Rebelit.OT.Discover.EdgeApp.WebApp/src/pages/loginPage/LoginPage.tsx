@@ -8,6 +8,7 @@ import FormField from "../../components/atoms/formField/FormField.tsx"
 import WizardPage from "../wizardPage/WizardPage.tsx"
 import { useWizard } from "../../context/WizardContext.tsx"
 import { Pages } from "../../models/Pages.ts"
+import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle.tsx"
 
 type LoginFormSubmitEvent = Parameters<NonNullable<ComponentProps<"form">["onSubmit"]>>[0]
 
@@ -58,7 +59,7 @@ function LoginPage() {
       }}>
 
       <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
-        <h1>Log in</h1>
+        <WizardPageTitle title="Log in" />
 
         <FormField
           id="applicationid"
@@ -85,10 +86,6 @@ function LoginPage() {
             Login succeeded. Continue to the next step.
           </p>
         )}
-
-        <button type="submit" className={styles.loginButton} disabled={isSubmitting}>
-          {isSubmitting ? "Signing in..." : "Sign in"}
-        </button>
       </form>
     </WizardPage>
   )
