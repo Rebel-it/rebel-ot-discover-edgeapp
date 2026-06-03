@@ -10,4 +10,8 @@
   >* {
     flex: 1;
   }
+
+  >*:last-child {
+    flex: none;
+  }
 }
