@@ -128,15 +128,12 @@ internal sealed class DataSourceResolver(
             string.Equals(d.IpAddress, host, StringComparison.OrdinalIgnoreCase)
         );
 
-        if (matched is null)
+        if (matched is null && logger.IsEnabled(LogLevel.Warning))
         {
-            if (logger.IsEnabled(LogLevel.Warning))
-            {
                 logger.LogWarning(
                     "No device found with IP address '{Host}'. Falling back to first device.",
                     host
                 );
-            }
         }
 
         return matched ?? devices.FirstOrDefault();

@@ -11,7 +11,6 @@ namespace Rebelit.OT.Discover.EdgeApp.API;
 public class Scraper(
     IUAClientFactory clientFactory,
     IClientSamplerFactory clientSamplerFactory,
-    IDataSourceResolver dataSourceResolver,
     INodeSynchronizer nodeSynchronizer,
     IIxonAuthenticationContext ixonAuthenticationContext,
     ILogger<Scraper> logger
@@ -160,6 +159,6 @@ public class Scraper(
             );
         }
 
-        await nodeSynchronizer.SynchronizeVariablesAsync(ixonAuthenticationContext.IxonHeaders.AgentId, createdVariables);
+        await nodeSynchronizer.SynchronizeVariablesAsync(ixonAuthenticationContext.IxonHeaders.GetRequiredAgentId(), createdVariables);
     }
 }
