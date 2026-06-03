@@ -18,9 +18,9 @@ internal static class SlugResolver
             return "opcua";
         }
         var slug = input.ToLowerInvariant()
-            .Replace(" ", "-")
-            .Replace("_", "-")
-            .Replace(".", "-");
+            .Replace(" ", "-", StringComparison.Ordinal)
+            .Replace("_", "-", StringComparison.Ordinal)
+            .Replace(".", "-", StringComparison.Ordinal);
         slug = new string(slug.Where(c => char.IsLetterOrDigit(c) || c == '-').ToArray());
 
         slug = slug.Trim('-');

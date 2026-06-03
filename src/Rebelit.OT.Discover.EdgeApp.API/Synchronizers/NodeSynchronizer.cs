@@ -3,7 +3,6 @@ using Rebelit.OT.Discover.EdgeApp.API.Mappers;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Clients;
-using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.API.Synchronizers;
 
@@ -94,7 +93,7 @@ internal sealed class NodeSynchronizer(
                 return null;
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is ServiceResultException or TimeoutException or OperationCanceledException)
         {
             if (logger.IsEnabled(LogLevel.Error))
             {
@@ -119,7 +118,7 @@ internal sealed class NodeSynchronizer(
             return null;
         }
 
-        if (address.Contains("(type)"))
+        if (address.Contains("(type)", StringComparison.Ordinal))
         {
             if (logger.IsEnabled(LogLevel.Trace))
             {

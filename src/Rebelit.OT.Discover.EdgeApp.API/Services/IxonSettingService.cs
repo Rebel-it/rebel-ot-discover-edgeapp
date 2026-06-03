@@ -7,7 +7,7 @@ public class IxonSettingService(
     IApiClient apiClient,
     IIxonAuthenticationContext authenticationContext) : IIxonSettingService
 {
-    public async Task<string?> PushDeviceConfig()
+    public async Task<string?> PushDeviceConfigAsync()
     {
         var response = await apiClient.PushConfigurationAsync(authenticationContext.IxonHeaders.GetRequiredAgentId());
         return response?.Status;
