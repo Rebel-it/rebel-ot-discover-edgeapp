@@ -78,7 +78,7 @@ internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
 
     private static BuiltInType? ResolveBuiltInType(ExpandedNodeId dataTypeId)
     {
-        int maxNumericId = 25; // The highest numeric ID for built-in types in OPC UA
+        const int maxNumericId = 25; // The highest numeric ID for built-in types in OPC UA
         if (dataTypeId.IdType != IdType.Numeric || dataTypeId.Identifier == null)
         {
             return null;

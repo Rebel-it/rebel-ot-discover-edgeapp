@@ -323,7 +323,7 @@ public class UAClient : IDisposable
                 lock (_lock)
                 {
                     Session.KeepAlive -= Session_KeepAlive;
-                    _reconnectHandler?.Dispose();
+                    Dispose();
                     _reconnectHandler = null;
                 }
 

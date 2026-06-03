@@ -8,7 +8,11 @@ public class ApiClient(
     IHttpClientFactory httpClientFactory,
     ILogger<ApiClient> logger) : IApiClient
 {
-    public const string HttpClientName = "SecureEdgePro";
+    public static string HttpClientName
+    {
+        get { return "SecureEdgePro"; }
+    }
+
     private readonly HttpClient _client = httpClientFactory.CreateClient(HttpClientName);
 
     public async Task<Result<SecureEdgeSystemInfo>> GetSystemInfoAsync()
