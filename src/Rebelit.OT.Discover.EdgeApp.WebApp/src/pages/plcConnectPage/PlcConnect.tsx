@@ -83,6 +83,7 @@ function PlcConnect() {
             value={plcObject.OpcUaServerAddress}
             onChange={(value) => setPlcProperty("OpcUaServerAddress", value)}
             required
+            placeholder="OPC://"
           />
 
           <Checkbox

@@ -1,9 +1,11 @@
 .loginForm {
+  width: 100%;
+  max-width: 600px;
+
   .formFieldWrapper {
     padding-top: 20rem;
     display: flex;
     flex-direction: column;
     gap: 40px;
-    width: 600px;
   }
 }
