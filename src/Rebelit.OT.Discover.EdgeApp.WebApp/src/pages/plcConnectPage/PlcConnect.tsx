@@ -1,13 +1,15 @@
 import { useNavigate } from "react-router-dom"
 import { savePlcAuth } from "../../services/sessionStorageService.ts"
 import { connectToPlc } from "../../services/plcService.ts"
-import styles from "../loginPage/LoginPage.module.css"
 import type { PlcAuthObject } from "../../models/PlcAuthObject.ts"
 import { useState, type ComponentProps } from "react"
 import FormField from "../../components/atoms/formField/FormField.tsx"
 import WizardPage from "../wizardPage/WizardPage.tsx"
 import { useWizard } from "../../context/WizardContext.tsx"
 import { Pages } from "../../models/Pages.ts"
+import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle.tsx"
+import styles from "./PlcConnect.module.css"
+import Checkbox from "../../components/atoms/checkbox/Checkbox.tsx"
 
 type PlcFormSubmitEvent = Parameters<NonNullable<ComponentProps<"form">["onSubmit"]>>[0]
 
@@ -71,44 +73,43 @@ function PlcConnect() {
         navigate(Pages.source);
       }}
     >
-      <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
-        <h1>PLC Connect</h1>
+      <form className={styles.plcConnectForm} onSubmit={handleSubmit} noValidate>
+        <WizardPageTitle title="PLC connection" />
 
-        <FormField
-          id="ipAddress"
-          label="PLC Server IP Address"
-          value={plcObject.OpcUaServerAddress}
-          onChange={(value) => setPlcProperty("OpcUaServerAddress", value)}
-          required
-        />
-
-        <label>
-          <input
-            type="checkbox"
-            checked={useCredentials}
-            onChange={(event) => handleUseCredentialsChange(event.target.checked)}
+        <div className={styles.formFieldWrapper}>
+          <FormField
+            id="ipAddress"
+            label="OPC Server Address"
+            value={plcObject.OpcUaServerAddress}
+            onChange={(value) => setPlcProperty("OpcUaServerAddress", value)}
+            required
           />
-          Use PLC username and password
-        </label>
 
-        {useCredentials && (
-          <>
-            <FormField
-              id="OpcUaUsername"
-              label="PLC User Name"
-              value={plcObject.OpcUaUsername}
-              onChange={(value) => setPlcProperty("OpcUaUsername", value)}
-            />
+          <Checkbox
+            label="Use PLC username and password"
+            checked={useCredentials}
+            onChange={handleUseCredentialsChange}
+          />
 
-            <FormField
-              id="OpcUaPassword"
-              label="PLC Password"
-              type="password"
-              value={plcObject.OpcUaPassword}
-              onChange={(value) => setPlcProperty("OpcUaPassword", value)}
-            />
-          </>
-        )}
+          {useCredentials && (
+            <>
+              <FormField
+                id="OpcUaUsername"
+                label="OPC username"
+                value={plcObject.OpcUaUsername}
+                onChange={(value) => setPlcProperty("OpcUaUsername", value)}
+              />
+
+              <FormField
+                id="OpcUaPassword"
+                label="OPC password"
+                type="password"
+                value={plcObject.OpcUaPassword}
+                onChange={(value) => setPlcProperty("OpcUaPassword", value)}
+              />
+            </>
+          )}
+        </div>
 
         {errorMessage && <p className={`${styles.formMessage} ${styles.errorMessage}`}>{errorMessage}</p>}
 
@@ -117,10 +118,6 @@ function PlcConnect() {
             PLC connection succeeded. Continue to the next step.
           </p>
         )}
-
-        <button type="submit" className={styles.loginButton} disabled={isSubmitting || connectionSucceeded}>
-          {isSubmitting ? "Connecting..." : "Connect"}
-        </button>
       </form>
     </WizardPage>
   )
