@@ -1,73 +1,74 @@
-import { useNavigate } from 'react-router-dom'
-import { savePlcAuth } from '../../services/sessionStorageService.ts'
-import { connectToPlc } from '../../services/plcService.ts'
-import styles from '../loginPage/LoginPage.module.css'
-import type { PlcAuthObject } from '../../models/PlcAuthObject.ts'
-import { useState, type ComponentProps } from 'react'
-import FormField from '../../components/atoms/formField/FormField.tsx'
-import WizardPage from '../wizardPage/WizardPage.tsx'
-import { useWizard } from '../../context/WizardContext.tsx'
+import { useNavigate } from "react-router-dom"
+import { savePlcAuth } from "../../services/sessionStorageService.ts"
+import { connectToPlc } from "../../services/plcService.ts"
+import styles from "../loginPage/LoginPage.module.css"
+import type { PlcAuthObject } from "../../models/PlcAuthObject.ts"
+import { useState, type ComponentProps } from "react"
+import FormField from "../../components/atoms/formField/FormField.tsx"
+import WizardPage from "../wizardPage/WizardPage.tsx"
+import { useWizard } from "../../context/WizardContext.tsx"
+import { Pages } from "../../models/Pages.ts"
 
-type PlcFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
+type PlcFormSubmitEvent = Parameters<NonNullable<ComponentProps<"form">["onSubmit"]>>[0]
 
 const defaultPlcObject: PlcAuthObject = {
-  OpcUaServerAddress: '',
-  OpcUaUsername: '',
-  OpcUaPassword: '',
+  OpcUaServerAddress: "",
+  OpcUaUsername: "",
+  OpcUaPassword: "",
 }
 
 function PlcConnect() {
-  const navigate = useNavigate()
-  const { markStepCompleted } = useWizard()
-  const [plcObject, setPlcObject] = useState<PlcAuthObject>(defaultPlcObject)
-  const [useCredentials, setUseCredentials] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [connectionSucceeded, setConnectionSucceeded] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
+  const navigate = useNavigate();
+  const { markStepCompleted } = useWizard();
+  const [plcObject, setPlcObject] = useState<PlcAuthObject>(defaultPlcObject);
+  const [useCredentials, setUseCredentials] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [connectionSucceeded, setConnectionSucceeded] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   function setPlcProperty<K extends keyof PlcAuthObject>(property: K, value: PlcAuthObject[K]) {
     setPlcObject((currentPlcObject) => ({
       ...currentPlcObject,
       [property]: value,
-    }))
+    }));
   }
 
   function handleUseCredentialsChange(checked: boolean) {
-    setUseCredentials(checked)
+    setUseCredentials(checked);
 
     if (!checked) {
       setPlcObject((currentPlcObject) => ({
         ...currentPlcObject,
-        OpcUaUsername: '',
-        OpcUaPassword: '',
-      }))
+        OpcUaUsername: "",
+        OpcUaPassword: "",
+      }));
     }
   }
 
   async function handleSubmit(event: PlcFormSubmitEvent) {
-    event.preventDefault()
-    setIsSubmitting(true)
-    setErrorMessage('')
-    setConnectionSucceeded(false)
+    event.preventDefault();
+    setIsSubmitting(true);
+    setErrorMessage("");
+    setConnectionSucceeded(false);
 
     try {
-      await connectToPlc(plcObject)
-      savePlcAuth(plcObject)
-      setConnectionSucceeded(true)
+      await connectToPlc(plcObject);
+      savePlcAuth(plcObject);
+      setConnectionSucceeded(true);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'PLC connection failed. Please check your credentials and try again.')
+      setErrorMessage(error instanceof Error ? error.message : "PLC connection failed. Please check your credentials and try again.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 
   return (
     <WizardPage
-      wizardStep='plcConnect'
-      continueButtonText='Connect'
+      wizardStep="plcConnect"
+      continueButtonText="Connect"
       onContinue={() => {
-        markStepCompleted('plcConnect');
-        navigate('/deviceConnect')
+        markStepCompleted("plcConnect");
+        navigate(`/${Pages.source}`);
       }}
     >
       <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
@@ -77,7 +78,7 @@ function PlcConnect() {
           id="ipAddress"
           label="PLC Server IP Address"
           value={plcObject.OpcUaServerAddress}
-          onChange={(value) => setPlcProperty('OpcUaServerAddress', value)}
+          onChange={(value) => setPlcProperty("OpcUaServerAddress", value)}
           required
         />
 
@@ -96,7 +97,7 @@ function PlcConnect() {
               id="OpcUaUsername"
               label="PLC User Name"
               value={plcObject.OpcUaUsername}
-              onChange={(value) => setPlcProperty('OpcUaUsername', value)}
+              onChange={(value) => setPlcProperty("OpcUaUsername", value)}
             />
 
             <FormField
@@ -104,7 +105,7 @@ function PlcConnect() {
               label="PLC Password"
               type="password"
               value={plcObject.OpcUaPassword}
-              onChange={(value) => setPlcProperty('OpcUaPassword', value)}
+              onChange={(value) => setPlcProperty("OpcUaPassword", value)}
             />
           </>
         )}
@@ -118,11 +119,11 @@ function PlcConnect() {
         )}
 
         <button type="submit" className={styles.loginButton} disabled={isSubmitting || connectionSucceeded}>
-          {isSubmitting ? 'Connecting...' : 'Connect'}
+          {isSubmitting ? "Connecting..." : "Connect"}
         </button>
       </form>
     </WizardPage>
   )
 }
 
-export default PlcConnect
+export default PlcConnect;

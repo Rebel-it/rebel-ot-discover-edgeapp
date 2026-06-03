@@ -1,19 +1,19 @@
-import { useState, type ComponentProps } from 'react'
-import { saveIxonAuth, clearIxonAuthenticationHeaders } from '../../services/sessionStorageService.ts'
-import styles from './LoginPage.module.css'
-import { useNavigate } from 'react-router-dom'
-import { getCompanyConfiguration } from '../../services/companyConfigurationService.ts'
-import type { ServiceAccountObject } from '../../models/ServiceAccountObject.ts'
-import FormField from '../../components/atoms/formField/FormField.tsx'
-import WizardPage from '../wizardPage/WizardPage.tsx'
-import { useWizard } from '../../context/WizardContext.tsx'
-import { Pages } from '../../models/Pages.ts'
+import { useState, type ComponentProps } from "react"
+import { saveIxonAuth, clearIxonAuthenticationHeaders } from "../../services/sessionStorageService.ts"
+import styles from "./LoginPage.module.css"
+import { useNavigate } from "react-router-dom"
+import { getCompanyConfiguration } from "../../services/companyConfigurationService.ts"
+import type { ServiceAccountObject } from "../../models/ServiceAccountObject.ts"
+import FormField from "../../components/atoms/formField/FormField.tsx"
+import WizardPage from "../wizardPage/WizardPage.tsx"
+import { useWizard } from "../../context/WizardContext.tsx"
+import { Pages } from "../../models/Pages.ts"
 
-type LoginFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
+type LoginFormSubmitEvent = Parameters<NonNullable<ComponentProps<"form">["onSubmit"]>>[0]
 
 const defaultAuthObject: ServiceAccountObject = {
-  apiApplicationID: '',
-  accessToken: ''
+  apiApplicationID: "",
+  accessToken: ""
 }
 
 function LoginPage() {
@@ -42,7 +42,7 @@ function LoginPage() {
       setErrorMessage("");
     } catch (error) {
       clearIxonAuthenticationHeaders();
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to login. Please check your credentials and try again.');
+      setErrorMessage(error instanceof Error ? error.message : "Failed to login. Please check your credentials and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -51,9 +51,9 @@ function LoginPage() {
   return (
     <WizardPage 
       wizardStep="login" 
-      continueButtonText='Log in' 
+      continueButtonText="Log in" 
       onContinue={() => {
-        markStepCompleted('login');
+        markStepCompleted("login");
         navigate(`/${Pages.plcConnect}`);
       }}>
 
@@ -64,7 +64,7 @@ function LoginPage() {
           id="applicationid"
           label="API Application ID"
           value={serviceAccount.apiApplicationID}
-          onChange={(value) => setAuthProperty('apiApplicationID', value)}
+          onChange={(value) => setAuthProperty("apiApplicationID", value)}
           required
         />
 
@@ -73,7 +73,7 @@ function LoginPage() {
           label="Access Token"
           type="password"
           value={serviceAccount.accessToken}
-          onChange={(value) => setAuthProperty('accessToken', value)}
+          onChange={(value) => setAuthProperty("accessToken", value)}
           required
         />
 
@@ -87,7 +87,7 @@ function LoginPage() {
         )}
 
         <button type="submit" className={styles.loginButton} disabled={isSubmitting}>
-          {isSubmitting ? 'Signing in...' : 'Sign in'}
+          {isSubmitting ? "Signing in..." : "Sign in"}
         </button>
       </form>
     </WizardPage>
