@@ -14,8 +14,10 @@ internal sealed class VariableService(
     {
         var response = await apiClient.GetDataVariablesAsync();
         var variables = response.Data ?? [];
-
-        logger.LogInformation("Retrieved {Count} variables for agent {AgentId}.", variables.Length, ixonAuthenticationContext.IxonHeaders.AgentId);
+        if(logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Retrieved {Count} variables for agent {AgentId}.", variables.Length, ixonAuthenticationContext.IxonHeaders.AgentId);
+        }
         return variables;
     }
 
@@ -44,10 +46,13 @@ internal sealed class VariableService(
         var response = await apiClient.PostVariableAsync(variable);
         var createdVariable = response?.Data;
 
-        logger.LogInformation(
-            "Created variable {VariableName} for agent {AgentId}.",
-            createdVariable?.Name ?? variable.Name,
-            ixonAuthenticationContext.IxonHeaders.AgentId);
+        if(logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Created variable {VariableName} for agent {AgentId}.",
+                createdVariable?.Name ?? variable.Name,
+                ixonAuthenticationContext.IxonHeaders.AgentId);
+        }   
 
         return createdVariable;
     }
@@ -63,7 +68,10 @@ internal sealed class VariableService(
         var response = await apiClient.PostVariablesAsync(variableList);
         var createdVariables = response?.Data ?? [];
 
-        logger.LogInformation("Created {Count} variables for agent {AgentId}.", createdVariables.Length, ixonAuthenticationContext.IxonHeaders.AgentId);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Created {Count} variables for agent {AgentId}.", createdVariables.Length, ixonAuthenticationContext.IxonHeaders.AgentId);
+        }
         return createdVariables;
     }
 }

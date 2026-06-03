@@ -42,22 +42,28 @@ internal sealed class DataSourceResolver(
             );
         }
         
-        logger.LogInformation(
-            "Using device '{DeviceName}' ({DevicePublicId}) with IP '{IpAddress}'.",
-            device.Name,
-            device.PublicId,
-            device.IpAddress
-        );
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Using device '{DeviceName}' ({DevicePublicId}) with IP '{IpAddress}'.",
+                device.Name,
+                device.PublicId,
+                device.IpAddress
+            );
+        }
 
         var existingDataSource = await FindExistingDataSourceAsync(device.PublicId, sourceName);
         if (existingDataSource is not null)
         {
-            logger.LogInformation(
-                "Found existing data source '{Name}' ({PublicId}) for device '{DeviceName}'. Reusing it.",
-                existingDataSource.Name,
-                existingDataSource.PublicId,
-                device.Name
-            );
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "Found existing data source '{Name}' ({PublicId}) for device '{DeviceName}'. Reusing it.",
+                    existingDataSource.Name,
+                    existingDataSource.PublicId,
+                    device.Name
+                );
+            }
             return existingDataSource.PublicId!;
         }
 
@@ -68,7 +74,10 @@ internal sealed class DataSourceResolver(
             result?.Data?.PublicId
             ?? throw new InvalidOperationException("Failed to create a new data source in IXON.");
 
-        logger.LogInformation("Created data source with ID '{DataSourceId}'.", createdId);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Created data source with ID '{DataSourceId}'.", createdId);
+        }
         return createdId;
     }
 
@@ -121,10 +130,13 @@ internal sealed class DataSourceResolver(
 
         if (matched is null)
         {
-            logger.LogWarning(
-                "No device found with IP address '{Host}'. Falling back to first device.",
-                host
-            );
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning(
+                    "No device found with IP address '{Host}'. Falling back to first device.",
+                    host
+                );
+            }
         }
 
         return matched ?? devices.FirstOrDefault();

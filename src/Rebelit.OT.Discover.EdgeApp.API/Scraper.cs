@@ -33,7 +33,10 @@ public class Scraper(
         var client = await CreateClientAsync();
         if (client == null)
         {
-            logger.LogError("Failed to create UAClient. Aborting execution.");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError("Failed to create UAClient. Aborting execution.");
+            }
             return null;
         }
 
@@ -48,7 +51,10 @@ public class Scraper(
 
         if (string.IsNullOrWhiteSpace(plcUrl))
         {
-            logger.LogError("PLC URL is missing. Aborting execution.");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError("PLC URL is missing. Aborting execution.");
+            }
             return null;
         }
 
@@ -59,7 +65,10 @@ public class Scraper(
 
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
         {
-            logger.LogError("PLC credentials are incomplete. Provide both username and password.");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError("PLC credentials are incomplete. Provide both username and password.");
+            }
             return null;
         }
 
@@ -84,14 +93,20 @@ public class Scraper(
 
         if (dataSourceId == null)
         {
-            logger.LogError("Data source ID is missing. Aborting execution.");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError("Data source ID is missing. Aborting execution.");
+            }
             return;
         }
 
         var client = await CreateClientAsync();
         if (client is null)
         {
-            logger.LogError("Failed to create UAClient. Aborting execution.");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError("Failed to create UAClient. Aborting execution.");
+            }
             return;
         }
 
@@ -101,10 +116,17 @@ public class Scraper(
             return;
         }
 
-        logger.LogInformation("Found {NodeCount} nodes in the OPC UA address space.", nodes.Count);
-        foreach (var rd in nodes)
+        if (logger.IsEnabled(LogLevel.Information))
         {
-            logger.LogTrace("Found node {NodeId} ({DisplayName}).", rd.NodeId, rd.DisplayName);
+            logger.LogInformation("Found {NodeCount} nodes in the OPC UA address space.", nodes.Count);
+        }
+
+        if (logger.IsEnabled(LogLevel.Trace))
+        {
+            foreach (var rd in nodes)
+            {
+                logger.LogTrace("Found node {NodeId} ({DisplayName}).", rd.NodeId, rd.DisplayName);
+            }
         }
 
         await nodeSynchronizer.InitializeAsync();
@@ -113,7 +135,10 @@ public class Scraper(
         {
             if (rd.NodeId.NamespaceIndex == 0 || rd.NodeId.NamespaceIndex == 1)
             {
-                logger.LogDebug("Skipping node {NodeId} in namespace {NamespaceIndex}.", rd.NodeId, rd.NodeId.NamespaceIndex);
+                if (logger.IsEnabled(LogLevel.Debug))
+                {
+                    logger.LogDebug("Skipping node {NodeId} in namespace {NamespaceIndex}.", rd.NodeId, rd.NodeId.NamespaceIndex);
+                }
                 return false;
             }
             return true;
@@ -127,10 +152,13 @@ public class Scraper(
             createdVariables.AddRange(batchVariables.Where(v => v is not null)!);
         }
 
-        logger.LogInformation(
-            "Mapped {VariableCount} variables from OPC UA nodes.",
-            createdVariables.Count
-        );
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Mapped {VariableCount} variables from OPC UA nodes.",
+                createdVariables.Count
+            );
+        }
 
         await nodeSynchronizer.SynchronizeVariablesAsync(ixonAuthenticationContext.IxonHeaders.AgentId, createdVariables);
     }

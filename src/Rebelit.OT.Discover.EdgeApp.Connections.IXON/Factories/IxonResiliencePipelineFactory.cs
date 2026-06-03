@@ -32,11 +32,14 @@ internal static class IxonResiliencePipelineFactory
             BackoffType = DelayBackoffType.Constant,
             OnRetry = args =>
             {
-                logger.LogWarning(
-                    "IXON API rate limit hit (429). Waiting {Delay} before retrying (attempt {AttemptNumber}).",
-                    args.RetryDelay,
-                    args.AttemptNumber + 1
-                );
+                if(logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning(
+                        "IXON API rate limit hit (429). Waiting {Delay} before retrying (attempt {AttemptNumber}).",
+                        args.RetryDelay,
+                        args.AttemptNumber + 1
+                    );
+                }
                 return ValueTask.CompletedTask;
             },
         };
@@ -56,11 +59,14 @@ internal static class IxonResiliencePipelineFactory
             BackoffType = DelayBackoffType.Constant,
             OnRetry = args =>
             {
-                logger.LogWarning(
-                    "IXON API connection failed. Waiting {Delay} before retrying (attempt {AttemptNumber}).",
-                    args.RetryDelay,
-                    args.AttemptNumber + 1
-                );
+                if(logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning(
+                        "IXON API connection failed. Waiting {Delay} before retrying (attempt {AttemptNumber}).",
+                        args.RetryDelay,
+                        args.AttemptNumber + 1
+                    );
+                }
                 return ValueTask.CompletedTask;
             },
         };

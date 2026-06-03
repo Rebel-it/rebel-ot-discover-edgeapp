@@ -35,7 +35,10 @@ public class ApiClient(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Could not reach SecureEdge Pro");
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError(ex, "Could not reach SecureEdge Pro");
+            }
             return new Result<SecureEdgeSystemInfo>
             {
                 ErrorMessage = "Could not reach SecureEdge Pro to retrieve system information. Are you connected with the VPN?"
