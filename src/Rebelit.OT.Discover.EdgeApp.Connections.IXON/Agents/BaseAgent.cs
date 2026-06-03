@@ -25,7 +25,7 @@ internal abstract class BaseAgent
         _ixonAuthenticationContext = ixonAuthenticationContext;
     }
 
-    protected async Task<T> Get<T>(string uri)
+    protected async Task<T> Get<T>(Uri uri)
     {
         var response = await ExecuteRequestAsync(http =>
             http.GetAsync($"{_configuration.CurrentValue.BaseUrl}{uri}")
@@ -34,7 +34,7 @@ internal abstract class BaseAgent
         return System.Text.Json.JsonSerializer.Deserialize<T>(content)!;
     }
 
-    protected async Task<T?> Post<T>(string uri, object body)
+    protected async Task<T?> Post<T>(Uri uri, object body)
     {
         var response = await ExecuteRequestAsync(http =>
             http.PostAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
@@ -43,14 +43,14 @@ internal abstract class BaseAgent
             await response.Content.ReadAsStringAsync()
         );
     }
-    protected async Task Post(string uri, object body)
+    protected async Task Post(Uri uri, object body)
     {
         await ExecuteRequestAsync(http =>
             http.PostAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
         );
     }
 
-    protected async Task<T?> Patch<T>(string uri, object body)
+    protected async Task<T?> Patch<T>(Uri uri, object body)
     {
         var response = await ExecuteRequestAsync(http =>
            http.PatchAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
@@ -60,7 +60,7 @@ internal abstract class BaseAgent
         );
     }
 
-    protected async Task<T?> Put<T>(string uri, object body)
+    protected async Task<T?> Put<T>(Uri uri, object body)
     {
         var response = await ExecuteRequestAsync(http =>
             http.PutAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
@@ -70,7 +70,7 @@ internal abstract class BaseAgent
         );
     }
 
-    protected async Task<T?> PostCsv<T>(string uri, string csv)
+    protected async Task<T?> PostCsv<T>(Uri uri, string csv)
     {
         var content = new StringContent(csv, System.Text.Encoding.UTF8, "text/csv");
         var response = await ExecuteRequestAsync(http =>
@@ -91,6 +91,8 @@ internal abstract class BaseAgent
             return await send(httpClient);
         });
     }
+
+    protected string AgentId => _ixonAuthenticationContext.IxonHeaders.GetRequiredAgentId();
 
     protected virtual HttpMessageHandler? GetHttpMessageHandler() => null;
 

@@ -21,7 +21,7 @@ internal sealed class VariableService(
         return variables;
     }
 
-    public async Task<Variable?> CreateVariableAsync(Variable variable, CancellationToken cancellationToken = default)
+    public Task<Variable?> CreateVariableAsync(Variable variable, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(variable.Name))
         {
@@ -43,6 +43,11 @@ internal sealed class VariableService(
             throw new ArgumentException("Variable source public id is required.", nameof(variable));
         }
 
+        return CreateVariableCoreAsync(variable, cancellationToken);
+    }
+
+    private async Task<Variable?> CreateVariableCoreAsync(Variable variable, CancellationToken cancellationToken)
+    {
         var response = await apiClient.PostVariableAsync(variable);
         var createdVariable = response?.Data;
 
@@ -52,7 +57,7 @@ internal sealed class VariableService(
                 "Created variable {VariableName} for agent {AgentId}.",
                 createdVariable?.Name ?? variable.Name,
                 ixonAuthenticationContext.IxonHeaders.AgentId);
-        }   
+        }
 
         return createdVariable;
     }
