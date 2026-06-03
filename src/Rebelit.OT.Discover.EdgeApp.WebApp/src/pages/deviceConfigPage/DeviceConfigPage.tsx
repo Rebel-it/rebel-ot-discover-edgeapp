@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import styles from './DeviceConfigPage.module.css'
-import sharedStyles from '../loginPage/LoginPage.module.css'
 import { PushDeviceConfiguration } from '../../services/IxonSettingService'
 import { loadIxonAuthenticationHeaders } from '../../services/sessionStorageService'
 import { useNavigate } from 'react-router-dom';
 import { useWizard } from '../../context/WizardContext'
 import WizardPage from '../wizardPage/WizardPage'
 import { Pages } from '../../models/Pages'
+import WizardPageTitle from '../../components/atoms/wizardPageTitle/WizardPageTitle'
 
 function DeviceConfigPage() {
   const navigate = useNavigate();
@@ -44,24 +44,22 @@ function DeviceConfigPage() {
         markStepCompleted("deviceConfig");
         navigate(Pages.final);
       }}>
-      <div className={styles.card}>
-        <h1>Device Configuration</h1>
-        <p>
-          Push the latest configuration to your edge devices to ensure they are up to date with the latest settings and ready for discovery workflows.
-        </p>
+      <div className={styles.page}>
+        <WizardPageTitle title="Device Configuration" />
+        <div className={styles.descriptionWrapper}>
+          <p>
+            The following data will be written to your edge router, there could be additional costs after doing this?
+          </p>
+          <p className={styles.warning}>
+            Note: when you push this, everyone on the VPN will be disconnected
+          </p>
+        </div>
+
         {status && (
           <p className={`${styles.formMessage} ${status.type === 'success' ? styles.successMessage : styles.errorMessage}`}>
             {status.message}
           </p>
         )}
-        <button
-          type="button"
-          className={sharedStyles.loginButton}
-          onClick={handlePushConfiguration}
-          disabled={loading}
-        >
-          {loading ? 'Pushing...' : 'Push Configuration'}
-        </button>
       </div>
     </WizardPage>
   )

@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import WizardPage from "../wizardPage/WizardPage";
 import { Pages } from "../../models/Pages";
 import { useWizard } from "../../context/WizardContext";
+import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle";
 
 function TagPage() {
   const navigate = useNavigate();
@@ -107,7 +108,7 @@ function TagPage() {
       }}>
 
       <div className={styles.header}>
-        <h1>Tags</h1>
+        <WizardPageTitle title="Tags" />
         <button
           type="button"
           className={styles.saveButton}
