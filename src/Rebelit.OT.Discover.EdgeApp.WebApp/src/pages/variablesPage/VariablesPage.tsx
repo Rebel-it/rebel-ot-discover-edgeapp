@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { synchronizeVariables as synchronizeVariablesRequest } from "../../services/scraperService"
-import sharedStyles from "../loginPage/LoginPage.module.css"
 import styles from "./VariablesPage.module.css"
 import { useWizard } from "../../context/WizardContext"
 import WizardPage from "../wizardPage/WizardPage"
 import { Pages } from "../../models/Pages"
+import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle"
+import Spinner from "../../components/atoms/spinner/Spinner"
 
 function VariablesPage() {
   const navigate = useNavigate();
@@ -14,41 +15,41 @@ function VariablesPage() {
   const [synchronizationSucceeded, setSynchronizationSucceeded] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
-    let isActive = true
+  // useEffect(() => {
+  //   let isActive = true
 
-    async function runSynchronization() {
-      setIsSubmitting(true);
-      setErrorMessage("");
-      setSynchronizationSucceeded(false);
+  //   async function runSynchronization() {
+  //     setIsSubmitting(true);
+  //     setErrorMessage("");
+  //     setSynchronizationSucceeded(false);
 
-      try {
-        await synchronizeVariablesRequest();
+  //     try {
+  //       await synchronizeVariablesRequest();
 
-        if (!isActive) {
-          return;
-        }
+  //       if (!isActive) {
+  //         return;
+  //       }
 
-        setSynchronizationSucceeded(true);
-      } catch (error) {
-        if (!isActive) {
-          return;
-        }
+  //       setSynchronizationSucceeded(true);
+  //     } catch (error) {
+  //       if (!isActive) {
+  //         return;
+  //       }
 
-        setErrorMessage(error instanceof Error ? error.message : "Variable synchronization failed. Please try again.");
-      } finally {
-        if (isActive) {
-          setIsSubmitting(false);
-        }
-      }
-    }
+  //       setErrorMessage(error instanceof Error ? error.message : "Variable synchronization failed. Please try again.");
+  //     } finally {
+  //       if (isActive) {
+  //         setIsSubmitting(false);
+  //       }
+  //     }
+  //   }
 
-    void runSynchronization();
+  //   void runSynchronization();
 
-    return () => {
-      isActive = false;
-    }
-  }, [])
+  //   return () => {
+  //     isActive = false;
+  //   }
+  // }, [])
 
   return (
     <WizardPage
@@ -58,23 +59,32 @@ function VariablesPage() {
         markStepCompleted("variables");
         navigate(Pages.tags);
       }}>
-      <div className={sharedStyles.loginForm}>
-        <h1>Synchronize variables</h1>
+      <div className={styles.page}>
+        <WizardPageTitle title="Synchronize variables" />
 
         {isSubmitting && (
-          <div className={styles.statusBlock}>
-            <div className={styles.spinner} aria-hidden="true" />
-            <p className={styles.statusText}>Variable synchronization is in progress. This may take a few moments.</p>
-          </div>
+          <>
+            <div className={styles.statusDescriptionWrapper}>
+              <p>The following steps will now be performed:</p>
+              <ol>
+                <li>Retrieving variables from your machine</li>
+                <li>Sending data to the IXON Cloud</li>
+              </ol>
+            </div>
+            <div className={styles.spinnerWrapper}>
+              <Spinner />
+            </div>
+          </>
         )}
 
-        {errorMessage && <p className={`${sharedStyles.formMessage} ${sharedStyles.errorMessage}`}>{errorMessage}</p>}
+        {errorMessage && <p className={`${styles.formMessage} ${styles.errorMessage}`}>{errorMessage}</p>}
 
         {synchronizationSucceeded && (
-          <p className={`${sharedStyles.formMessage} ${sharedStyles.successMessage}`}>
+          <p className={`${styles.formMessage} ${styles.successMessage}`}>
             Variable synchronization succeeded. Continue to the next step.
           </p>
         )}
+
       </div>
     </WizardPage>
   )
