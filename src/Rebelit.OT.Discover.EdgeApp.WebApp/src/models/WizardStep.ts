@@ -1,5 +1,7 @@
+import { Pages } from "./Pages";
+
 export const WizardStep = {
-    introduction: {
+    start: {
       title: "",
       description: "",
     },
@@ -38,11 +40,11 @@ export type WizardStep = typeof WizardStep[keyof typeof WizardStep];
 export type WizardStepKey = keyof typeof WizardStep;
 
 export const WizardStepOrder: WizardStepKey[] = [
-    'login',
-    'plcConnect',
-    'source',
-    'variables',
-    'tags',
-    'deviceConfig',
-    'final',
+    Pages.login as WizardStepKey,
+    Pages.plcConnect as WizardStepKey,
+    Pages.source as WizardStepKey,
+    Pages.variables as WizardStepKey,
+    Pages.tags as WizardStepKey,
+    Pages.deviceConfig as WizardStepKey,
+    Pages.final as WizardStepKey,
 ];

@@ -5,120 +5,124 @@ import styles from '../loginPage/LoginPage.module.css'
 import type { PlcAuthObject } from '../../models/PlcAuthObject.ts'
 import { useState, type ComponentProps } from 'react'
 import FormField from '../../components/atoms/formField/FormField.tsx'
+import WizardPage from '../wizardPage/WizardPage.tsx'
+import { useWizard } from '../../context/WizardContext.tsx'
 
 type PlcFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
 const defaultPlcObject: PlcAuthObject = {
-    OpcUaServerAddress: '',
-    OpcUaUsername: '',
-    OpcUaPassword: '',
+  OpcUaServerAddress: '',
+  OpcUaUsername: '',
+  OpcUaPassword: '',
 }
 
 function PlcConnect() {
-    const navigate = useNavigate()
-    const [plcObject, setPlcObject] = useState<PlcAuthObject>(defaultPlcObject)
-    const [useCredentials, setUseCredentials] = useState(false)
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [connectionSucceeded, setConnectionSucceeded] = useState(false)
-    const [errorMessage, setErrorMessage] = useState('')
+  const navigate = useNavigate()
+  const { markStepCompleted } = useWizard()
+  const [plcObject, setPlcObject] = useState<PlcAuthObject>(defaultPlcObject)
+  const [useCredentials, setUseCredentials] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [connectionSucceeded, setConnectionSucceeded] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
-    function setPlcProperty<K extends keyof PlcAuthObject>(property: K, value: PlcAuthObject[K]) {
-        setPlcObject((currentPlcObject) => ({
-            ...currentPlcObject,
-            [property]: value,
-        }))
+  function setPlcProperty<K extends keyof PlcAuthObject>(property: K, value: PlcAuthObject[K]) {
+    setPlcObject((currentPlcObject) => ({
+      ...currentPlcObject,
+      [property]: value,
+    }))
+  }
+
+  function handleUseCredentialsChange(checked: boolean) {
+    setUseCredentials(checked)
+
+    if (!checked) {
+      setPlcObject((currentPlcObject) => ({
+        ...currentPlcObject,
+        OpcUaUsername: '',
+        OpcUaPassword: '',
+      }))
     }
+  }
 
-    function handleUseCredentialsChange(checked: boolean) {
-        setUseCredentials(checked)
+  async function handleSubmit(event: PlcFormSubmitEvent) {
+    event.preventDefault()
+    setIsSubmitting(true)
+    setErrorMessage('')
+    setConnectionSucceeded(false)
 
-        if (!checked) {
-            setPlcObject((currentPlcObject) => ({
-                ...currentPlcObject,
-                OpcUaUsername: '',
-                OpcUaPassword: '',
-            }))
-        }
+    try {
+      await connectToPlc(plcObject)
+      savePlcAuth(plcObject)
+      setConnectionSucceeded(true)
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'PLC connection failed. Please check your credentials and try again.')
+    } finally {
+      setIsSubmitting(false)
     }
+  }
 
-    async function handleSubmit(event: PlcFormSubmitEvent) {
-        event.preventDefault()
-        setIsSubmitting(true)
-        setErrorMessage('')
-        setConnectionSucceeded(false)
+  return (
+    <WizardPage
+      wizardStep='plcConnect'
+      continueButtonText='Connect'
+      onContinue={() => {
+        markStepCompleted('plcConnect');
+        navigate('/deviceConnect')
+      }}
+    >
+      <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
+        <h1>PLC Connect</h1>
 
-        try {
-            await connectToPlc(plcObject)
-            savePlcAuth(plcObject)
-            setConnectionSucceeded(true)
-        } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : 'PLC connection failed. Please check your credentials and try again.')
-        } finally {
-            setIsSubmitting(false)
-        }
-    }
+        <FormField
+          id="ipAddress"
+          label="PLC Server IP Address"
+          value={plcObject.OpcUaServerAddress}
+          onChange={(value) => setPlcProperty('OpcUaServerAddress', value)}
+          required
+        />
 
-    return (
-        <div className={styles.wrapper}>
-            <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
-                <h1>PLC Connect</h1>
+        <label>
+          <input
+            type="checkbox"
+            checked={useCredentials}
+            onChange={(event) => handleUseCredentialsChange(event.target.checked)}
+          />
+          Use PLC username and password
+        </label>
 
-                <FormField
-                    id="ipAddress"
-                    label="PLC Server IP Address"
-                    value={plcObject.OpcUaServerAddress}
-                    onChange={(value) => setPlcProperty('OpcUaServerAddress', value)}
-                    required
-                />
+        {useCredentials && (
+          <>
+            <FormField
+              id="OpcUaUsername"
+              label="PLC User Name"
+              value={plcObject.OpcUaUsername}
+              onChange={(value) => setPlcProperty('OpcUaUsername', value)}
+            />
 
-                <label>
-                    <input
-                        type="checkbox"
-                        checked={useCredentials}
-                        onChange={(event) => handleUseCredentialsChange(event.target.checked)}
-                    />
-                    Use PLC username and password
-                </label>
+            <FormField
+              id="OpcUaPassword"
+              label="PLC Password"
+              type="password"
+              value={plcObject.OpcUaPassword}
+              onChange={(value) => setPlcProperty('OpcUaPassword', value)}
+            />
+          </>
+        )}
 
-                {useCredentials && (
-                    <>
-                        <FormField
-                            id="OpcUaUsername"
-                            label="PLC User Name"
-                            value={plcObject.OpcUaUsername}
-                            onChange={(value) => setPlcProperty('OpcUaUsername', value)}
-                        />
+        {errorMessage && <p className={`${styles.formMessage} ${styles.errorMessage}`}>{errorMessage}</p>}
 
-                        <FormField
-                            id="OpcUaPassword"
-                            label="PLC Password"
-                            type="password"
-                            value={plcObject.OpcUaPassword}
-                            onChange={(value) => setPlcProperty('OpcUaPassword', value)}
-                        />
-                    </>
-                )}
+        {connectionSucceeded && (
+          <p className={`${styles.formMessage} ${styles.successMessage}`}>
+            PLC connection succeeded. Continue to the next step.
+          </p>
+        )}
 
-                {errorMessage && <p className={`${styles.formMessage} ${styles.errorMessage}`}>{errorMessage}</p>}
-
-                {connectionSucceeded && (
-                    <p className={`${styles.formMessage} ${styles.successMessage}`}>
-                        PLC connection succeeded. Continue to the next step.
-                    </p>
-                )}
-
-                <button type="submit" className={styles.loginButton} disabled={isSubmitting || connectionSucceeded}>
-                    {isSubmitting ? 'Connecting...' : 'Connect'}
-                </button>
-            </form>
-
-            {connectionSucceeded && (
-                <button type="button" className={styles.nextButton} onClick={() => navigate('/source')}>
-                    Next
-                </button>
-            )}
-        </div>
-    )
+        <button type="submit" className={styles.loginButton} disabled={isSubmitting || connectionSucceeded}>
+          {isSubmitting ? 'Connecting...' : 'Connect'}
+        </button>
+      </form>
+    </WizardPage>
+  )
 }
 
 export default PlcConnect

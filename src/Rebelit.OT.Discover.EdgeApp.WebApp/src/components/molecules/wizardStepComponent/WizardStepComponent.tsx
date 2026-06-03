@@ -6,9 +6,14 @@ type Props = {
   stepNumber: number;
   wizardStep: step;
   status: "todo" | "active" | "done";
+  isCurrentStep: boolean;
 }
 
-export default function WizardStepComponent({ stepNumber, wizardStep, status }: Props) {
+export default function WizardStepComponent({
+  stepNumber,
+  wizardStep,
+  status,
+  isCurrentStep }: Props) {
   return (
     <div className={styles.wizardStep}>
       <div className={styles.header}>
@@ -16,7 +21,7 @@ export default function WizardStepComponent({ stepNumber, wizardStep, status }: 
         <h2>{wizardStep.title}</h2>
       </div>
       <div className={styles.description}>
-        {status === "active" && (
+        {isCurrentStep && (
           <p>{wizardStep.description}</p>
         )}
       </div>

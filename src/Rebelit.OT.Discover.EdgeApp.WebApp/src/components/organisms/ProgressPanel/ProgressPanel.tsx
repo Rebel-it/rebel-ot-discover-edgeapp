@@ -10,6 +10,10 @@ type Props = {
 export default function ProgressPanel({ currentStep }: Readonly<Props>) {
   const { isStepCompleted } = useWizard();
 
+  function isCurrentStep(stepKey: WizardStepKey): boolean {
+    return stepKey === currentStep;
+  }
+
   return (
     <div className={styles.progressPanel}>
       {WizardStepOrder.map((key, index) => {
@@ -24,6 +28,7 @@ export default function ProgressPanel({ currentStep }: Readonly<Props>) {
             stepNumber={index + 1}
             wizardStep={step}
             status={status}
+            isCurrentStep={isCurrentStep(key)}
           />
         );
       })}
