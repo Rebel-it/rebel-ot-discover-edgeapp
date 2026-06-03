@@ -58,7 +58,7 @@ function LoginPage() {
       }}>
 
       <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
-        <h1>Sign in</h1>
+        <h1>Log in</h1>
 
         <FormField
           id="applicationid"
