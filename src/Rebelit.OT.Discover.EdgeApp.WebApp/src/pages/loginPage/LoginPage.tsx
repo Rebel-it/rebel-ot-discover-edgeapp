@@ -50,9 +50,9 @@ function LoginPage() {
   }
 
   return (
-    <WizardPage 
-      wizardStep="login" 
-      continueButtonText="Log in" 
+    <WizardPage
+      wizardStep="login"
+      continueButtonText="Log in"
       onContinue={() => {
         markStepCompleted("login");
         navigate(Pages.plcConnect);
@@ -61,22 +61,25 @@ function LoginPage() {
       <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
         <WizardPageTitle title="Log in" />
 
-        <FormField
-          id="applicationid"
-          label="API Application ID"
-          value={serviceAccount.apiApplicationID}
-          onChange={(value) => setAuthProperty("apiApplicationID", value)}
-          required
-        />
-
-        <FormField
-          id="accesstoken"
-          label="Access Token"
-          type="password"
-          value={serviceAccount.accessToken}
-          onChange={(value) => setAuthProperty("accessToken", value)}
-          required
-        />
+        <div className={styles.formFieldWrapper}>
+          <FormField
+            id="applicationid"
+            label="API Application ID"
+            value={serviceAccount.apiApplicationID}
+            onChange={(value) => setAuthProperty("apiApplicationID", value)}
+            required
+            placeholder="..."
+          />
+          <FormField
+            id="accesstoken"
+            label="Access Token"
+            type="password"
+            value={serviceAccount.accessToken}
+            onChange={(value) => setAuthProperty("accessToken", value)}
+            required
+            placeholder="..."
+          />
+        </div>
 
         {errorMessage && <p className={`${styles.formMessage} ${styles.errorMessage}`}>{errorMessage}</p>}
 

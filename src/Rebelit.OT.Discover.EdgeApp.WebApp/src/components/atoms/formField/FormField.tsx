@@ -8,10 +8,11 @@ type Props = {
   onChange: (value: string) => void
   type?: ComponentProps<'input'>['type']
   required?: boolean
+  placeholder?: string
 }
 
 function FormField({ id, label, value, onChange,
-  type = 'text', required }: Readonly<Props>) {
+  type = 'text', required, placeholder }: Readonly<Props>) {
   return (
     <div className={styles.formField}>
       <label htmlFor={id}>{label}</label>
@@ -22,6 +23,7 @@ function FormField({ id, label, value, onChange,
         inputMode={type === 'password' ? undefined : 'text'}
         onChange={(e) => onChange(e.target.value)}
         required={required}
+        placeholder={placeholder}
       />
     </div>
   )

@@ -19,5 +19,9 @@
     border: 1px solid #6C4796;
     height: 46px;
     padding: 12px 20px;
+
+    &::placeholder {
+      color: #747474;
+    }
   }
 }
