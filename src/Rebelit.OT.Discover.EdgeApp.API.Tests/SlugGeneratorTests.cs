@@ -70,4 +70,16 @@ public partial class SlugGeneratorTests
             Assert.That(SlugRegex().IsMatch(result), Is.True);
         });
     }
+
+    [Test]
+    public void CreateFromNameAndAddress_WithNonAsciiCharacters_NormalizesToValidAsciiSlug()
+    {
+        var result = SlugGenerator.CreateFromNameAndAddress("ÄÖÜ", "ns=2;s=ß");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result, Is.EqualTo("a____s_"));
+            Assert.That(SlugRegex().IsMatch(result), Is.True);
+        });
+    }
 }

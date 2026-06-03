@@ -61,7 +61,10 @@ internal sealed class NodeSynchronizer(
 
             if(client.Session is null)
             {
-                logger.LogError("OPC UA session is not established. Cannot read DataType attribute for node {NodeId}.", nodeId);
+                if(logger.IsEnabled(LogLevel.Error))
+                {
+                    logger.LogError("OPC UA session is not established. Cannot read DataType attribute for node {NodeId}.", nodeId);
+                }
                 return null;
             }
 
@@ -79,17 +82,24 @@ internal sealed class NodeSynchronizer(
             }
             else
             {
-                logger.LogError(
+                if (logger.IsEnabled(LogLevel.Error))
+                {
+                    logger.LogError(
                     "Failed to read DataType attribute for node {NodeId}. StatusCode: {StatusCode}",
                     nodeId,
                     response.Results.Count > 0 ? response.Results[0].StatusCode : Opc.Ua.StatusCodes.Bad
                 );
+                }
+
                 return null;
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error reading DataType attribute for node {NodeId}", nodeId);
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError(ex, "Error reading DataType attribute for node {NodeId}", nodeId);
+            }
             return null;
         }
     }
@@ -99,19 +109,25 @@ internal sealed class NodeSynchronizer(
         var address = referenceDescription.NodeId.ToString();
         if (_existingAddresses.Contains(address))
         {
-            logger.LogTrace(
-                "Variable with address {Address} already exists. Skipping creation.",
-                address
-            );
+            if (logger.IsEnabled(LogLevel.Trace))
+            {
+                logger.LogTrace(
+                    "Variable with address {Address} already exists. Skipping creation.",
+                    address
+                );
+            }
             return null;
         }
 
         if (address.Contains("(type)"))
         {
-            logger.LogTrace(
-                "Node {NodeId} is a type definition. Skipping variable creation.",
-                address
-            );
+            if (logger.IsEnabled(LogLevel.Trace))
+            {
+                logger.LogTrace(
+                    "Node {NodeId} is a type definition. Skipping variable creation.",
+                    address
+                );
+            }
             return null;
         }
 
@@ -119,18 +135,24 @@ internal sealed class NodeSynchronizer(
 
         if (dataTypeNodeId == null)
         {
-            logger.LogError("ReadDataTypeAttributeAsync failed for node {NodeId}.", referenceDescription.NodeId);
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError("ReadDataTypeAttributeAsync failed for node {NodeId}.", referenceDescription.NodeId);
+            }
             return null;
         }
         var variable = variableMapper.Map(dataTypeNodeId, referenceDescription, dataSourceId);
 
         if (variable is null)
         {
-            logger.LogWarning(
-                "Node '{DisplayName}' ({NodeId}) could not be mapped to an IXON variable and was skipped.",
-                referenceDescription.DisplayName,
-                referenceDescription.NodeId
-            );
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning(
+                    "Node '{DisplayName}' ({NodeId}) could not be mapped to an IXON variable and was skipped.",
+                    referenceDescription.DisplayName,
+                    referenceDescription.NodeId
+                );
+            }
             return null;
         }
         return variable;
@@ -141,30 +163,42 @@ internal sealed class NodeSynchronizer(
         var variableList = variables.ToList();
         if (variableList.Count == 0)
         {
-            logger.LogInformation(
-                "No variables to post for agent {AgentId}. Skipping synchronization.",
-                agentId
-            );
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "No variables to post for agent {AgentId}. Skipping synchronization.",
+                    agentId
+                );
+            }
             return;
         }
 
-        logger.LogInformation("Posting {Count} variables for agent {AgentId}.", variableList.Count, agentId);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Posting {Count} variables for agent {AgentId}.", variableList.Count, agentId);
+        }
 
         var result = await apiClient.PostVariablesAsync(variableList);
 
         if (result is not null && result.Data is not null)
         {
-            logger.LogInformation(
-                "Successfully posted {Count} variables for agent {AgentId}.",
-                result.Data.Length,
-                agentId
-            );
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "Successfully posted {Count} variables for agent {AgentId}.",
+                    result.Data.Length,
+                    agentId
+                );
+            }
             return;
         }
-        logger.LogWarning(
-            "Posting variables for agent {AgentId} returned an unexpected empty response. Attempted to post {Count} variables.",
-            agentId,
-            variableList.Count
+        if (logger.IsEnabled(LogLevel.Warning))
+        {
+            logger.LogWarning(
+                "Posting variables for agent {AgentId} returned an unexpected empty response. Attempted to post {Count} variables.",
+                agentId,
+                variableList.Count
             );
+        }
     }
 }

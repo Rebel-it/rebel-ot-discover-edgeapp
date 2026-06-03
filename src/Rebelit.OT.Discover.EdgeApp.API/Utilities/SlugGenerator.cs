@@ -28,27 +28,31 @@ public static class SlugGenerator
     {
         const int maxSlugLength = 64;
 
-        var normalized = new string([
-            .. slug.ToLowerInvariant().Select(c =>
-                c is >= 'a' and <= 'z' ||
-                c is >= '0' and <= '9' ||
-                c is '_' ||
-                c is '-'
-                    ? c
-                    : '_'
-            ),
-        ]);
+        var normalized = new string(
+            slug.ToLowerInvariant()
+                .Select(c => IsAllowedSlugChar(c) ? c : '_')
+                .ToArray());
 
         if (string.IsNullOrWhiteSpace(normalized))
         {
             normalized = "a";
         }
 
-        if (normalized[0] is < 'a' or > 'z')
+        if (!char.IsAsciiLetter(normalized[0]))
         {
             normalized = $"a{normalized}";
         }
 
-        return normalized.Length > maxSlugLength ? normalized[..maxSlugLength] : normalized;
+        if (normalized.Length > maxSlugLength)
+        {
+            normalized = normalized[..maxSlugLength];
+        }
+
+        return normalized;
+    }
+
+    private static bool IsAllowedSlugChar(char c)
+    {
+        return char.IsAsciiLetterOrDigit(c) || c is '_' or '-';
     }
 }

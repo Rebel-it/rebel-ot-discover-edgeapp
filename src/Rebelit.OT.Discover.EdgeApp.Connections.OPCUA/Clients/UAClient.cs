@@ -138,18 +138,23 @@ public class UAClient : IDisposable
             Session = previousSession;
             return false;
         }
-
-        _logger.LogInformation(
-            "Transferring {Count} subscriptions from old session to new session...",
-            subscriptions.Count
-        );
+        if(_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation(
+                "Transferring {Count} subscriptions from old session to new session...",
+                subscriptions.Count
+            );
+        }
         bool success = await Session
             .TransferSubscriptionsAsync(subscriptions, true, ct)
             .ConfigureAwait(false);
 
         if (success)
         {
-            _logger.LogInformation("Subscriptions transferred.");
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Subscriptions transferred.");
+            }
         }
 
         return success;
@@ -178,7 +183,10 @@ public class UAClient : IDisposable
         {
             if (Session?.Connected == true)
             {
-                _logger.LogInformation("Session already connected!");
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Session already connected!");
+                }
                 return true;
             }
 
@@ -216,22 +224,29 @@ public class UAClient : IDisposable
 
             if (session?.Connected != true)
             {
-                _logger.LogWarning("Session created but not in Connected state.");
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning("Session created but not in Connected state.");
+                }
                 session?.Dispose();
                 return false;
             }
 
             ConfigureSession(session);
-            _logger.LogInformation(
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation(
                 "New Session Created with SessionName = {SessionName}",
-                session.SessionName
-            );
-
+                session.SessionName);
+            }
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Create Session Error");
+            if (_logger.IsEnabled(LogLevel.Error))
+            {
+                _logger.LogError(ex, "Create Session Error");
+            }
             return false;
         }
     }
@@ -263,7 +278,10 @@ public class UAClient : IDisposable
         CancellationToken ct
     )
     {
-        _logger.LogInformation("Waiting for reverse connection to {ServerUrl}...", serverUrl);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation("Waiting for reverse connection to {ServerUrl}...", serverUrl);
+        }
         EndpointDescription? endpointDescription = null;
         ITransportWaitingConnection? connection = null;
         do
@@ -282,7 +300,10 @@ public class UAClient : IDisposable
             }
             if (endpointDescription == null)
             {
-                _logger.LogInformation("Discovering reverse connection endpoints...");
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Discovering reverse connection endpoints...");
+                }
                 endpointDescription = await CoreClientUtils
                     .SelectEndpointAsync(_configuration, connection, useSecurity, _telemetry, ct)
                     .ConfigureAwait(false);
@@ -318,12 +339,15 @@ public class UAClient : IDisposable
         {
             if (Session != null)
             {
-                _logger.LogInformation("Disconnecting...");
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Disconnecting...");
+                }
 
                 lock (_lock)
                 {
                     Session.KeepAlive -= Session_KeepAlive;
-                    _reconnectHandler?.Dispose();
+                    Dispose();
                     _reconnectHandler = null;
                 }
 
@@ -334,18 +358,26 @@ public class UAClient : IDisposable
                 }
                 Session.Dispose();
                 Session = null;
-
-                _logger.LogInformation("Session Disconnected.");
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Session Disconnected.");
+                }
                 OnSessionStateChanged(new SessionStateChangedEventArgs(UAClientState.Disconnected));
             }
             else
             {
-                _logger.LogWarning("DisconnectAsync called but no active session.");
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning("DisconnectAsync called but no active session.");
+                }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Disconnect Error");
+            if (_logger.IsEnabled(LogLevel.Error))
+            {
+                _logger.LogError(ex, "Disconnect Error");
+            }
         }
     }
 
@@ -386,10 +418,12 @@ public class UAClient : IDisposable
             {
                 if (ReconnectPeriod <= 0)
                 {
-                    _logger.LogWarning(
+                    if (_logger.IsEnabled(LogLevel.Warning))
+                    {
+                        _logger.LogWarning(
                         "KeepAlive status {StatusCode}, but reconnect is disabled.",
-                        e.Status
-                    );
+                        e.Status);
+                    }
                     return;
                 }
 
@@ -450,20 +484,24 @@ public class UAClient : IDisposable
                 // after reactivate, the same session instance may be returned
                 if (!ReferenceEquals(Session, _reconnectHandler.Session))
                 {
-                    _logger.LogInformation(
+                    if (_logger.IsEnabled(LogLevel.Information))
+                    {
+                        _logger.LogInformation(
                         "--- RECONNECTED TO NEW SESSION --- {SessionId}",
-                        _reconnectHandler.Session.SessionId
-                    );
+                        _reconnectHandler.Session.SessionId);
+                    }
                     ISession session = Session;
                     Session = _reconnectHandler.Session;
                     Utils.SilentDispose(session);
                 }
                 else
                 {
-                    _logger.LogInformation(
+                    if (_logger.IsEnabled(LogLevel.Information))
+                    {
+                        _logger.LogInformation(
                         "--- REACTIVATED SESSION --- {SessionId}",
-                        _reconnectHandler.Session.SessionId
-                    );
+                        _reconnectHandler.Session.SessionId);
+                    }
                 }
                 OnSessionStateChanged(
                     new SessionStateChangedEventArgs(UAClientState.Reconnected, Session)
@@ -471,7 +509,10 @@ public class UAClient : IDisposable
             }
             else
             {
-                _logger.LogInformation("--- RECONNECT KeepAlive recovered ---");
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("--- RECONNECT KeepAlive recovered ---");
+                }
                 OnSessionStateChanged(
                     new SessionStateChangedEventArgs(UAClientState.Reconnected, Session)
                 );
@@ -502,7 +543,10 @@ public class UAClient : IDisposable
         // ***
 
         ServiceResult error = e.Error;
-        _logger.LogInformation("{Error}", error);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation("{Error}", error);
+        }
         if (error.StatusCode == StatusCodes.BadCertificateUntrusted && AutoAccept)
         {
             certificateAccepted = true;
@@ -510,18 +554,22 @@ public class UAClient : IDisposable
 
         if (certificateAccepted)
         {
-            _logger.LogInformation(
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation(
                 "Untrusted Certificate accepted. Subject = {Subject}",
-                e.Certificate.Subject
-            );
+                e.Certificate.Subject);
+            }
             e.Accept = true;
         }
         else
         {
-            _logger.LogInformation(
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation(
                 "Untrusted Certificate rejected. Subject = {Subject}",
-                e.Certificate.Subject
-            );
+                e.Certificate.Subject);
+            }
         }
     }
 }

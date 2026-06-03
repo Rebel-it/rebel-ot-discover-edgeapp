@@ -17,64 +17,90 @@ public class CompanyConfigurationService(
             Data = new CompanyConfigurationDto()
         };
 
+        var companyId = await GetCompanyIdAsync(response);
+        if (companyId is null)
+        {
+            return response;
+        }
+
+        authenticationContext.IxonHeaders.CompanyId = companyId;
+        response.Data.CompanyId = companyId;
+
+        var serialNumber = await GetDeviceSerialNumberAsync(response);
+        if (serialNumber is null)
+        {
+            return response;
+        }
+
+        var agentId = await GetAgentIdAsync(serialNumber, response);
+        if (agentId is null)
+        {
+            return response;
+        }
+
+        response.Data.AgentId = agentId;
+        return response;
+    }
+
+    private async Task<string?> GetCompanyIdAsync(Result<CompanyConfigurationDto> response)
+    {
         var companyResult = await apiClient.GetAssociatedCompanyAsync();
 
         if (companyResult.HasError)
         {
             response.ErrorMessage = companyResult.ErrorMessage ?? "The company could not be retrieved from IXON.";
-            return response;
+            return null;
         }
 
-        var company = companyResult.Data?.FirstOrDefault();
-
-        if (company == null)
+        var companyId = companyResult.Data?.FirstOrDefault()?.PublicId;
+        if (string.IsNullOrEmpty(companyId))
         {
             response.ErrorMessage = "No associated company found.";
-            return response;
+            return null;
         }
 
-        authenticationContext.IxonHeaders.CompanyId = company.PublicId;
-        response.Data.CompanyId = company.PublicId;
+        return companyId;
+    }
 
+    private async Task<string?> GetDeviceSerialNumberAsync(Result<CompanyConfigurationDto> response)
+    {
         var deviceSystemInfoResult = await secureEdgeApiClient.GetSystemInfoAsync();
-        var deviceSystemInfo = deviceSystemInfoResult.Data;
 
         if (!deviceSystemInfoResult.Success)
         {
             response.ErrorMessage = deviceSystemInfoResult.ErrorMessage;
-            return response;
+            return null;
         }
 
-        if (string.IsNullOrEmpty(deviceSystemInfo?.SerialNumber))
+        var serialNumber = deviceSystemInfoResult.Data?.SerialNumber;
+        if (string.IsNullOrEmpty(serialNumber))
         {
             response.ErrorMessage = "Serial number of device is missing from system info response.";
-            return response;
+            return null;
         }
 
+        return serialNumber;
+    }
+
+    private async Task<string?> GetAgentIdAsync(string serialNumber, Result<CompanyConfigurationDto> response)
+    {
         var agentResult = await apiClient.GetAgentsAsync();
 
         if (agentResult.HasError)
         {
             response.ErrorMessage = agentResult.ErrorMessage ?? "The agent could not be retrieved from IXON.";
-            return response;
-        }
-        var agents = agentResult.Data?.ToArray();
-
-        if (agents is not { Length: > 0 })
-        {
-            response.ErrorMessage = "It seems there are no agents in the company.";
-            return response;
+            return null;
         }
 
-        var agent = agents.FirstOrDefault(x => x.DeviceId != null && 
-                                               x.DeviceId.Contains(deviceSystemInfo.SerialNumber, StringComparison.InvariantCultureIgnoreCase));
-        if (agent == null)
+        var agent = agentResult.Data?
+            .FirstOrDefault(x => x.DeviceId is not null && x.DeviceId.Contains(serialNumber, StringComparison.InvariantCultureIgnoreCase));
+
+        if (agent is null)
         {
             response.ErrorMessage = "No agent found in IXON with a device ID containing the device serial number.";
-            return response;
+            return null;
         }
 
-        response.Data.AgentId = agent.PublicId;
-        return response;
+        return agent.PublicId;
     }
 }

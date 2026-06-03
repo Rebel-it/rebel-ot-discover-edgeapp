@@ -33,22 +33,28 @@ internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
         var builtInType = ResolveBuiltInType(dataTypeNodeId);
         if (builtInType is null)
         {
-            logger.LogWarning(
-                "Node '{DisplayName}' ({NodeId}) could not be mapped: TypeDefinition NodeId is not a known numeric type.",
-                referenceDescription.DisplayName,
-                referenceDescription.NodeId
-            );
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning(
+                    "Node '{DisplayName}' ({NodeId}) could not be mapped: TypeDefinition NodeId is not a known numeric type.",
+                    referenceDescription.DisplayName,
+                    referenceDescription.NodeId
+                );
+            }
             return null;
         }
 
         if (!TypeMap.TryGetValue(builtInType.Value, out var mapping))
         {
-            logger.LogWarning(
-                "Node '{DisplayName}' ({NodeId}) could not be mapped: built-in type '{BuiltInType}' is not supported.",
-                referenceDescription.DisplayName,
-                referenceDescription.NodeId,
-                builtInType.Value
-            );
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning(
+                    "Node '{DisplayName}' ({NodeId}) could not be mapped: built-in type '{BuiltInType}' is not supported.",
+                    referenceDescription.DisplayName,
+                    referenceDescription.NodeId,
+                    builtInType.Value
+                );
+            }
             return null;
         }
 
@@ -56,9 +62,12 @@ internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
 
         if (width is null)
         {
-            logger.LogWarning(
-                "The built-in type '{BuiltInType}' does not have a defined width.",
-                builtInType);
+            if(logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning(
+                    "The built-in type '{BuiltInType}' does not have a defined width.",
+                    builtInType);
+            }
         }
 
         var address = referenceDescription.NodeId.ToString();
@@ -78,7 +87,7 @@ internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
 
     private static BuiltInType? ResolveBuiltInType(ExpandedNodeId dataTypeId)
     {
-        int maxNumericId = 25; // The highest numeric ID for built-in types in OPC UA
+        const int maxNumericId = 25; // The highest numeric ID for built-in types in OPC UA
         if (dataTypeId.IdType != IdType.Numeric || dataTypeId.Identifier == null)
         {
             return null;
