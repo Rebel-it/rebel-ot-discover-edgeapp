@@ -1,28 +1,23 @@
 .formField {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 
   label {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-h);
+    font-family: Zilla Slab, serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--white);
   }
 
   input {
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--bg);
-    color: var(--text-h);
-    font: inherit;
-    font-size: 16px;
-    transition: border-color 0.2s, box-shadow 0.2s;
-
-    &:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-bg);
-    }
+    background-color: var(--white);
+    font-family: Lato, serif;
+    font-weight: 400;
+    font-size: 1.8rem;
+    border-radius: 8px;
+    border: 1px solid #6C4796;
+    height: 46px;
+    padding: 12px 20px;
   }
 }
