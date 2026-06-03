@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { WizardStep as step } from '../../../models/WizardStep';
 import WizardStepIndicator from '../../atoms/wizardStepIndicator/WizardStepIndicator';
 import styles from './WizardStepComponent.module.css';
@@ -14,8 +15,16 @@ export default function WizardStepComponent({
   wizardStep,
   status,
   isCurrentStep }: Props) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isCurrentStep) {
+      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [isCurrentStep]);
+
   return (
-    <div className={`${styles.wizardStep} ${styles[status]}`}>
+    <div ref={ref} className={`${styles.wizardStep} ${styles[status]}`}>
       <div className={styles.header}>
         <WizardStepIndicator step={stepNumber} status={status} />
         <h2>{wizardStep.title}</h2>
