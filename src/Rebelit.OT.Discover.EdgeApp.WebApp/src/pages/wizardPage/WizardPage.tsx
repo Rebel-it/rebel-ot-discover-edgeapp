@@ -2,6 +2,7 @@ import Button from "../../components/atoms/button/Button";
 import ProgressPanel from "../../components/organisms/ProgressPanel/ProgressPanel";
 import type { WizardStepKey } from "../../models/WizardStep";
 import styles from "./WizardPage.module.css";
+import poweredByRebel from '../../assets/poweredbyrebel.png';
 
 type Props = {
   children: React.ReactNode;
@@ -24,6 +25,7 @@ export default function WizardPage({ children, wizardStep, continueButtonText, o
       <div className={styles.progressPanelWrapper}>
         <ProgressPanel currentStep={wizardStep} />
       </div>
+      <img className={styles.poweredByRebel} src={poweredByRebel} alt="Powered by rebel:it" />
     </div>
   );
 }
