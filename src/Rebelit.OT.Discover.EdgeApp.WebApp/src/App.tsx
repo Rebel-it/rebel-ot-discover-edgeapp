@@ -9,6 +9,7 @@ import DeviceConfigPage from './pages/deviceConfigPage/DeviceConfigPage'
 import VariablesPage from './pages/variablesPage/VariablesPage'
 import FinalPage from './pages/finalPage/FinalPage'
 import { WizardProvider } from './context/WizardContext'
+import { Pages } from './models/Pages'
 
 
 function App() {
@@ -16,15 +17,15 @@ function App() {
     <WizardProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<StartPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/final" element={<FinalPage />} />
+          <Route path={Pages.start} element={<StartPage />} />
+          <Route path={Pages.login} element={<LoginPage />} />
+          <Route path={Pages.final} element={<FinalPage />} />
           {/* <Route element={<ProtectedRoute />}> */}
-          <Route path="/plc" element={<PlcConnect />} />
-          <Route path="/source" element={<SourcePage />} />
-          <Route path="/variables" element={<VariablesPage />} />
-          <Route path="/tags" element={<TagPage />} />
-          <Route path="/deviceconfig" element={<DeviceConfigPage />} />
+          <Route path={Pages.plcConnect} element={<PlcConnect />} />
+          <Route path={Pages.source} element={<SourcePage />} />
+          <Route path={Pages.variables} element={<VariablesPage />} />
+          <Route path={Pages.tags} element={<TagPage />} />
+          <Route path={Pages.deviceConfig} element={<DeviceConfigPage />} />
           {/* </Route> */}
         </Routes>
       </BrowserRouter>

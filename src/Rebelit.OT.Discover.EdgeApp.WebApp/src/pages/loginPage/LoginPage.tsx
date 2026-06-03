@@ -5,6 +5,9 @@ import { useNavigate } from 'react-router-dom'
 import { getCompanyConfiguration } from '../../services/companyConfigurationService.ts'
 import type { ServiceAccountObject } from '../../models/ServiceAccountObject.ts'
 import FormField from '../../components/atoms/formField/FormField.tsx'
+import WizardPage from '../wizardPage/WizardPage.tsx'
+import { useWizard } from '../../context/WizardContext.tsx'
+import { Pages } from '../../models/Pages.ts'
 
 type LoginFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
 
@@ -19,6 +22,7 @@ function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { markStepCompleted } = useWizard();
 
   function setAuthProperty<K extends keyof ServiceAccountObject>(property: K, value: ServiceAccountObject[K]) {
     setServiceAccount((currentServiceAccount) => ({
@@ -45,7 +49,14 @@ function LoginPage() {
   }
 
   return (
-    <div className={styles.loginWrapper}>
+    <WizardPage 
+      wizardStep="login" 
+      continueButtonText='Log in' 
+      onContinue={() => {
+        markStepCompleted('login');
+        navigate(`/${Pages.plcConnect}`);
+      }}>
+
       <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
         <h1>Sign in</h1>
 
@@ -65,7 +76,7 @@ function LoginPage() {
           onChange={(value) => setAuthProperty('accessToken', value)}
           required
         />
-        
+
         {errorMessage && <p className={`${styles.formMessage} ${styles.errorMessage}`}>{errorMessage}</p>}
 
 
@@ -79,13 +90,7 @@ function LoginPage() {
           {isSubmitting ? 'Signing in...' : 'Sign in'}
         </button>
       </form>
-
-      {loginSucceeded && (
-        <button type="button" className={styles.nextButton} onClick={() => navigate('/plc')}>
-          Next
-        </button>
-      )}
-    </div>
+    </WizardPage>
   )
 }
 

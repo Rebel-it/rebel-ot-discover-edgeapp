@@ -4,7 +4,7 @@ import WizardStepComponent from "../../molecules/wizardStepComponent/WizardStepC
 import styles from "./ProgressPanel.module.css";
 
 type Props = {
-  currentStep: WizardStepKey;
+  currentStep?: WizardStepKey;
 }
 
 export default function ProgressPanel({ currentStep }: Readonly<Props>) {

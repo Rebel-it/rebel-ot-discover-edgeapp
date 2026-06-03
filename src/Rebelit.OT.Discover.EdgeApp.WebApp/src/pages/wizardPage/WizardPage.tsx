@@ -5,7 +5,7 @@ import styles from "./WizardPage.module.css";
 
 type Props = {
   children: React.ReactNode;
-  wizardStep: WizardStepKey;
+  wizardStep?: WizardStepKey;
   continueButtonText?: string;
   onContinue?: () => void;
 }
