@@ -1,5 +1,4 @@
 using Opc.Ua;
-using Rebelit.OT.Discover.EdgeApp.API.Resolvers;
 using Rebelit.OT.Discover.EdgeApp.API.Synchronizers;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Clients;
@@ -59,7 +58,7 @@ public class Scraper(
 
         if (string.IsNullOrWhiteSpace(username) && string.IsNullOrWhiteSpace(password))
         {
-            return await clientFactory.Create(plcUrl);
+            return await clientFactory.CreateAsync(plcUrl);
         }
 
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
@@ -71,7 +70,7 @@ public class Scraper(
             return null;
         }
 
-        return await clientFactory.Create(plcUrl, username, password);
+        return await clientFactory.CreateAsync(plcUrl, username, password);
     }
 
     private async Task<ReferenceDescriptionCollection?> FetchReferenceDescriptionsAsync(

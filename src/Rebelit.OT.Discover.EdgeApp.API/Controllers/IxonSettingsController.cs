@@ -28,7 +28,7 @@ public class IxonSettingsController(
     [HttpPost("pushConfiguration")]
     public async Task<IActionResult> PushConfiguration()
     {
-        var result = await ixonSettingService.PushDeviceConfig();
+        var result = await ixonSettingService.PushDeviceConfigAsync();
         if (result != "success")
         {
             return BadRequest(new { message = "Failed to push device configuration." });

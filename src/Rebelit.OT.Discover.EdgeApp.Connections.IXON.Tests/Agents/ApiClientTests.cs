@@ -748,7 +748,7 @@ public class ApiClientTests
     {
         protected override HttpMessageHandler? GetHttpMessageHandler() => handler;
 
-        public Task PostAsync(Uri uri, object body) => Post(uri, body);
+        public Task PostAsync(Uri uri, object body) => base.PostAsync(uri, body);
     }
 
     private sealed class FakeIxonAuthenticationContext : IIxonAuthenticationContext

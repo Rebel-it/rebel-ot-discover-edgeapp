@@ -13,7 +13,7 @@ public static class SlugGenerator
             var separatorIndex = address.IndexOf(';');
             if (separatorIndex >= 0 && separatorIndex + 1 < address.Length)
             {
-                var nodeIdPart = address[(separatorIndex + 1)..].Replace("=", string.Empty);
+                var nodeIdPart = address[(separatorIndex + 1)..].Replace("=", string.Empty, StringComparison.Ordinal);
                 if (!string.IsNullOrWhiteSpace(nodeIdPart))
                 {
                     return Normalize($"{baseSlug}_{nodeIdPart}");
