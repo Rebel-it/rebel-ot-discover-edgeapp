@@ -1,11 +1,11 @@
 import Button from "../../components/atoms/button/Button";
 import ProgressPanel from "../../components/organisms/ProgressPanel/ProgressPanel";
-import type { WizardStep } from "../../models/WizardStep";
+import type { WizardStepKey } from "../../models/WizardStep";
 import styles from "./WizardPage.module.css";
 
 type Props = {
   children: React.ReactNode;
-  wizardStep: WizardStep;
+  wizardStep: WizardStepKey;
   continueButtonText?: string;
   onContinue?: () => void;
 }
@@ -22,7 +22,7 @@ export default function WizardPage({ children, wizardStep, continueButtonText, o
         </div>
       </div>
       <div className={styles.progressPanelWrapper}>
-        <ProgressPanel wizardStep={wizardStep} />
+        <ProgressPanel currentStep={wizardStep} />
       </div>
     </div>
   );

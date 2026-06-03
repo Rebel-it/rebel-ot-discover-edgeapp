@@ -35,3 +35,14 @@ export const WizardStep = {
 } as const;
 
 export type WizardStep = typeof WizardStep[keyof typeof WizardStep];
+export type WizardStepKey = keyof typeof WizardStep;
+
+export const WizardStepOrder: WizardStepKey[] = [
+    'login',
+    'plcConnect',
+    'source',
+    'variables',
+    'tags',
+    'deviceConfig',
+    'final',
+];

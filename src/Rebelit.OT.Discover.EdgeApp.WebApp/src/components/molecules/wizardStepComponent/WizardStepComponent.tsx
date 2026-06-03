@@ -3,19 +3,22 @@ import WizardStepIndicator from '../../atoms/wizardStepIndicator/WizardStepIndic
 import styles from './WizardStepComponent.module.css';
 
 type Props = {
+  stepNumber: number;
   wizardStep: step;
   status: "todo" | "active" | "done";
 }
 
-export default function WizardStepComponent({ wizardStep, status }: Props) {
+export default function WizardStepComponent({ stepNumber, wizardStep, status }: Props) {
   return (
     <div className={styles.wizardStep}>
       <div className={styles.header}>
-        <WizardStepIndicator step={1} status={status} />
+        <WizardStepIndicator step={stepNumber} status={status} />
         <h2>{wizardStep.title}</h2>
       </div>
       <div className={styles.description}>
-        <p>{wizardStep.description}</p>
+        {status === "active" && (
+          <p>{wizardStep.description}</p>
+        )}
       </div>
     </div>
   );

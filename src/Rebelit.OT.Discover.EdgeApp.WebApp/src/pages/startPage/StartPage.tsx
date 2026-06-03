@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import styles from './StartPage.module.css'
 import WizardPage from '../wizardPage/WizardPage'
-import { WizardStep } from '../../models/WizardStep'
 
 function StartPage() {
   const navigate = useNavigate()
@@ -9,7 +8,7 @@ function StartPage() {
 
   return (
     <WizardPage 
-      wizardStep={WizardStep.login}
+      wizardStep="login"
       continueButtonText="Start"
       onContinue={() => navigate('/login')}
     >
