@@ -13,7 +13,7 @@ export default function ProgressPanel({ currentStep }: Readonly<Props>) {
   function isCurrentStep(stepKey: WizardStepKey): boolean {
     return stepKey === currentStep;
   }
-
+  
   return (
     <div className={styles.progressPanel}>
       {WizardStepOrder.map((key, index) => {

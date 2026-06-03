@@ -56,7 +56,7 @@ function VariablesPage() {
       continueButtonText="Continue"
       onContinue={() => {
         markStepCompleted("variables");
-        navigate(`/${Pages.tags}`);
+        navigate(Pages.tags);
       }}>
       <div className={sharedStyles.loginForm}>
         <h1>Synchronize variables</h1>

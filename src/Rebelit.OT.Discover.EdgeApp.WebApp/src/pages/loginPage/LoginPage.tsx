@@ -54,7 +54,7 @@ function LoginPage() {
       continueButtonText="Log in" 
       onContinue={() => {
         markStepCompleted("login");
-        navigate(`/${Pages.plcConnect}`);
+        navigate(Pages.plcConnect);
       }}>
 
       <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>

@@ -10,7 +10,7 @@ function FinalPage() {
       wizardStep="final"
       continueButtonText="Finish"
       onContinue={() => {
-        navigate(`/${Pages.start}`);
+        navigate(Pages.start);
       }}>
       <div>
         <h1>Completed!</h1>

@@ -42,7 +42,7 @@ function DeviceConfigPage() {
       continueButtonText="Push to device"
       onContinue={() => {
         markStepCompleted("deviceConfig");
-        navigate(`/${Pages.final}`);
+        navigate(Pages.final);
       }}>
       <div className={styles.card}>
         <h1>Device Configuration</h1>

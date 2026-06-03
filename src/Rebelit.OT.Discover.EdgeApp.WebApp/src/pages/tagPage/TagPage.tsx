@@ -103,7 +103,7 @@ function TagPage() {
       continueButtonText="I'm done creating tags"
       onContinue={() => {
         markStepCompleted("tags");
-        navigate(`/${Pages.deviceConfig}`);
+        navigate(Pages.deviceConfig);
       }}>
 
       <div className={styles.header}>

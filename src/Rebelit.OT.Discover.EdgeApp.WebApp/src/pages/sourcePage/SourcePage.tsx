@@ -67,7 +67,7 @@ function SourcePage() {
       continueButtonText="Create"
       onContinue={() => {
         markStepCompleted("source");
-        navigate(`/${Pages.variables}`);
+        navigate(Pages.variables);
       }}
     >
       <form className={Loginstyles.loginForm} onSubmit={handleSubmit} noValidate>

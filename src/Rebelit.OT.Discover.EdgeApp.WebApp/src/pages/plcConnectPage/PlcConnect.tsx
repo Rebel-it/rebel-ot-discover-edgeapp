@@ -68,7 +68,7 @@ function PlcConnect() {
       continueButtonText="Connect"
       onContinue={() => {
         markStepCompleted("plcConnect");
-        navigate(`/${Pages.source}`);
+        navigate(Pages.source);
       }}
     >
       <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
