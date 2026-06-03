@@ -11,14 +11,16 @@ internal static class SlugResolver
     /// <param name="input">The input string to normalize.</param>
     /// <returns>A normalized slug consisting of lowercase letters, digits, and hyphens. Returns "opcua" if the input is null,
     /// empty, or contains no valid characters.</returns>
-    public static string Resolve(string input)
+    internal static string Resolve(string input)
     {
         if (string.IsNullOrEmpty(input))
+        {
             return "opcua";
+        }
         var slug = input.ToLowerInvariant()
-            .Replace(" ", "-")
-            .Replace("_", "-")
-            .Replace(".", "-");
+            .Replace(" ", "-", StringComparison.Ordinal)
+            .Replace("_", "-", StringComparison.Ordinal)
+            .Replace(".", "-", StringComparison.Ordinal);
         slug = new string(slug.Where(c => char.IsLetterOrDigit(c) || c == '-').ToArray());
 
         slug = slug.Trim('-');

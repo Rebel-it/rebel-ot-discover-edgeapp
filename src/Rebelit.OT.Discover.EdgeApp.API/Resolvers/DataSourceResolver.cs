@@ -27,35 +27,43 @@ internal sealed class DataSourceResolver(
     public async Task<string> ResolveAsync( string sourceName)
     {
         if (string.IsNullOrWhiteSpace(sourceName))
+        {
             sourceName = "OPC UA";
-
-        logger.LogInformation("Creating a new OPC-UA data source...");
+        }
 
         var devicesResponse = await apiClient.GetDevicesAsync();
         var devices = devicesResponse.Data ?? [];
         var device = FindDeviceByHost(devices);
 
         if (device?.PublicId is null)
+        {
             throw new InvalidOperationException(
                 $"Could not resolve device publicId for agent '{authenticationContext.IxonHeaders.AgentId}'."
             );
-
-        logger.LogInformation(
-            "Using device '{DeviceName}' ({DevicePublicId}) with IP '{IpAddress}'.",
-            device.Name,
-            device.PublicId,
-            device.IpAddress
-        );
+        }
+        
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Using device '{DeviceName}' ({DevicePublicId}) with IP '{IpAddress}'.",
+                device.Name,
+                device.PublicId,
+                device.IpAddress
+            );
+        }
 
         var existingDataSource = await FindExistingDataSourceAsync(device.PublicId, sourceName);
         if (existingDataSource is not null)
         {
-            logger.LogInformation(
-                "Found existing data source '{Name}' ({PublicId}) for device '{DeviceName}'. Reusing it.",
-                existingDataSource.Name,
-                existingDataSource.PublicId,
-                device.Name
-            );
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "Found existing data source '{Name}' ({PublicId}) for device '{DeviceName}'. Reusing it.",
+                    existingDataSource.Name,
+                    existingDataSource.PublicId,
+                    device.Name
+                );
+            }
             return existingDataSource.PublicId!;
         }
 
@@ -63,10 +71,13 @@ internal sealed class DataSourceResolver(
         var result = await apiClient.PostDataSourceAsync(newDataSource);
 
         var createdId =
-            result?.Data.PublicId
+            result?.Data?.PublicId
             ?? throw new InvalidOperationException("Failed to create a new data source in IXON.");
 
-        logger.LogInformation("Created data source with ID '{DataSourceId}'.", createdId);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Created data source with ID '{DataSourceId}'.", createdId);
+        }
         return createdId;
     }
 
@@ -109,21 +120,25 @@ internal sealed class DataSourceResolver(
     {
         var host = ExtractHost(authenticationContext.IxonHeaders.PlcUrl);
         if (string.IsNullOrEmpty(host))
+        {
             return devices.FirstOrDefault();
+        }
 
         var matched = devices.FirstOrDefault(d =>
             string.Equals(d.IpAddress, host, StringComparison.OrdinalIgnoreCase)
         );
 
-        if (matched is null)
-            logger.LogWarning(
-                "No device found with IP address '{Host}'. Falling back to first device.",
-                host
-            );
+        if (matched is null && logger.IsEnabled(LogLevel.Warning))
+        {
+                logger.LogWarning(
+                    "No device found with IP address '{Host}'. Falling back to first device.",
+                    host
+                );
+        }
 
         return matched ?? devices.FirstOrDefault();
     }
 
-    private static string? ExtractHost(string opcuaAddress) =>
+    private static string? ExtractHost(string? opcuaAddress) =>
         Uri.TryCreate(opcuaAddress, UriKind.Absolute, out var uri) ? uri.Host : null;
 }

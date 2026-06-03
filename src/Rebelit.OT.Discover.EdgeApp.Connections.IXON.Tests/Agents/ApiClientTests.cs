@@ -16,7 +16,7 @@ public class ApiClientTests
 
     private static readonly Configuration DefaultConfig = new()
     {
-        BaseUrl = "https://test.example.com",
+        BaseUrl = new Uri("https://test.example.com"),
     };
 
     private static Tag CreateTagRequest() => new()
@@ -85,7 +85,7 @@ public class ApiClientTests
         await client.GetDataVariablesAsync();
 
         Assert.That(
-            handler.LastRequest!.RequestUri!.ToString(),
+            handler.LastRequest?.RequestUri?.ToString(),
             Does.Contain($"/api/agents/{AgentId}/data-variables")
         );
     }
@@ -97,7 +97,7 @@ public class ApiClientTests
 
         await client.GetDataVariablesAsync();
 
-        AssertCommonHeaders(handler.LastRequest!);
+        AssertCommonHeaders(handler.LastRequest);
     }
 
     [Test]
@@ -129,7 +129,7 @@ public class ApiClientTests
         {
             Assert.That(result.Data, Has.Length.EqualTo(1));
             Assert.That(result.Data[0].Slug, Is.EqualTo("s"));
-            Assert.That(result.Data[0].Variable.PublicId, Is.EqualTo("var-1"));
+            Assert.That(result.Data[0].Variable?.PublicId, Is.EqualTo("var-1"));
         });
     }
 
@@ -141,7 +141,7 @@ public class ApiClientTests
         await client.GetTagsAsync();
 
         Assert.That(
-            handler.LastRequest!.RequestUri!.ToString(),
+            handler.LastRequest?.RequestUri?.ToString(),
             Does.Contain($"/api/agents/{AgentId}/data-tags")
         );
     }
@@ -165,8 +165,8 @@ public class ApiClientTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result!.Data.Slug, Is.EqualTo("s"));
-            Assert.That(result.Data.Variable.PublicId, Is.EqualTo("var-1"));
+            Assert.That(result?.Data?.Slug, Is.EqualTo("s"));
+            Assert.That(result?.Data?.Variable?.PublicId, Is.EqualTo("var-1"));
         });
     }
 
@@ -181,9 +181,9 @@ public class ApiClientTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(handler.LastRequest!.Method, Is.EqualTo(HttpMethod.Post));
+            Assert.That(handler.LastRequest?.Method, Is.EqualTo(HttpMethod.Post));
             Assert.That(
-                handler.LastRequest.RequestUri!.ToString(),
+                handler.LastRequest?.RequestUri?.ToString(),
                 Does.Contain($"/api/agents/{AgentId}/data-tags")
             );
         });
@@ -215,7 +215,7 @@ public class ApiClientTests
 
         var result = await client.PostVariableAsync(newVariable);
 
-        Assert.That(result!.Data.PublicId, Is.EqualTo("var-1"));
+        Assert.That(result?.Data?.PublicId, Is.EqualTo("var-1"));
     }
 
     [Test]
@@ -239,9 +239,9 @@ public class ApiClientTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(handler.LastRequest!.Method, Is.EqualTo(HttpMethod.Post));
+            Assert.That(handler.LastRequest?.Method, Is.EqualTo(HttpMethod.Post));
             Assert.That(
-                handler.LastRequest.RequestUri!.ToString(),
+                handler.LastRequest?.RequestUri?.ToString(),
                 Does.Contain($"/api/agents/{AgentId}/data-variables")
             );
         });
@@ -292,7 +292,7 @@ public class ApiClientTests
         await client.GetAgentAsync();
 
         Assert.That(
-            handler.LastRequest!.RequestUri!.ToString(),
+            handler.LastRequest?.RequestUri?.ToString(),
             Does.Contain($"/api/agents/{AgentId}?fields=publicId,name,deviceId")
         );
     }
@@ -304,7 +304,7 @@ public class ApiClientTests
 
         await client.GetAgentAsync();
 
-        AssertCommonHeaders(handler.LastRequest!);
+        AssertCommonHeaders(handler.LastRequest);
     }
 
     [Test]
@@ -328,7 +328,7 @@ public class ApiClientTests
         {
             Assert.That(result.Data, Has.Length.EqualTo(1));
             Assert.That(result.Data[0].PublicId, Is.EqualTo("ds-1"));
-            Assert.That(result.Data[0].Protocol.PublicId, Is.EqualTo("modbus"));
+            Assert.That(result.Data[0].Protocol?.PublicId, Is.EqualTo("modbus"));
         });
     }
 
@@ -340,7 +340,7 @@ public class ApiClientTests
         await client.GetDataSourcesAsync();
 
         Assert.That(
-            handler.LastRequest!.RequestUri!.ToString(),
+            handler.LastRequest?.RequestUri?.ToString(),
             Does.Contain($"/api/agents/{AgentId}/data-sources")
         );
     }
@@ -352,7 +352,7 @@ public class ApiClientTests
 
         await client.GetDataSourcesAsync();
 
-        AssertCommonHeaders(handler.LastRequest!);
+        AssertCommonHeaders(handler.LastRequest);
     }
 
     [Test]
@@ -387,7 +387,7 @@ public class ApiClientTests
 
         var result = await client.PostDataSourceAsync(newDataSource);
 
-        Assert.That(result!.Data.PublicId, Is.EqualTo("ds-1"));
+        Assert.That(result?.Data?.PublicId, Is.EqualTo("ds-1"));
     }
 
     [Test]
@@ -408,9 +408,9 @@ public class ApiClientTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(handler.LastRequest!.Method, Is.EqualTo(HttpMethod.Post));
+            Assert.That(handler.LastRequest?.Method, Is.EqualTo(HttpMethod.Post));
             Assert.That(
-                handler.LastRequest.RequestUri!.ToString(),
+                handler.LastRequest?.RequestUri?.ToString(),
                 Does.Contain($"/api/agents/{AgentId}/data-sources")
             );
         });
@@ -438,9 +438,9 @@ public class ApiClientTests
     {
         var (agent, handler) = CreateBaseAgentSut(HttpStatusCode.OK);
 
-        await agent.PostAsync("/api/test", new { Value = 1 });
+        await agent.PostAsync(new Uri("/api/test", UriKind.Relative), new { Value = 1 });
 
-        Assert.That(handler.LastRequest!.Method, Is.EqualTo(HttpMethod.Post));
+        Assert.That(handler.LastRequest?.Method, Is.EqualTo(HttpMethod.Post));
     }
 
     [Test]
@@ -448,7 +448,7 @@ public class ApiClientTests
     {
         var (agent, _) = CreateBaseAgentSut(HttpStatusCode.BadRequest, "error");
 
-        Assert.DoesNotThrowAsync(() => agent.PostAsync("/api/test", new { }));
+        Assert.DoesNotThrowAsync(() => agent.PostAsync(new Uri("/api/test", UriKind.Relative), new { }));
     }
 
     [Test]
@@ -577,7 +577,7 @@ public class ApiClientTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result!.Data.PublicId, Is.EqualTo("var-1"));
+            Assert.That(result?.Data?.PublicId, Is.EqualTo("var-1"));
             Assert.That(handler.RequestCount, Is.EqualTo(2));
         });
     }
@@ -620,7 +620,7 @@ public class ApiClientTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result!.Data.PublicId, Is.EqualTo("var-1"));
+            Assert.That(result?.Data?.PublicId, Is.EqualTo("var-1"));
             Assert.That(handler.RequestCount, Is.EqualTo(2));
         });
     }
@@ -677,8 +677,14 @@ public class ApiClientTests
         );
     }
 
-    private static void AssertCommonHeaders(HttpRequestMessage request)
+    private static void AssertCommonHeaders(HttpRequestMessage? request)
     {
+        Assert.That(request, Is.Not.Null);
+        if (request is null)
+        {
+            return;
+        }
+
         Assert.Multiple(() =>
         {
             Assert.That(request.Headers.Authorization?.Scheme, Is.EqualTo("Bearer"));
@@ -742,12 +748,12 @@ public class ApiClientTests
     {
         protected override HttpMessageHandler? GetHttpMessageHandler() => handler;
 
-        public Task PostAsync(string uri, object body) => Post(uri, body);
+        public Task PostAsync(Uri uri, object body) => base.PostAsync(uri, body);
     }
 
     private sealed class FakeIxonAuthenticationContext : IIxonAuthenticationContext
     {
-        public IxonHeaders IxonHeaders => new()
+        public static IxonHeaders IxonHeaders => new()
         {
             ServiceAccount = new ServiceAccount
             {

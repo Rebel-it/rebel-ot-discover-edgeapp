@@ -22,7 +22,9 @@ Console.WriteLine("Welcome to the OT Discover Edge App Installation Wizard!");
 // 1. Check prerequisites
 Console.WriteLine("\nChecking prerequisites...");
 if (!DockerChecker.IsDockerInstalled())
+{
     Environment.Exit(1);
+}
 
 // 2. Ask what to do
 var action = WizardConsole.PromptAction();

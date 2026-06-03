@@ -52,12 +52,17 @@ public class ScriptRunner(string edgeIp, string username, string password)
         scriptProcess.OutputDataReceived += (_, e) =>
         {
             if (e.Data != null)
+            {
                 Console.WriteLine(e.Data);
+            }
         };
 
         scriptProcess.ErrorDataReceived += (_, e) =>
         {
-            if (e.Data == null) return;
+            if (e.Data == null)
+            {
+                return;
+            }
             var prev = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine($"[stderr] {e.Data}");

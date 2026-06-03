@@ -13,7 +13,7 @@ public class PlcController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SaveOpcSettings([FromBody] OpcCredentials settings)
     {
-        using var client = await uaClientFactory.Create(
+        using var client = await uaClientFactory.CreateAsync(
             settings.OpcUaServerAddress,
             settings.OpcUaUsername ?? string.Empty,
             settings.OpcUaPassword ?? string.Empty

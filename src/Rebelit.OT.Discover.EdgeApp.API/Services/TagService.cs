@@ -6,7 +6,7 @@ using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.API.Services;
 
-internal sealed class TagService(
+public sealed class TagService(
     IApiClient apiClient,
     IIxonAuthenticationContext ixonAuthenticationContext,
     IVariableService variableService,
@@ -17,7 +17,10 @@ internal sealed class TagService(
         var response = await apiClient.GetTagsAsync();
         var tags = response.Data ?? [];
 
-        logger.LogInformation("Retrieved {Count} tags for agent {AgentId}.", tags.Length, ixonAuthenticationContext.IxonHeaders.AgentId);
+        if(logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Retrieved {Count} tags for agent {AgentId}.", tags.Length, ixonAuthenticationContext.IxonHeaders.AgentId);
+        }
         return tags;
     }
     public async Task<IReadOnlyList<Tag>> GetPrefilledTagsAsync()
@@ -42,7 +45,7 @@ internal sealed class TagService(
                 EdgeAggregator = "last",
                 Variable = new TagVariable { PublicId = variable.PublicId },
             };
-            if(existingTags.Any(t => t.Variable.PublicId == variable.PublicId || !variable.Address.Contains("ns=")))
+            if(existingTags.Any(t => t.Variable.PublicId == variable.PublicId || !variable.Address.Contains("ns=", StringComparison.Ordinal)))
             {
                 continue; 
             }
@@ -61,53 +64,46 @@ internal sealed class TagService(
 
     public async Task<Tag?> UploadTagAsync(Tag tag)
     {
-        ArgumentNullException.ThrowIfNull(tag);
-
         var response = await apiClient.PostTagAsync(tag);
         var createdTag = response?.Data;
-
-        logger.LogInformation(
-            "Created tag {TagName} for agent {AgentId}.",
-            createdTag?.Name ?? tag.Name,
-            ixonAuthenticationContext.IxonHeaders.AgentId);
-
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Created tag {TagName} for agent {AgentId}.",
+                createdTag?.Name ?? tag.Name,
+                ixonAuthenticationContext.IxonHeaders.AgentId);
+        }
         return createdTag;
     }
-    public async Task CreateTagsAsync(List<Tag> requests)
+    public async Task CreateTagsAsync(IEnumerable<Tag> requests)
     {
-        ArgumentNullException.ThrowIfNull(requests);
-
-        logger.LogInformation("Posting {Count} tags for agent {AgentId}.", requests.Count, ixonAuthenticationContext.IxonHeaders.AgentId);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Posting {Count} tags for agent {AgentId}.", requests.Count(), ixonAuthenticationContext.IxonHeaders.AgentId);
+        }
         var result = await apiClient.PostTagsAsync(requests);
 
         if (result is not null && result.Data is not null)
         {
-            logger.LogInformation(
-                "Successfully posted {Count} tags for agent {AgentId}.",
-                result.Data.Length,
-                ixonAuthenticationContext.IxonHeaders.AgentId
-            );
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "Successfully posted {Count} tags for agent {AgentId}.",
+                    result.Data.Length,
+                    ixonAuthenticationContext.IxonHeaders.AgentId
+                );
+            }
             return;
         }
 
-        logger.LogWarning(
-            "Posting tags for agent {AgentId} returned an unexpected empty response. Attempted to post {Count} tags.",
-            ixonAuthenticationContext.IxonHeaders.AgentId,
-            requests.Count
-            );   
-    }
-
-    public async Task<Tag?> UpdateTagAsync(Tag tag, string publicId)
-    {
-        var response = await apiClient.UpdateTagAsync(publicId, tag);
-        var updatedTag = response?.Data;
-
-        logger.LogInformation(
-             "Updated tag {TagName} for agent {AgentId}.",
-             updatedTag?.Name ?? tag.Name,
-             ixonAuthenticationContext.IxonHeaders.AgentId);
-
-        return updatedTag;
+        if (logger.IsEnabled(LogLevel.Warning))
+        {
+            logger.LogWarning(
+                "Posting tags for agent {AgentId} returned an unexpected empty response. Attempted to post {Count} tags.",
+                ixonAuthenticationContext.IxonHeaders.AgentId,
+                requests.Count()
+            );
+        }
     }
 
     public async Task<Tag?> CreateTagAsync(Tag request)
@@ -130,14 +126,16 @@ internal sealed class TagService(
     public async Task<Tag?> UpdateTagAsync(UpdateTagRequest request)
     {
         var tag = MapToTag(request);
-        ArgumentNullException.ThrowIfNull(tag);
         var response = await apiClient.UpdateTagAsync(request.PublicId, tag);
         var updatedTag = response?.Data;
 
-        logger.LogInformation(
-             "Updated tag {TagName} for agent {AgentId}.",
-             updatedTag?.Name ?? tag.Name,
-             ixonAuthenticationContext.IxonHeaders.AgentId);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                 "Updated tag {TagName} for agent {AgentId}.",
+                 updatedTag?.Name ?? tag.Name,
+                 ixonAuthenticationContext.IxonHeaders.AgentId);
+        }
 
         return updatedTag;
     }

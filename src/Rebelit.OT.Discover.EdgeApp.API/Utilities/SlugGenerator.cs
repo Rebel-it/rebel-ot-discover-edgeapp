@@ -1,6 +1,6 @@
 namespace Rebelit.OT.Discover.EdgeApp.API.Utilities;
 
-internal static class SlugGenerator
+public static class SlugGenerator
 {
     public static string CreateFromNameAndAddress(string? name, string? address)
     {
@@ -13,7 +13,7 @@ internal static class SlugGenerator
             var separatorIndex = address.IndexOf(';');
             if (separatorIndex >= 0 && separatorIndex + 1 < address.Length)
             {
-                var nodeIdPart = address[(separatorIndex + 1)..].Replace("=", string.Empty);
+                var nodeIdPart = address[(separatorIndex + 1)..].Replace("=", string.Empty, StringComparison.Ordinal);
                 if (!string.IsNullOrWhiteSpace(nodeIdPart))
                 {
                     return Normalize($"{baseSlug}_{nodeIdPart}");
@@ -28,27 +28,31 @@ internal static class SlugGenerator
     {
         const int maxSlugLength = 64;
 
-        var normalized = new string([
-            .. slug.ToLowerInvariant().Select(c =>
-                c is >= 'a' and <= 'z' ||
-                c is >= '0' and <= '9' ||
-                c is '_' ||
-                c is '-'
-                    ? c
-                    : '_'
-            ),
-        ]);
+        var normalized = new string(
+            slug.ToLowerInvariant()
+                .Select(c => IsAllowedSlugChar(c) ? c : '_')
+                .ToArray());
 
         if (string.IsNullOrWhiteSpace(normalized))
         {
             normalized = "a";
         }
 
-        if (normalized[0] is < 'a' or > 'z')
+        if (!char.IsAsciiLetter(normalized[0]))
         {
             normalized = $"a{normalized}";
         }
 
-        return normalized.Length > maxSlugLength ? normalized[..maxSlugLength] : normalized;
+        if (normalized.Length > maxSlugLength)
+        {
+            normalized = normalized[..maxSlugLength];
+        }
+
+        return normalized;
+    }
+
+    private static bool IsAllowedSlugChar(char c)
+    {
+        return char.IsAsciiLetterOrDigit(c) || c is '_' or '-';
     }
 }

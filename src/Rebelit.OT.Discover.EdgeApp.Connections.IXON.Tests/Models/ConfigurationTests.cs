@@ -12,7 +12,7 @@ public class ConfigurationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(config.BaseUrl, Is.EqualTo("https://portal.ixon.cloud"));
+            Assert.That(config.BaseUrl, Is.EqualTo(new Uri("https://portal.ixon.cloud/")));
             Assert.That(config.Version, Is.EqualTo(2));
         });
     }
@@ -22,13 +22,13 @@ public class ConfigurationTests
     {
         var config = new Configuration
         {
-            BaseUrl = "https://custom.example.com",
+            BaseUrl = new Uri("https://custom.example.com"),
             Version = 3,
         };
 
         Assert.Multiple(() =>
         {
-            Assert.That(config.BaseUrl, Is.EqualTo("https://custom.example.com"));
+            Assert.That(config.BaseUrl, Is.EqualTo(new Uri("https://custom.example.com")));
             Assert.That(config.Version, Is.EqualTo(3));
         });
     }

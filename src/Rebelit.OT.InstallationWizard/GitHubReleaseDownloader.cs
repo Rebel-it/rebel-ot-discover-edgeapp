@@ -51,7 +51,9 @@ public class GitHubReleaseDownloader(string repo, string accessToken)
         {
             var name = asset.GetProperty("name").GetString() ?? "";
             if (!name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+            {
                 continue;
+            }
 
             var assetId = asset.GetProperty("id").GetInt64();
             var downloadUrl = $"{GitHubApiBase}/repos/{repo}/releases/assets/{assetId}";
@@ -79,7 +81,9 @@ public class GitHubReleaseDownloader(string repo, string accessToken)
     private static void ExtractZip(string zipPath, string extractDir)
     {
         if (Directory.Exists(extractDir))
+        {
             Directory.Delete(extractDir, recursive: true);
+        }
 
         ZipFile.ExtractToDirectory(zipPath, extractDir);
     }
