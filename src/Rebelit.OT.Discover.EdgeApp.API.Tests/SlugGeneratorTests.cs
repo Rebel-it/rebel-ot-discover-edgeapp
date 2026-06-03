@@ -4,9 +4,10 @@ using Rebelit.OT.Discover.EdgeApp.API.Utilities;
 namespace Rebelit.OT.Discover.EdgeApp.Tests;
 
 [TestFixture]
-public class SlugGeneratorTests
+public partial class SlugGeneratorTests
 {
-    private static readonly Regex SlugRegex = new("^[a-z][a-z0-9_-]{0,63}$", RegexOptions.Compiled);
+    [GeneratedRegex("^[a-z][a-z0-9_-]{0,63}$")]
+    private static partial Regex SlugRegex();
 
     [Test]
     public void CreateFromNameAndAddress_WithNumericNodeId_AppendsNodeIdWithoutEquals()
@@ -32,7 +33,7 @@ public class SlugGeneratorTests
         Assert.Multiple(() =>
         {
             Assert.That(result, Is.EqualTo("mytestname_sa_b_c"));
-            Assert.That(SlugRegex.IsMatch(result), Is.True);
+            Assert.That(SlugRegex().IsMatch(result), Is.True);
         });
     }
 
@@ -53,8 +54,8 @@ public class SlugGeneratorTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.Length, Is.EqualTo(64));
-            Assert.That(SlugRegex.IsMatch(result), Is.True);
+            Assert.That(result, Has.Length.EqualTo(64));
+            Assert.That(SlugRegex().IsMatch(result), Is.True);
         });
     }
 
@@ -66,7 +67,7 @@ public class SlugGeneratorTests
         Assert.Multiple(() =>
         {
             Assert.That(result, Is.EqualTo("a"));
-            Assert.That(SlugRegex.IsMatch(result), Is.True);
+            Assert.That(SlugRegex().IsMatch(result), Is.True);
         });
     }
 }
