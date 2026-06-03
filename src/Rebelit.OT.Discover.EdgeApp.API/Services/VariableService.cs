@@ -10,7 +10,7 @@ internal sealed class VariableService(
     ILogger<VariableService> logger) : IVariableService
 {
 
-    public async Task<IReadOnlyList<Variable>> GetVariablesAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Variable>> GetVariablesAsync()
     {
         var response = await apiClient.GetDataVariablesAsync();
         var variables = response.Data ?? [];
@@ -19,64 +19,5 @@ internal sealed class VariableService(
             logger.LogInformation("Retrieved {Count} variables for agent {AgentId}.", variables.Length, ixonAuthenticationContext.IxonHeaders.AgentId);
         }
         return variables;
-    }
-
-    public Task<Variable?> CreateVariableAsync(Variable variable, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(variable.Name))
-        {
-            throw new ArgumentException("Variable name is required.", nameof(variable));
-        }
-
-        if (string.IsNullOrWhiteSpace(variable.Address))
-        {
-            throw new ArgumentException("Variable address is required.", nameof(variable));
-        }
-
-        if (string.IsNullOrWhiteSpace(variable.Type))
-        {
-            throw new ArgumentException("Variable type is required.", nameof(variable));
-        }
-
-        if (variable.Source is null || string.IsNullOrWhiteSpace(variable.Source.PublicId))
-        {
-            throw new ArgumentException("Variable source public id is required.", nameof(variable));
-        }
-
-        return CreateVariableCoreAsync(variable, cancellationToken);
-    }
-
-    private async Task<Variable?> CreateVariableCoreAsync(Variable variable, CancellationToken cancellationToken)
-    {
-        var response = await apiClient.PostVariableAsync(variable);
-        var createdVariable = response?.Data;
-
-        if(logger.IsEnabled(LogLevel.Information))
-        {
-            logger.LogInformation(
-                "Created variable {VariableName} for agent {AgentId}.",
-                createdVariable?.Name ?? variable.Name,
-                ixonAuthenticationContext.IxonHeaders.AgentId);
-        }
-
-        return createdVariable;
-    }
-
-    public async Task<IReadOnlyList<Variable>> CreateVariablesAsync(IEnumerable<Variable> variables, CancellationToken cancellationToken = default)
-    {
-        var variableList = variables.ToList();
-        if (variableList.Count == 0)
-        {
-            return [];
-        }
-
-        var response = await apiClient.PostVariablesAsync(variableList);
-        var createdVariables = response?.Data ?? [];
-
-        if (logger.IsEnabled(LogLevel.Information))
-        {
-            logger.LogInformation("Created {Count} variables for agent {AgentId}.", createdVariables.Length, ixonAuthenticationContext.IxonHeaders.AgentId);
-        }
-        return createdVariables;
     }
 }

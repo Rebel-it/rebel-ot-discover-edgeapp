@@ -12,6 +12,11 @@ public sealed class TagService(
     IVariableService variableService,
     ILogger<TagService> logger) : ITagService
 {
+    private const string DefaultLogEvent = "interval";
+    private const string DefaultLoggingInterval = "500ms";
+    private const string DefaultRetentionPolicy = "260w";
+    private const string DefaultEdgeAggregator = "last";
+
     public async Task<IReadOnlyList<Tag>> GetTagsAsync()
     {
         var response = await apiClient.GetTagsAsync();
@@ -21,8 +26,10 @@ public sealed class TagService(
         {
             logger.LogInformation("Retrieved {Count} tags for agent {AgentId}.", tags.Length, ixonAuthenticationContext.IxonHeaders.AgentId);
         }
+
         return tags;
     }
+
     public async Task<IReadOnlyList<Tag>> GetPrefilledTagsAsync()
     {
         var variables = await variableService.GetVariablesAsync();
@@ -39,10 +46,10 @@ public sealed class TagService(
             {
                 Name = variable.Name,
                 Slug = SlugGenerator.CreateFromNameAndAddress(variable.Name, variable.Address),
-                LogEvent = "interval",
-                LoggingInterval = "500ms",
-                RetentionPolicy = "260w",
-                EdgeAggregator = "last",
+                LogEvent = DefaultLogEvent,
+                LoggingInterval = DefaultLoggingInterval,
+                RetentionPolicy = DefaultRetentionPolicy,
+                EdgeAggregator = DefaultEdgeAggregator,
                 Variable = new TagVariable { PublicId = variable.PublicId },
             };
             if(existingTags.Any(t => t.Variable.PublicId == variable.PublicId || !variable.Address.Contains("ns=", StringComparison.Ordinal)))
@@ -62,19 +69,6 @@ public sealed class TagService(
         return tags;
     }
 
-    public async Task<Tag?> UploadTagAsync(Tag tag)
-    {
-        var response = await apiClient.PostTagAsync(tag);
-        var createdTag = response?.Data;
-        if (logger.IsEnabled(LogLevel.Information))
-        {
-            logger.LogInformation(
-                "Created tag {TagName} for agent {AgentId}.",
-                createdTag?.Name ?? tag.Name,
-                ixonAuthenticationContext.IxonHeaders.AgentId);
-        }
-        return createdTag;
-    }
     public async Task CreateTagsAsync(IEnumerable<Tag> requests)
     {
         if (logger.IsEnabled(LogLevel.Information))
@@ -108,24 +102,31 @@ public sealed class TagService(
 
     public async Task<Tag?> CreateTagAsync(Tag request)
     {
-        return await UploadTagAsync(request);
+        var response = await apiClient.PostTagAsync(request);
+        var createdTag = response?.Data;
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Created tag {TagName} for agent {AgentId}.",
+                createdTag?.Name ?? request.Name,
+                ixonAuthenticationContext.IxonHeaders.AgentId);
+        }
+        return createdTag;
     }
-
-    private static Tag MapToTag(CreateTagRequest request) => new()
-    {
-        Name = request.Name,
-        Slug = request.Slug,
-        LogEvent = request.LogEvent,
-        LoggingInterval = request.LoggingInterval,
-        OnChangeExpiry = request.OnChangeExpiry,
-        RetentionPolicy = request.RetentionPolicy,
-        EdgeAggregator = request.EdgeAggregator,
-        Variable = new TagVariable { PublicId = request.Variable },
-    };
 
     public async Task<Tag?> UpdateTagAsync(UpdateTagRequest request)
     {
-        var tag = MapToTag(request);
+        var tag = new Tag
+        {
+            Name = request.Name,
+            Slug = request.Slug,
+            LogEvent = request.LogEvent,
+            LoggingInterval = request.LoggingInterval,
+            OnChangeExpiry = request.OnChangeExpiry,
+            RetentionPolicy = request.RetentionPolicy,
+            EdgeAggregator = request.EdgeAggregator,
+            Variable = new TagVariable { PublicId = request.Variable },
+        };
         var response = await apiClient.UpdateTagAsync(request.PublicId, tag);
         var updatedTag = response?.Data;
 

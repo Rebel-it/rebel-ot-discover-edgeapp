@@ -8,23 +8,16 @@ using System.Globalization;
 
 namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 
-internal abstract class BaseAgent
-{
-    private readonly IOptionsMonitor<Configuration> _configuration;
-    private readonly ResiliencePipeline<HttpResponseMessage> _pipeline;
-    private readonly IIxonAuthenticationContext _ixonAuthenticationContext;
-
-    protected BaseAgent(
-        IOptionsMonitor<Configuration> configuration,
-        ILogger<BaseAgent> logger,
-        TimeProvider timeProvider,
-        IIxonAuthenticationContext ixonAuthenticationContext
+internal abstract class BaseAgent(
+    IOptionsMonitor<Configuration> configuration,
+    ILogger<BaseAgent> logger,
+    TimeProvider timeProvider,
+    IIxonAuthenticationContext ixonAuthenticationContext
     )
-    {
-        _configuration = configuration;
-        _pipeline = IxonResiliencePipelineFactory.Create(timeProvider, logger);
-        _ixonAuthenticationContext = ixonAuthenticationContext;
-    }
+{
+    private readonly IOptionsMonitor<Configuration> _configuration = configuration;
+    private readonly ResiliencePipeline<HttpResponseMessage> _pipeline = IxonResiliencePipelineFactory.Create(timeProvider, logger);
+    private readonly IIxonAuthenticationContext _ixonAuthenticationContext = ixonAuthenticationContext;
 
     protected async Task<T> GetAsync<T>(
         Uri uri,

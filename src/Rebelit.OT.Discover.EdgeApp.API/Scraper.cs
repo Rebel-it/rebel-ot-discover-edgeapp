@@ -24,66 +24,6 @@ public class Scraper(
 
     public IReadOnlyList<Variable> CreatedVariables => _CreatedVariables;
 
-    protected virtual async Task<ReferenceDescriptionCollection?> FetchReferenceDescriptionsAsync(
-        CancellationToken cancellationToken
-    )
-    {
-        var client = await CreateClientAsync();
-        if (client == null)
-        {
-            if (logger.IsEnabled(LogLevel.Error))
-            {
-                logger.LogError("Failed to create UAClient. Aborting execution.");
-            }
-            return null;
-        }
-
-        return await FetchReferenceDescriptionsAsync(client, cancellationToken);
-    }
-
-    private async Task<UAClient?> CreateClientAsync()
-    {
-        var plcUrl = ixonAuthenticationContext.IxonHeaders.PlcUrl;
-        var username = ixonAuthenticationContext.IxonHeaders.PlcUsername;
-        var password = ixonAuthenticationContext.IxonHeaders.PlcPassword;
-
-        if (string.IsNullOrWhiteSpace(plcUrl))
-        {
-            if (logger.IsEnabled(LogLevel.Error))
-            {
-                logger.LogError("PLC URL is missing. Aborting execution.");
-            }
-            return null;
-        }
-
-        if (string.IsNullOrWhiteSpace(username) && string.IsNullOrWhiteSpace(password))
-        {
-            return await clientFactory.CreateAsync(plcUrl);
-        }
-
-        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-        {
-            if (logger.IsEnabled(LogLevel.Error))
-            {
-                logger.LogError("PLC credentials are incomplete. Provide both username and password.");
-            }
-            return null;
-        }
-
-        return await clientFactory.CreateAsync(plcUrl, username, password);
-    }
-
-    private async Task<ReferenceDescriptionCollection?> FetchReferenceDescriptionsAsync(
-        UAClient client,
-        CancellationToken cancellationToken
-    )
-    {
-        var sampler = await clientSamplerFactory.CreateAsync();
-        return await sampler
-            .BrowseFullAddressSpaceAsync(client, Objects.RootFolder, ct: cancellationToken)
-            .ConfigureAwait(false);
-    }
-
     public async Task ExecuteVariableScraperAsync(CancellationToken cancellationToken)
     {
         _CreatedVariables.Clear();
@@ -160,4 +100,49 @@ public class Scraper(
 
         await nodeSynchronizer.SynchronizeVariablesAsync(ixonAuthenticationContext.IxonHeaders.GetRequiredAgentId(), createdVariables);
     }
+
+    private async Task<UAClient?> CreateClientAsync()
+    {
+        var plcUrl = ixonAuthenticationContext.IxonHeaders.PlcUrl;
+        var username = ixonAuthenticationContext.IxonHeaders.PlcUsername;
+        var password = ixonAuthenticationContext.IxonHeaders.PlcPassword;
+
+        if (string.IsNullOrWhiteSpace(plcUrl))
+        {
+            if (logger.IsEnabled(LogLevel.Error))
+    
+            {
+                logger.LogError("PLC URL is missing. Aborting execution.");
+            }
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(username) && string.IsNullOrWhiteSpace(password))
+        {
+            return await clientFactory.CreateAsync(plcUrl);
+        }
+
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        {
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError("PLC credentials are incomplete. Provide both username and password.");
+            }
+            return null;
+        }
+
+        return await clientFactory.CreateAsync(plcUrl, username, password);
+    }
+
+    private async Task<ReferenceDescriptionCollection?> FetchReferenceDescriptionsAsync(
+        UAClient client,
+        CancellationToken cancellationToken
+    )
+    {
+        var sampler = await clientSamplerFactory.CreateAsync();
+        return await sampler
+            .BrowseFullAddressSpaceAsync(client, Objects.RootFolder, ct: cancellationToken)
+            .ConfigureAwait(false);
+    }
+
 }
