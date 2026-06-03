@@ -193,6 +193,7 @@ flowchart TD
 
 | `IxonSettingsController`
 | `POST /api/ixonsettings/datasource`. Delegates to `IDataSourceResolver` to find an existing OPC UA data source by name or create a new one on the agent.
+| `POST /api/ixonsettings/pushConfiguration`. Pushes all the changes to the IXON Edge Pro
 
 | `PlcController`
 | `POST /api/plc/connect`. Attempts an OPC UA connection using the supplied credentials; returns `200 OK` on success or `400 Bad Request` on failure.
