@@ -15,7 +15,7 @@ export default function WizardStepComponent({
   status,
   isCurrentStep }: Props) {
   return (
-    <div className={styles.wizardStep}>
+    <div className={`${styles.wizardStep} ${styles[status]}`}>
       <div className={styles.header}>
         <WizardStepIndicator step={stepNumber} status={status} />
         <h2>{wizardStep.title}</h2>
