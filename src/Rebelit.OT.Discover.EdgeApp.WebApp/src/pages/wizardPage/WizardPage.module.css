@@ -21,8 +21,8 @@
 
   .progressPanelWrapper {
       display: flex;
-      width: 35vw;
-      max-width: 700px;
+      width: 34vw;
+      max-width: 650px;
 
       > :first-child {
         flex: 1;
