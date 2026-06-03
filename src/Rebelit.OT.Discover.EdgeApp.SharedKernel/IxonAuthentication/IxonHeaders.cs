@@ -36,4 +36,60 @@ public class IxonHeaders
     /// Sourceid of the opcua datasource
     /// </summary>
     public string? SourceId { get; set; }
+
+    public string GetRequiredAgentId()
+    {
+        if(string.IsNullOrEmpty(AgentId))
+        {
+            throw new InvalidOperationException("AgentId is required but was not set.");
+        } 
+        return AgentId;
+    }
+
+    public string GetRequiredCompanyId()
+    {
+        if (string.IsNullOrEmpty(CompanyId))
+        {
+            throw new InvalidOperationException("CompanyId is required but was not set.");
+        }
+        return CompanyId;
+    }
+
+    public string GetRequiredPlcUrl()
+    {
+        if (string.IsNullOrEmpty(PlcUrl))
+        {
+            throw new InvalidOperationException("PlcUrl is required but was not set.");
+        }
+        return PlcUrl;
+    }
+
+    public string GetRequiredSourceId()
+    {
+        if (string.IsNullOrEmpty(SourceId))
+        {
+            throw new InvalidOperationException("SourceId is required but was not set.");
+        }
+        return SourceId;
+    }
+
+    public string GetRequiredPlcUsername()
+    {
+        if (string.IsNullOrEmpty(PlcUsername))
+        {
+            throw new InvalidOperationException("PlcUsername is required but was not set.");
+        }
+        return PlcUsername;
+    }
+
+    public string GetRequiredPlcPassword()
+    {
+        if (string.IsNullOrEmpty(PlcPassword))
+        {
+            throw new InvalidOperationException("PlcPassword is required but was not set.");
+        }
+        return PlcPassword;
+    }
+
+
 }

@@ -6,7 +6,6 @@ namespace Rebelit.OT.Discover.EdgeApp.API.Services;
 
 internal sealed class VariableService(
     IApiClient apiClient,
-    IConfiguration configuration,
     IIxonAuthenticationContext ixonAuthenticationContext,
     ILogger<VariableService> logger) : IVariableService
 {
@@ -22,8 +21,6 @@ internal sealed class VariableService(
 
     public async Task<Variable?> CreateVariableAsync(Variable variable, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(variable);
-
         if (string.IsNullOrWhiteSpace(variable.Name))
         {
             throw new ArgumentException("Variable name is required.", nameof(variable));
@@ -57,8 +54,6 @@ internal sealed class VariableService(
 
     public async Task<IReadOnlyList<Variable>> CreateVariablesAsync(IEnumerable<Variable> variables, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(variables);
-
         var variableList = variables.ToList();
         if (variableList.Count == 0)
         {

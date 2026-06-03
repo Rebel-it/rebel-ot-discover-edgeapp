@@ -1,6 +1,6 @@
 namespace Rebelit.OT.Discover.EdgeApp.API.Utilities;
 
-internal static class SlugGenerator
+public static class SlugGenerator
 {
     public static string CreateFromNameAndAddress(string? name, string? address)
     {

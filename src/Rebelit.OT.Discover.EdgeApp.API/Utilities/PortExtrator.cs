@@ -1,6 +1,6 @@
 namespace Rebelit.OT.Discover.EdgeApp.API.Utilities;
 
-internal static class PortExtractor
+public static class PortExtractor
 {
     public static int? ExtractPort(string? opcuaAddress)
     {

@@ -3,7 +3,8 @@ using System.Text.Json.Serialization;
 namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 
 /// <summary>
-///     Represents a Variable in the IXON API, containing properties that define the variable's identifiers, address, type, source, and other metadata. This class is used to model the data structure of variables as returned by the IXON API and to facilitate interactions with variables when using the API client.
+///     Represents a Variable in the IXON API, containing properties that define the variable's identifiers, address, type, source, and other metadata.
+///     This class is used to model the data structure of variables as returned by the IXON API and to facilitate interactions with variables when using the API client.
 /// </summary>
 /// <remarks>
 ///    Variables represent data points in the IXON system, defined by their address and type to the node.

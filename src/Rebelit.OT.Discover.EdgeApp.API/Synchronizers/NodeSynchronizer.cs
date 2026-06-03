@@ -9,7 +9,7 @@ namespace Rebelit.OT.Discover.EdgeApp.API.Synchronizers;
 
 public interface INodeSynchronizer
 {
-    Task InitializeAsync(string agentId);
+    Task InitializeAsync();
 
     Task SynchronizeVariablesAsync(string agentId, IEnumerable<Variable> variables);
 
@@ -25,17 +25,18 @@ public interface INodeSynchronizer
 internal sealed class NodeSynchronizer(
     IApiClient apiClient,
     IOpcUaVariableMapper variableMapper,
-    IConfiguration configuration,
     ILogger<NodeSynchronizer> logger
 ) : INodeSynchronizer
 {
     private HashSet<string> _existingAddresses = [];
 
-    public async Task InitializeAsync(string agentId)
+    public async Task InitializeAsync()
     {
+        var response = await apiClient.GetDataVariablesAsync();
+
         _existingAddresses =
         [
-            .. (await apiClient.GetDataVariablesAsync()).Data.Select(v => v.Address),
+            .. (response.Data ?? []).Select(v => v.Address),
         ];
     }
 
@@ -57,6 +58,13 @@ internal sealed class NodeSynchronizer(
             };
 
             var nodesToRead = new ReadValueIdCollection { readValueId };
+
+            if(client.Session is null)
+            {
+                logger.LogError("OPC UA session is not established. Cannot read DataType attribute for node {NodeId}.", nodeId);
+                return null;
+            }
+
             var response = await client.Session.ReadAsync(
                 null,
                 0,
@@ -108,6 +116,12 @@ internal sealed class NodeSynchronizer(
         }
 
         var dataTypeNodeId = await ReadDataTypeAttributeAsync(client, (NodeId)referenceDescription.NodeId);
+
+        if (dataTypeNodeId == null)
+        {
+            logger.LogError("ReadDataTypeAttributeAsync failed for node {NodeId}.", referenceDescription.NodeId);
+            return null;
+        }
         var variable = variableMapper.Map(dataTypeNodeId, referenceDescription, dataSourceId);
 
         if (variable is null)
