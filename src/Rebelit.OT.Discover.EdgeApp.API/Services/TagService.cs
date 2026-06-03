@@ -73,11 +73,11 @@ internal sealed class TagService(
 
         return createdTag;
     }
-    public async Task CreateTagsAsync(List<Tag> requests)
+    public async Task CreateTagsAsync(IEnumerable<Tag> requests)
     {
         ArgumentNullException.ThrowIfNull(requests);
 
-        logger.LogInformation("Posting {Count} tags for agent {AgentId}.", requests.Count, ixonAuthenticationContext.IxonHeaders.AgentId);
+        logger.LogInformation("Posting {Count} tags for agent {AgentId}.", requests.Count(), ixonAuthenticationContext.IxonHeaders.AgentId);
         var result = await apiClient.PostTagsAsync(requests);
 
         if (result is not null && result.Data is not null)
@@ -93,7 +93,7 @@ internal sealed class TagService(
         logger.LogWarning(
             "Posting tags for agent {AgentId} returned an unexpected empty response. Attempted to post {Count} tags.",
             ixonAuthenticationContext.IxonHeaders.AgentId,
-            requests.Count
+            requests.Count()
             );   
     }
 

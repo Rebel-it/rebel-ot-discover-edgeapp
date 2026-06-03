@@ -60,7 +60,7 @@ public class TagsController(ITagService tagService) : BaseController
     [HttpPost("CreateTags")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreateTagsAsync([FromBody] List<Tag> model)
+    public async Task<IActionResult> CreateTagsAsync([FromBody] IEnumerable<Tag> model)
     {
         await _tagService.CreateTagsAsync(model);
 
