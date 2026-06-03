@@ -12,7 +12,7 @@ public class ConfigurationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(config.BaseUrl, Is.EqualTo("https://portal.ixon.cloud"));
+            Assert.That(config.BaseUrl, Is.EqualTo(new Uri("https://portal.ixon.cloud/")));
             Assert.That(config.Version, Is.EqualTo(2));
         });
     }
