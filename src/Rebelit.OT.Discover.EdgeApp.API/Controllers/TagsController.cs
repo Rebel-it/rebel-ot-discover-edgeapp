@@ -26,7 +26,7 @@ public class TagsController(ITagService tagService) : BaseController
     /// <summary>
     /// Retrieves prefilled tags.
     /// </summary>
-    [HttpGet("prefilled")]
+    [HttpGet("Prefilled")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetPrefilledTagsAsync()
