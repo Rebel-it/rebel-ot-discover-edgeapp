@@ -161,5 +161,4 @@ public class DataSourceResolverTests
                 PlcPassword = password,
             },
         };
-
 }
