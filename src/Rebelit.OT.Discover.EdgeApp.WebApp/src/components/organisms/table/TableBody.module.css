@@ -1,0 +1,26 @@
+.tableBody {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid var(--purple-500);
+  border-top: none;
+  border-radius: 0 0 20px 20px;
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  align-items: stretch;
+  min-height: 48px;
+}
+
+.tableBody>.row:nth-child(odd) {
+  background-color: var(--white);
+}
+
+.tableBody>.row:nth-child(even) {
+  background-color: var(--grey-100);
+}
+
+.tableBody>.row.selected {
+  background-color: var(--purple-500);
+}

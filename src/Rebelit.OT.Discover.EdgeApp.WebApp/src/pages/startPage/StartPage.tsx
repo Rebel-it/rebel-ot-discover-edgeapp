@@ -4,6 +4,7 @@ import WizardPage from "../wizardPage/WizardPage"
 import { Pages } from "../../models/Pages"
 import { useEffect } from "react"
 import { useWizard } from "../../context/WizardContext"
+import Table from "../../components/organisms/table/Table"
 
 function StartPage() {
   const navigate = useNavigate();
@@ -14,21 +15,56 @@ function StartPage() {
     deleteCompletedSteps();
   }, []);
 
+  const columnDefs = [
+    { key: "column1", label: "Step", sortable: true },
+    { key: "column2", label: "Action", sortable: true },
+    { key: "column3", label: "Estimated Time", sortable: true },
+  ]
+
+  const rowData = [
+    {
+      id: "1",
+      cells: {
+        column1: "Step 1",
+        column2: "Connect to VPN",
+        column3: "Estimated time: 2 minutes"
+      }
+    },
+    {
+      id: "2",
+      cells: {
+        column1: "Step 2",
+        column2: "Connect to VPNNN",
+        column3: "Estimated time: 4 minutes"
+      }
+    },
+  ]
+
   return (
-    <WizardPage 
+    <WizardPage
       continueButtonText="Start"
       onContinue={() => navigate(Pages.login)}
     >
       <section className={styles.page}>
-          <h1 className={styles.title}>[OPC & Discovery app]</h1>
-          <p className={styles.description}>
-            {description.split("\n\n").map((paragraph, index) => (
-              <span key={index}>
-                {paragraph}
-                <br /><br />
-              </span>
-            ))}
-          </p>
+        <h1 className={styles.title}>[OPC & Discovery app]</h1>
+        <p className={styles.description}>
+          {description.split("\n\n").map((paragraph, index) => (
+            <span key={index}>
+              {paragraph}
+              <br /><br />
+            </span>
+          ))}
+        </p>
+
+        <Table
+          rows={rowData}
+          columns={columnDefs}
+          selectedIds={[]}
+          onRowSelect={() => { }}
+          onSelectAll={() => { }}
+          onSort={() => { }}
+        />
+
       </section>
     </WizardPage>
   )

@@ -1,0 +1,19 @@
+.cell {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    flex: 1;
+    min-width: 0;
+    border-left: 1px solid var(--purple-200);
+}
+
+.cell:first-child {
+    border-left: none;
+}
+
+.narrow {
+    flex: 0 0 48px;
+    width: 48px;
+    justify-content: center;
+    padding: 12px 16px;
+}

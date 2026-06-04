@@ -1,0 +1,24 @@
+.columnHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-left: 1px solid white;
+  padding: 0 16px;
+  flex: 1;
+  min-width: 0;
+
+  p {
+    font-family: Zilla Slab, serif;
+    font-weight: 700;
+    font-size: 2.4rem;
+  }
+}
+
+.columnHeader:not(.sortable) {
+  cursor: default;
+  pointer-events: none;
+}
