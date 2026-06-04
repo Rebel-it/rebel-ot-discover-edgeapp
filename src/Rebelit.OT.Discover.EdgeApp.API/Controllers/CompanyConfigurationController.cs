@@ -4,7 +4,7 @@ using Rebelit.OT.Discover.EdgeApp.API.Services;
 namespace Rebelit.OT.Discover.EdgeApp.API.Controllers;
 
 public class CompanyConfigurationController(
-    ICompanyConfigurationService service
+    IIxonCompanyConfigurationService service
 ) : BaseController
 {
     [HttpGet]

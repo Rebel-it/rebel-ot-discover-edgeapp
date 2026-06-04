@@ -46,18 +46,3 @@ function toVariableOption(value: unknown): VariableOption | null {
 
     return null
 }
-
-
-export async function getVariables(): Promise<VariableOption[]> {
-    let payload: unknown
-
-    try {
-        payload = await httpClient.get<unknown>('/variable')
-    } catch {
-        return []
-    }
-
-    if (!Array.isArray(payload)) return []
-
-    return payload.map(toVariableOption).filter((value): value is VariableOption => Boolean(value))
-}
