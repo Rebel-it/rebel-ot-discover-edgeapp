@@ -64,8 +64,8 @@ function VariablesPage() {
       <div className={styles.page}>
         <WizardPageTitle title="Synchronize variables" />
 
-        {isSubmitting && (
-          <>
+        <>
+          {isSubmitting && (
             <div className={styles.statusDescriptionWrapper}>
               <p>The following steps will now be performed:</p>
               <ol>
@@ -73,18 +73,19 @@ function VariablesPage() {
                 <li>Sending data to the IXON Cloud</li>
               </ol>
             </div>
-            <div className={styles.statusIndicatorWrapper}>
-              {isSubmitting ?
-                (
-                  <Spinner />
-                )
-                : (
-                  <img src={taskFinished} alt="Variables sync completed" />
-                )
-              }
-            </div>
-          </>
-        )}
+          )}
+
+          <div className={styles.statusIndicatorWrapper}>
+            {isSubmitting ?
+              (
+                <Spinner />
+              )
+              : (
+                <img src={taskFinished} alt="Variables sync completed" />
+              )
+            }
+          </div>
+        </>
 
         {errorMessage && <p className={`${styles.formMessage} ${styles.errorMessage}`}>{errorMessage}</p>}
 
