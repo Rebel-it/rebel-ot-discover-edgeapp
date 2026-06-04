@@ -6,6 +6,7 @@ import WizardPage from "../wizardPage/WizardPage";
 import { Pages } from "../../models/Pages";
 import { useWizard } from "../../context/WizardContext";
 import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle";
+import Table from "../../components/organisms/table/Table";
 
 function TagPage() {
   const navigate = useNavigate();
@@ -18,7 +19,6 @@ function TagPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const selectAllRef = useRef<HTMLInputElement | null>(null);
   const isSubmittingRef = useRef(false);
-  const [initialTagsCreated, setInitialTagsCreated] = useState(false);
 
   const tagKeys = tags.map(getTagKey);
   const allSelected = tagKeys.length > 0 && tagKeys.every((key) => selectedTagKeys.has(key));
@@ -74,7 +74,7 @@ function TagPage() {
     return tag.edgeAggregator ?? "";
   }
 
-  async function handleCreateSelected() {
+  async function handleCreateTags() {
     if (selectedTagKeys.size === 0 || isSubmittingRef.current) {
       return;
     }
@@ -89,7 +89,8 @@ function TagPage() {
 
       setTags((prev) => prev.filter((tag) => !selectedTagKeys.has(getTagKey(tag))));
       setSelectedTagKeys(new Set());
-      setInitialTagsCreated(true);
+      markStepCompleted("tags");
+      navigate(Pages.deviceConfig);
     } catch {
       setErrorMessage("Unable to reach the tag service. Check that the API is running.");
     } finally {
@@ -98,32 +99,56 @@ function TagPage() {
     }
   }
 
+  const columnDefs = [
+    { key: "name", label: "Name", sortable: true },
+    { key: "logOn", label: "Log on", sortable: false },
+    { key: "interval", label: "Interval", sortable: false },
+    { key: "formula", label: "Formula", sortable: false },
+  ]
+
+  const rowData = tags.map((tag) => ({
+    id: getTagKey(tag),
+    cells: {
+      name: tag.name,
+      logOn: tag.logEvent,
+      interval: tag.loggingInterval,
+      formula: getFormulaLabel(tag)
+    }
+  }));
+
   return (
     <WizardPage
       wizardStep="tags"
       continueButtonText="I'm done creating tags"
-      onContinue={() => {
-        markStepCompleted("tags");
-        navigate(Pages.deviceConfig);
-      }}>
+      onContinue={handleCreateTags}
+      loading={isSubmitting || selectedCount === 0}>
 
-      <div className={styles.header}>
+      <div className={styles.page}>
         <WizardPageTitle title="Tags" />
-        <button
-          type="button"
-          className={styles.saveButton}
-          onClick={handleCreateSelected}
-          disabled={isSubmitting || selectedCount === 0}
-        >
-          {isSubmitting ? "Creating..." : `Create selected (${selectedCount})`}
-        </button>
+
+        {tagsLoading && <p className={styles.empty}>Loading tags...</p>}
+        {!tagsLoading && tagsError && <p className={styles.empty}>{tagsError}</p>}
+        {!tagsLoading && !tagsError && tags.length === 0 && (
+          <p className={styles.empty}>No prefilled tags available.</p>
+        )}
+
+        {/* {rowData.length > 0 && ( */}
+        <div className={styles.tableWrapper}>
+          <Table
+            rows={rowData}
+            columns={columnDefs}
+            selectedIds={[]}
+            onRowSelect={() => { }}
+            onSelectAll={() => { }}
+            onSort={() => { }}
+          />
+        </div>
+        {/* )} */}
+        {errorMessage && <p>{errorMessage}</p>}
       </div>
 
-      {tagsLoading && <p className={styles.empty}>Loading tags...</p>}
-      {!tagsLoading && tagsError && <p className={styles.empty}>{tagsError}</p>}
-      {!tagsLoading && !tagsError && tags.length === 0 && (
-        <p className={styles.empty}>No prefilled tags available.</p>
-      )}
+      {/* 
+      
       {!tagsLoading && !tagsError && tags.length > 0 && (
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
@@ -165,7 +190,7 @@ function TagPage() {
           </table>
         </div>
       )}
-      {errorMessage && <p>{errorMessage}</p>}
+      {errorMessage && <p>{errorMessage}</p>} */}
     </WizardPage>
   )
 }

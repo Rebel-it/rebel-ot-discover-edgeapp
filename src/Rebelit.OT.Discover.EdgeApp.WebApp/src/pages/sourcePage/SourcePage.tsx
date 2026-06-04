@@ -1,6 +1,6 @@
 import style from "./SourcePage.module.css"
 import { useNavigate } from "react-router-dom"
-import { useState, type ComponentProps } from "react"
+import { useState } from "react"
 import { loadPlcServerAddress, saveSourceId } from "../../services/sessionStorageService.ts"
 import type { SourceObject } from "../../models/SourceObject.ts"
 import { createSource } from "../../services/dataSourceService.ts"
@@ -9,8 +9,6 @@ import WizardPage from "../wizardPage/WizardPage.tsx"
 import { Pages } from "../../models/Pages.ts"
 import { useWizard } from "../../context/WizardContext.tsx"
 import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle.tsx"
-
-type SourceFormSubmitEvent = Parameters<NonNullable<ComponentProps<"form">["onSubmit"]>>[0]
 
 function getDefaultDataSourceName(): string {
   const opcAddress = loadPlcServerAddress().trim();
@@ -41,9 +39,7 @@ function SourcePage() {
     }));
   }
 
-  async function handleSubmit(event: SourceFormSubmitEvent) {
-    event.preventDefault();
-
+  async function handleCreateDataSource() {
     if (isSubmitting) {
       return;
     }
@@ -55,6 +51,8 @@ function SourcePage() {
       const result: string = await createSource(sourceObject);
       saveSourceId(result);
       setSourceCreationSucceeded(true);
+      markStepCompleted("source");
+      navigate(Pages.variables);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Source creation failed. Please check your input and try again.");
     } finally {
@@ -66,12 +64,10 @@ function SourcePage() {
     <WizardPage
       wizardStep="source"
       continueButtonText="Create"
-      onContinue={() => {
-        markStepCompleted("source");
-        navigate(Pages.variables);
-      }}
+      onContinue={handleCreateDataSource}
+      loading={isSubmitting}
     >
-      <form className={style.sourceForm} onSubmit={handleSubmit} noValidate>
+      <form className={style.sourceForm}  noValidate>
         <WizardPageTitle title="Create data source" />
 
         <div className={style.formFieldWrapper}>

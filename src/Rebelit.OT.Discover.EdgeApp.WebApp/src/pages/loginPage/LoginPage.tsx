@@ -1,4 +1,4 @@
-import { useState, type ComponentProps } from "react"
+import { useState } from "react"
 import { saveIxonAuth, clearIxonAuthenticationHeaders } from "../../services/sessionStorageService.ts"
 import styles from "./LoginPage.module.css"
 import { useNavigate } from "react-router-dom"
@@ -9,8 +9,6 @@ import WizardPage from "../wizardPage/WizardPage.tsx"
 import { useWizard } from "../../context/WizardContext.tsx"
 import { Pages } from "../../models/Pages.ts"
 import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle.tsx"
-
-type LoginFormSubmitEvent = Parameters<NonNullable<ComponentProps<"form">["onSubmit"]>>[0]
 
 const defaultAuthObject: ServiceAccountObject = {
   apiApplicationID: "",
@@ -32,15 +30,15 @@ function LoginPage() {
     }));
   }
 
-  async function handleSubmit(event: LoginFormSubmitEvent) {
-    event.preventDefault();
-
+  async function handleLogin() {
     try {
       setIsSubmitting(true);
       const result = await getCompanyConfiguration(serviceAccount);
       saveIxonAuth(serviceAccount, result);
       setLoginSucceeded(true);
       setErrorMessage("");
+      markStepCompleted("login");
+      navigate(Pages.plcConnect);
     } catch (error) {
       clearIxonAuthenticationHeaders();
       setErrorMessage(error instanceof Error ? error.message : "Failed to login. Please check your credentials and try again.");
@@ -53,12 +51,10 @@ function LoginPage() {
     <WizardPage
       wizardStep="login"
       continueButtonText="Log in"
-      onContinue={() => {
-        markStepCompleted("login");
-        navigate(Pages.plcConnect);
-      }}>
+      onContinue={handleLogin}
+      loading={isSubmitting}>
 
-      <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
+      <form className={styles.loginForm} noValidate>
         <WizardPageTitle title="Log in" />
 
         <div className={styles.formFieldWrapper}>
@@ -82,7 +78,6 @@ function LoginPage() {
         </div>
 
         {errorMessage && <p className={`${styles.formMessage} ${styles.errorMessage}`}>{errorMessage}</p>}
-
 
         {loginSucceeded && (
           <p className={`${styles.formMessage} ${styles.successMessage}`}>

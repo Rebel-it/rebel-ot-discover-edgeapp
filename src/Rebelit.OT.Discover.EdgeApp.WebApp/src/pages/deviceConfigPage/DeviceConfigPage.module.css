@@ -2,10 +2,16 @@
 
   .descriptionWrapper {
     padding-top: 40px;
-    
+
     font-size: 1.8rem;
+
     .warning {
       font-weight: 700;
     }
+  }
+
+  .tableWrapper {
+    width: 100%;
+    max-width: 1200px;
   }
 }

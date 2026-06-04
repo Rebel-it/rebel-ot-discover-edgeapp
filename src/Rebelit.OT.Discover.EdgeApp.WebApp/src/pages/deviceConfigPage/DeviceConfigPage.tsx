@@ -7,6 +7,7 @@ import { useWizard } from '../../context/WizardContext'
 import WizardPage from '../wizardPage/WizardPage'
 import { Pages } from '../../models/Pages'
 import WizardPageTitle from '../../components/atoms/wizardPageTitle/WizardPageTitle'
+import Table from '../../components/organisms/table/Table';
 
 function DeviceConfigPage() {
   const navigate = useNavigate();
@@ -36,6 +37,31 @@ function DeviceConfigPage() {
     }
   }
 
+  const columnDefs = [
+    { key: "column1", label: "Step", sortable: true },
+    { key: "column2", label: "Action", sortable: true },
+    { key: "column3", label: "Estimated Time", sortable: true },
+  ]
+
+  const rowData = [
+    {
+      id: "1",
+      cells: {
+        column1: "Step 1",
+        column2: "Connect to VPN",
+        column3: "Estimated time: 2 minutes"
+      }
+    },
+    {
+      id: "2",
+      cells: {
+        column1: "Step 2",
+        column2: "Connect to VPNNN",
+        column3: "Estimated time: 4 minutes"
+      }
+    },
+  ]
+
   return (
     <WizardPage
       wizardStep="deviceConfig"
@@ -60,6 +86,16 @@ function DeviceConfigPage() {
             {status.message}
           </p>
         )}
+        <div className={styles.tableWrapper}>
+          <Table
+            rows={rowData}
+            columns={columnDefs}
+            selectedIds={[]}
+            onRowSelect={() => { }}
+            onSelectAll={() => { }}
+            onSort={() => { }}
+          />
+        </div>
       </div>
     </WizardPage>
   )

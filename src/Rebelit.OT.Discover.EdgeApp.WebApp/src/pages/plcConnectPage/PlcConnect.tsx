@@ -1,17 +1,15 @@
-import { useNavigate } from "react-router-dom"
-import { savePlcAuth } from "../../services/sessionStorageService.ts"
-import { connectToPlc } from "../../services/plcService.ts"
-import type { PlcAuthObject } from "../../models/PlcAuthObject.ts"
-import { useState, type ComponentProps } from "react"
-import FormField from "../../components/atoms/formField/FormField.tsx"
-import WizardPage from "../wizardPage/WizardPage.tsx"
-import { useWizard } from "../../context/WizardContext.tsx"
-import { Pages } from "../../models/Pages.ts"
-import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle.tsx"
-import styles from "./PlcConnect.module.css"
-import Checkbox from "../../components/atoms/checkbox/Checkbox.tsx"
-
-type PlcFormSubmitEvent = Parameters<NonNullable<ComponentProps<"form">["onSubmit"]>>[0]
+import { useNavigate } from "react-router-dom";
+import { savePlcAuth } from "../../services/sessionStorageService.ts";
+import { connectToPlc } from "../../services/plcService.ts";
+import type { PlcAuthObject } from "../../models/PlcAuthObject.ts";
+import { useState } from "react";
+import FormField from "../../components/atoms/formField/FormField.tsx";
+import WizardPage from "../wizardPage/WizardPage.tsx";
+import { useWizard } from "../../context/WizardContext.tsx";
+import { Pages } from "../../models/Pages.ts";
+import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle.tsx";
+import styles from "./PlcConnect.module.css";
+import Checkbox from "../../components/atoms/checkbox/Checkbox.tsx";
 
 const defaultPlcObject: PlcAuthObject = {
   OpcUaServerAddress: "",
@@ -47,8 +45,7 @@ function PlcConnect() {
     }
   }
 
-  async function handleSubmit(event: PlcFormSubmitEvent) {
-    event.preventDefault();
+  async function handlePlcConnect() {
     setIsSubmitting(true);
     setErrorMessage("");
     setConnectionSucceeded(false);
@@ -57,6 +54,8 @@ function PlcConnect() {
       await connectToPlc(plcObject);
       savePlcAuth(plcObject);
       setConnectionSucceeded(true);
+      markStepCompleted("plcConnect");
+      navigate(Pages.source);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "PLC connection failed. Please check your credentials and try again.");
     } finally {
@@ -68,12 +67,10 @@ function PlcConnect() {
     <WizardPage
       wizardStep="plcConnect"
       continueButtonText="Connect"
-      onContinue={() => {
-        markStepCompleted("plcConnect");
-        navigate(Pages.source);
-      }}
+      onContinue={handlePlcConnect}
+      loading={isSubmitting}
     >
-      <form className={styles.plcConnectForm} onSubmit={handleSubmit} noValidate>
+      <form className={styles.plcConnectForm} noValidate>
         <WizardPageTitle title="PLC connection" />
 
         <div className={styles.formFieldWrapper}>

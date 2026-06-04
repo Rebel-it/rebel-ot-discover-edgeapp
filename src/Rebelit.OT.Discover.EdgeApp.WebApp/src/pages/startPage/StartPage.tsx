@@ -1,10 +1,9 @@
-import { useNavigate } from "react-router-dom"
-import styles from "./StartPage.module.css"
-import WizardPage from "../wizardPage/WizardPage"
-import { Pages } from "../../models/Pages"
-import { useEffect } from "react"
-import { useWizard } from "../../context/WizardContext"
-import Table from "../../components/organisms/table/Table"
+import { useNavigate } from "react-router-dom";
+import styles from "./StartPage.module.css";
+import WizardPage from "../wizardPage/WizardPage";
+import { Pages } from "../../models/Pages";
+import { useEffect } from "react";
+import { useWizard } from "../../context/WizardContext";
 
 function StartPage() {
   const navigate = useNavigate();
@@ -14,31 +13,6 @@ function StartPage() {
   useEffect(() => {
     deleteCompletedSteps();
   }, []);
-
-  const columnDefs = [
-    { key: "column1", label: "Step", sortable: true },
-    { key: "column2", label: "Action", sortable: true },
-    { key: "column3", label: "Estimated Time", sortable: true },
-  ]
-
-  const rowData = [
-    {
-      id: "1",
-      cells: {
-        column1: "Step 1",
-        column2: "Connect to VPN",
-        column3: "Estimated time: 2 minutes"
-      }
-    },
-    {
-      id: "2",
-      cells: {
-        column1: "Step 2",
-        column2: "Connect to VPNNN",
-        column3: "Estimated time: 4 minutes"
-      }
-    },
-  ]
 
   return (
     <WizardPage
@@ -55,16 +29,6 @@ function StartPage() {
             </span>
           ))}
         </p>
-
-        <Table
-          rows={rowData}
-          columns={columnDefs}
-          selectedIds={[]}
-          onRowSelect={() => { }}
-          onSelectAll={() => { }}
-          onSort={() => { }}
-        />
-
       </section>
     </WizardPage>
   )

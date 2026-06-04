@@ -1,5 +1,5 @@
 import Button from "../../components/atoms/button/Button";
-import ProgressPanel from "../../components/organisms/ProgressPanel/ProgressPanel";
+import ProgressPanel from "../../components/organisms/progressPanel/ProgressPanel";
 import type { WizardStepKey } from "../../models/WizardStep";
 import styles from "./WizardPage.module.css";
 import poweredByRebel from '../../assets/poweredbyrebel.png';
@@ -9,16 +9,18 @@ type Props = {
   wizardStep?: WizardStepKey;
   continueButtonText?: string;
   onContinue?: () => void;
+  loading?: boolean;
 }
 
-export default function WizardPage({ children, wizardStep, continueButtonText, onContinue }: Readonly<Props>) {
+export default function WizardPage({ children, wizardStep, continueButtonText, 
+  onContinue, loading }: Readonly<Props>) {
   return (
     <div className={styles.wizardPage}>
       <div className={styles.content}>
         {children}
         <div className={styles.buttonWrapper}>
           {continueButtonText && onContinue && (
-            <Button text={continueButtonText} onClick={onContinue} />
+            <Button text={continueButtonText} onClick={onContinue} loading={loading} />
           )}
         </div>
       </div>

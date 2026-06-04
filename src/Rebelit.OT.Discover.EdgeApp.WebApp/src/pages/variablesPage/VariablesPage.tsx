@@ -7,6 +7,7 @@ import WizardPage from "../wizardPage/WizardPage"
 import { Pages } from "../../models/Pages"
 import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle"
 import Spinner from "../../components/atoms/spinner/Spinner"
+import taskFinished from '../../assets/taskfinished.png';
 
 function VariablesPage() {
   const navigate = useNavigate();
@@ -15,41 +16,40 @@ function VariablesPage() {
   const [synchronizationSucceeded, setSynchronizationSucceeded] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // useEffect(() => {
-  //   let isActive = true
+  useEffect(() => {
+    let isActive = true
 
-  //   async function runSynchronization() {
-  //     setIsSubmitting(true);
-  //     setErrorMessage("");
-  //     setSynchronizationSucceeded(false);
+    async function runSynchronization() {
+      setErrorMessage("");
+      setSynchronizationSucceeded(false);
 
-  //     try {
-  //       await synchronizeVariablesRequest();
+      try {
+        await synchronizeVariablesRequest();
 
-  //       if (!isActive) {
-  //         return;
-  //       }
+        if (!isActive) {
+          return;
+        }
 
-  //       setSynchronizationSucceeded(true);
-  //     } catch (error) {
-  //       if (!isActive) {
-  //         return;
-  //       }
+        setSynchronizationSucceeded(true);
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
 
-  //       setErrorMessage(error instanceof Error ? error.message : "Variable synchronization failed. Please try again.");
-  //     } finally {
-  //       if (isActive) {
-  //         setIsSubmitting(false);
-  //       }
-  //     }
-  //   }
+        setErrorMessage(error instanceof Error ? error.message : "Variable synchronization failed. Please try again.");
+      } finally {
+        if (isActive) {
+          setIsSubmitting(false);
+        }
+      }
+    }
 
-  //   void runSynchronization();
+    void runSynchronization();
 
-  //   return () => {
-  //     isActive = false;
-  //   }
-  // }, [])
+    return () => {
+      isActive = false;
+    }
+  }, [])
 
   return (
     <WizardPage
@@ -58,7 +58,9 @@ function VariablesPage() {
       onContinue={() => {
         markStepCompleted("variables");
         navigate(Pages.tags);
-      }}>
+      }}
+      loading={isSubmitting}
+    >
       <div className={styles.page}>
         <WizardPageTitle title="Synchronize variables" />
 
@@ -71,8 +73,15 @@ function VariablesPage() {
                 <li>Sending data to the IXON Cloud</li>
               </ol>
             </div>
-            <div className={styles.spinnerWrapper}>
-              <Spinner />
+            <div className={styles.statusIndicatorWrapper}>
+              {isSubmitting ?
+                (
+                  <Spinner />
+                )
+                : (
+                  <img src={taskFinished} alt="Variables sync completed" />
+                )
+              }
             </div>
           </>
         )}

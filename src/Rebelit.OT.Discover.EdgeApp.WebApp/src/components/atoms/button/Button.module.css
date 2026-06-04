@@ -17,3 +17,8 @@
 .button:active {
   background-color: var(--purple-100);
 }
+
+.button:disabled {
+  background-color: var(--purple-100);
+  cursor: default;
+}
