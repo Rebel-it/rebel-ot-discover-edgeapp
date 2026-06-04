@@ -17,16 +17,16 @@ function TagPage() {
   const [tags, setTags] = useState<ApiTag[]>([]);
   const [tagsLoading, setTagsLoading] = useState(true);
   const [tagsError, setTagsError] = useState("");
-  const [selectedTagKeys, setSelectedTagKeys] = useState<Set<string>>(new Set());
+  const [selectedTagKeys, setSelectedTagKeys] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const selectAllRef = useRef<HTMLInputElement | null>(null);
   const isSubmittingRef = useRef(false);
 
   const tagKeys = tags.map(getTagKey);
-  const allSelected = tagKeys.length > 0 && tagKeys.every((key) => selectedTagKeys.has(key));
-  const someSelected = tagKeys.some((key) => selectedTagKeys.has(key));
-  const selectedCount = selectedTagKeys.size;
+  const allSelected = tagKeys.length > 0 && tagKeys.every((key) => selectedTagKeys.includes(key));
+  const someSelected = tagKeys.some((key) => selectedTagKeys.includes(key));
+  const selectedCount = selectedTagKeys.length;
 
   useEffect(() => {
     getFilledTags()
@@ -45,11 +45,12 @@ function TagPage() {
     const tagKey = getTagKey(tag);
 
     setSelectedTagKeys((prev) => {
-      const next = new Set(prev);
-      if (next.has(tagKey)) {
-        next.delete(tagKey);
+      const next = [...prev];
+      const index = next.indexOf(tagKey);
+      if (index !== -1) {
+        next.splice(index, 1);
       } else {
-        next.add(tagKey);
+        next.push(tagKey);
       }
 
       return next;
@@ -58,15 +59,16 @@ function TagPage() {
 
   function toggleSelectAll() {
     if (allSelected) {
-      setSelectedTagKeys(new Set());
+      setSelectedTagKeys([]);
       return;
     }
 
-    setSelectedTagKeys(new Set(tagKeys));
+    setSelectedTagKeys([...tagKeys]);
+    console.log("Selected all tags");
   }
 
   async function handleCreateTags() {
-    if (selectedTagKeys.size === 0 || isSubmittingRef.current) {
+    if (selectedTagKeys.length === 0 || isSubmittingRef.current) {
       return;
     }
 
@@ -75,11 +77,11 @@ function TagPage() {
     setErrorMessage("");
 
     try {
-      const selectedTags = tags.filter((tag) => selectedTagKeys.has(getTagKey(tag)));
+      const selectedTags = tags.filter((tag) => selectedTagKeys.includes(getTagKey(tag)));
       await createTags(selectedTags);
 
       saveTags(selectedTags);
-      setSelectedTagKeys(new Set());
+      setSelectedTagKeys([]);
       markStepCompleted("tags");
       navigate(Pages.deviceConfig);
     } catch {
@@ -131,9 +133,9 @@ function TagPage() {
           <Table
             rows={rowData}
             columns={columnDefs}
-            selectedIds={[]}
+            selectedIds={selectedTagKeys}
+            onSelectAll={toggleSelectAll}
             onRowSelect={() => { }}
-            onSelectAll={() => { }}
             onSort={() => { }}
           />
         </div>

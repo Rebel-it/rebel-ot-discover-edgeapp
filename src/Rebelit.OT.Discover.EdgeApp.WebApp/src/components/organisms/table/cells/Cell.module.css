@@ -12,6 +12,12 @@
     font-size: 1.8rem;
     color: var(--black);
   }
+
+  &.selected {
+    p {
+      color: var(--white);
+    }
+  }
 }
 
 .cell:first-child {

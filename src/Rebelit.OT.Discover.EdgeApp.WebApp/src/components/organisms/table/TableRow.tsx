@@ -26,7 +26,7 @@ export default function TableRow({ row, columns, selected, onSelect }: Readonly<
         if (!cell) {
           return null;
         }
-        return <TextCell key={column.key} value={cell} />;
+        return <TextCell selected={selected} key={column.key} value={cell} />;
       })}
     </div>
   );
