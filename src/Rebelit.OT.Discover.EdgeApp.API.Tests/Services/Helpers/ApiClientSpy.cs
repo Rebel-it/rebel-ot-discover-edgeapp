@@ -13,6 +13,9 @@ public sealed class ApiClientSpy : IApiClient
     public Tag? UpdatedTagResponse { get; set; }
     public Company[]? AssociatedCompanies { get; set; }
     public Agent[]? Agents { get; set; }
+    public Device[]? Devices { get; set; }
+    public DataSource[]? ExistingDataSources { get; set; }
+    public string? CreatedDataSourceId { get; set; }
     public bool ReturnNullFromPostTags { get; set; }
     public bool ReturnNullFromPostTag { get; set; }
     public bool ReturnNullFromUpdateTag { get; set; }
@@ -23,6 +26,7 @@ public sealed class ApiClientSpy : IApiClient
     public Tag? UpdatedTagRequest { get; private set; }
     public string? UpdatedTagPublicId { get; private set; }
     public string? PushConfigurationAgentId { get; private set; }
+    public DataSource? PostedDataSource { get; private set; }
 
     public int GetDataVariablesCallCount { get; private set; }
     public int GetTagsCallCount { get; private set; }
@@ -32,6 +36,9 @@ public sealed class ApiClientSpy : IApiClient
     public int PushConfigurationCallCount { get; private set; }
     public int GetAssociatedCompanyCallCount { get; private set; }
     public int GetAgentsCallCount { get; private set; }
+    public int GetDevicesCallCount { get; private set; }
+    public int GetDataSourcesCallCount { get; private set; }
+    public int PostDataSourceCallCount { get; private set; }
 
     public Task<Response<Variable[]>> GetDataVariablesAsync()
     {
@@ -106,17 +113,40 @@ public sealed class ApiClientSpy : IApiClient
         });
     }
 
-    public Task<Response<DataSource[]>> GetDataSourcesAsync() =>
-        throw new NotSupportedException();
+    public Task<Response<DataSource[]>> GetDataSourcesAsync()
+    {
+        GetDataSourcesCallCount++;
+        return Task.FromResult(new Response<DataSource[]>
+        {
+            RawData = JsonSerializer.SerializeToElement(ExistingDataSources),
+        });
+    }
 
     public Task<Response<Agent>> GetAgentAsync() =>
         throw new NotSupportedException();
 
-    public Task<Response<Device[]>> GetDevicesAsync() =>
-        throw new NotSupportedException();
+    public Task<Response<Device[]>> GetDevicesAsync()
+    {
+        GetDevicesCallCount++;
+        return Task.FromResult(new Response<Device[]>
+        {
+            RawData = JsonSerializer.SerializeToElement(Devices),
+        });
+    }
 
-    public Task<Response<DataSource>?> PostDataSourceAsync(DataSource newDataSource) =>
-        throw new NotSupportedException();
+    public Task<Response<DataSource>?> PostDataSourceAsync(DataSource newDataSource)
+    {
+        PostDataSourceCallCount++;
+        PostedDataSource = newDataSource;
+
+        return Task.FromResult<Response<DataSource>?>(new Response<DataSource>
+        {
+            RawData = JsonSerializer.SerializeToElement(new DataSource
+            {
+                PublicId = CreatedDataSourceId,
+            }),
+        });
+    }
 
     public Task<Response<Company[]>> GetAssociatedCompanyAsync()
     {

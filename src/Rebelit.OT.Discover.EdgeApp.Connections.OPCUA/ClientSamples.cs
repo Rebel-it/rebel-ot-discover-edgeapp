@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,7 @@ namespace Rebelit.OT.Discover.EdgeApp.Connections.OPCUA;
 /// <remarks>
 ///     Code is copied and adapted from the <see href="https://github.com/OPCFoundation/UA-.NETStandard/blob/master/Applications/ConsoleReferenceClient/ClientSamples.cs"> OPC Foundation .NET Standard Library samples </see>.
 /// </remarks>
+[ExcludeFromCodeCoverage]
 public class ClientSamples
 {
     private const int MaxSearchDepth = 128;
