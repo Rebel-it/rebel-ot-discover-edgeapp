@@ -11,19 +11,27 @@ public sealed class ApiClientSpy : IApiClient
     public Tag[]? PostedTagsResponse { get; set; }
     public Tag? PostedTagResponse { get; set; }
     public Tag? UpdatedTagResponse { get; set; }
+    public Company[]? AssociatedCompanies { get; set; }
+    public Agent[]? Agents { get; set; }
     public bool ReturnNullFromPostTags { get; set; }
     public bool ReturnNullFromPostTag { get; set; }
     public bool ReturnNullFromUpdateTag { get; set; }
+    public bool ReturnNullFromPushConfiguration { get; set; }
+    public string? PushConfigurationStatus { get; set; }
     public IReadOnlyList<Tag>? PostedTags { get; private set; }
     public Tag? PostedTag { get; private set; }
     public Tag? UpdatedTagRequest { get; private set; }
     public string? UpdatedTagPublicId { get; private set; }
+    public string? PushConfigurationAgentId { get; private set; }
 
     public int GetDataVariablesCallCount { get; private set; }
     public int GetTagsCallCount { get; private set; }
     public int PostTagsCallCount { get; private set; }
     public int PostTagCallCount { get; private set; }
     public int UpdateTagCallCount { get; private set; }
+    public int PushConfigurationCallCount { get; private set; }
+    public int GetAssociatedCompanyCallCount { get; private set; }
+    public int GetAgentsCallCount { get; private set; }
 
     public Task<Response<Variable[]>> GetDataVariablesAsync()
     {
@@ -110,12 +118,37 @@ public sealed class ApiClientSpy : IApiClient
     public Task<Response<DataSource>?> PostDataSourceAsync(DataSource newDataSource) =>
         throw new NotSupportedException();
 
-    public Task<Response<Company[]>> GetAssociatedCompanyAsync() =>
-        throw new NotSupportedException();
+    public Task<Response<Company[]>> GetAssociatedCompanyAsync()
+    {
+        GetAssociatedCompanyCallCount++;
+        return Task.FromResult(new Response<Company[]>
+        {
+            RawData = JsonSerializer.SerializeToElement(AssociatedCompanies),
+        });
+    }
 
-    public Task<Response<Agent[]>> GetAgentsAsync() =>
-        throw new NotSupportedException();
+    public Task<Response<Agent[]>> GetAgentsAsync()
+    {
+        GetAgentsCallCount++;
+        return Task.FromResult(new Response<Agent[]>
+        {
+            RawData = JsonSerializer.SerializeToElement(Agents),
+        });
+    }
 
-    public Task<Response<string>?> PushConfigurationAsync(string agentId) =>
-        throw new NotSupportedException();
+    public Task<Response<string>?> PushConfigurationAsync(string agentId)
+    {
+        PushConfigurationCallCount++;
+        PushConfigurationAgentId = agentId;
+
+        if (ReturnNullFromPushConfiguration)
+        {
+            return Task.FromResult<Response<string>?>(null);
+        }
+
+        return Task.FromResult<Response<string>?>(new Response<string>
+        {
+            Status = PushConfigurationStatus,
+        });
+    }
 }
