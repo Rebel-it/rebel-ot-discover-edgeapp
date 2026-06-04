@@ -4,11 +4,12 @@ type Props = {
   label: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
+  orangeBorder?: boolean;
 }
 
-export default function Checkbox({ label, checked, onChange }: Props) {
+export default function Checkbox({ label, checked, onChange, orangeBorder }: Props) {
   return (
-    <div className={styles.checkbox}>
+    <div className={`${styles.checkbox} ${orangeBorder ? styles.orangeBorder : ''}`}>
       <label>
         <input
           type="checkbox"
