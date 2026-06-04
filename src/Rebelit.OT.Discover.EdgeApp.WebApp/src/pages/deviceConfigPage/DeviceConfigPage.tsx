@@ -1,25 +1,27 @@
-import { useState } from 'react'
-import styles from './DeviceConfigPage.module.css'
-import { PushDeviceConfiguration } from '../../services/IxonSettingService'
-import { loadIxonAuthenticationHeaders } from '../../services/sessionStorageService'
-import { useNavigate } from 'react-router-dom';
-import { useWizard } from '../../context/WizardContext'
-import WizardPage from '../wizardPage/WizardPage'
-import { Pages } from '../../models/Pages'
-import WizardPageTitle from '../../components/atoms/wizardPageTitle/WizardPageTitle'
-import Table from '../../components/organisms/table/Table';
+import { useState } from "react"
+import styles from "./DeviceConfigPage.module.css"
+import { PushDeviceConfiguration } from "../../services/IxonSettingService"
+import { loadIxonAuthenticationHeaders } from "../../services/sessionStorageService"
+import { useNavigate } from "react-router-dom";
+import { useWizard } from "../../context/WizardContext"
+import WizardPage from "../wizardPage/WizardPage"
+import { Pages } from "../../models/Pages"
+import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle"
+import Table from "../../components/organisms/table/Table";
+import { useTags } from "../../context/TagContext";
+import { getFormulaLabel, getTagKey } from "../../models/Tag";
 
 function DeviceConfigPage() {
   const navigate = useNavigate();
+  const { tags } = useTags();
   const { markStepCompleted } = useWizard();
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [pushDeviceSuccess, setPushDeviceSuccess] = useState(false);
+  const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   async function handlePushConfiguration() {
     const auth = loadIxonAuthenticationHeaders();
     if (!auth?.AgentId) {
-      setStatus({ type: 'error', message: 'No agent ID found. Please log in again.' });
+      setStatus({ type: "error", message: "No agent ID found. Please log in again." });
       return;
     }
 
@@ -28,48 +30,40 @@ function DeviceConfigPage() {
 
     try {
       await PushDeviceConfiguration(auth.AgentId);
-      setStatus({ type: 'success', message: 'Configuration pushed successfully.' });
-      setPushDeviceSuccess(true);
+      setStatus({ type: "success", message: "Configuration pushed successfully." });
+      markStepCompleted("deviceConfig");
+      navigate(Pages.final);
     } catch {
-      setStatus({ type: 'error', message: 'Failed to push configuration. Please try again.' })
+      setStatus({ type: "error", message: "Failed to push configuration. Please try again." })
     } finally {
       setLoading(false);
     }
   }
 
   const columnDefs = [
-    { key: "column1", label: "Step", sortable: true },
-    { key: "column2", label: "Action", sortable: true },
-    { key: "column3", label: "Estimated Time", sortable: true },
+    { key: "name", label: "Name", sortable: true },
+    { key: "logOn", label: "Log on", sortable: false },
+    { key: "interval", label: "Interval", sortable: false },
+    { key: "formula", label: "Formula", sortable: false },
   ]
 
-  const rowData = [
-    {
-      id: "1",
-      cells: {
-        column1: "Step 1",
-        column2: "Connect to VPN",
-        column3: "Estimated time: 2 minutes"
-      }
-    },
-    {
-      id: "2",
-      cells: {
-        column1: "Step 2",
-        column2: "Connect to VPNNN",
-        column3: "Estimated time: 4 minutes"
-      }
-    },
-  ]
+  const rowData = tags.map((tag) => ({
+    id: getTagKey(tag),
+    cells: {
+      name: tag.name,
+      logOn: tag.logEvent,
+      interval: tag.loggingInterval,
+      formula: getFormulaLabel(tag)
+    }
+  }));
 
   return (
     <WizardPage
       wizardStep="deviceConfig"
       continueButtonText="Push to device"
-      onContinue={() => {
-        markStepCompleted("deviceConfig");
-        navigate(Pages.final);
-      }}>
+      onContinue={handlePushConfiguration}
+      loading={loading}>
+
       <div className={styles.page}>
         <WizardPageTitle title="Device Configuration" />
         <div className={styles.descriptionWrapper}>
@@ -82,7 +76,7 @@ function DeviceConfigPage() {
         </div>
 
         {status && (
-          <p className={`${styles.formMessage} ${status.type === 'success' ? styles.successMessage : styles.errorMessage}`}>
+          <p className={`${styles.formMessage} ${status.type === "success" ? styles.successMessage : styles.errorMessage}`}>
             {status.message}
           </p>
         )}

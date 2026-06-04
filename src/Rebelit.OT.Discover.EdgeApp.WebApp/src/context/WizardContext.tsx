@@ -5,7 +5,9 @@ const STORAGE_KEY = 'wizard-completed-steps';
 
 function loadCompletedSteps(): Set<WizardStepKey> {
   const raw = sessionStorage.getItem(STORAGE_KEY);
-  if (!raw) return new Set();
+  if (!raw) {
+    return new Set();
+  }
   return new Set(JSON.parse(raw) as WizardStepKey[]);
 }
 

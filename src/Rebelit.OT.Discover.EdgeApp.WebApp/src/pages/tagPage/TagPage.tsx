@@ -7,9 +7,12 @@ import { Pages } from "../../models/Pages";
 import { useWizard } from "../../context/WizardContext";
 import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle";
 import Table from "../../components/organisms/table/Table";
+import { getFormulaLabel, getTagKey } from "../../models/Tag";
+import { useTags } from "../../context/TagContext";
 
 function TagPage() {
   const navigate = useNavigate();
+  const { saveTags } = useTags();
   const { markStepCompleted } = useWizard();
   const [tags, setTags] = useState<ApiTag[]>([]);
   const [tagsLoading, setTagsLoading] = useState(true);
@@ -38,10 +41,6 @@ function TagPage() {
     }
   }, [someSelected, allSelected])
 
-  function getTagKey(tag: ApiTag) {
-    return `${tag.slug}-${tag.variable.publicId}`;
-  }
-
   function toggleTagSelection(tag: ApiTag) {
     const tagKey = getTagKey(tag);
 
@@ -66,14 +65,6 @@ function TagPage() {
     setSelectedTagKeys(new Set(tagKeys));
   }
 
-  function getFormulaLabel(tag: ApiTag) {
-    if (tag.logEvent === "change") {
-      return tag.onChangeExpiry === "1h" ? "value_changes_hourly" : "value_changes_only";
-    }
-
-    return tag.edgeAggregator ?? "";
-  }
-
   async function handleCreateTags() {
     if (selectedTagKeys.size === 0 || isSubmittingRef.current) {
       return;
@@ -87,7 +78,7 @@ function TagPage() {
       const selectedTags = tags.filter((tag) => selectedTagKeys.has(getTagKey(tag)));
       await createTags(selectedTags);
 
-      setTags((prev) => prev.filter((tag) => !selectedTagKeys.has(getTagKey(tag))));
+      saveTags(selectedTags);
       setSelectedTagKeys(new Set());
       markStepCompleted("tags");
       navigate(Pages.deviceConfig);
@@ -126,11 +117,14 @@ function TagPage() {
       <div className={styles.page}>
         <WizardPageTitle title="Tags" />
 
-        {tagsLoading && <p className={styles.empty}>Loading tags...</p>}
-        {!tagsLoading && tagsError && <p className={styles.empty}>{tagsError}</p>}
-        {!tagsLoading && !tagsError && tags.length === 0 && (
-          <p className={styles.empty}>No prefilled tags available.</p>
-        )}
+        <div className={styles.messageWrapper}>
+          {tagsLoading && <p className={styles.empty}>Loading tags...</p>}
+          {!tagsLoading && tagsError && <p className={styles.empty}>{tagsError}</p>}
+          {!tagsLoading && !tagsError && tags.length === 0 && (
+            <p className={styles.empty}>No prefilled tags available.</p>
+          )}
+          {errorMessage && <p>{errorMessage}</p>}
+        </div>
 
         {/* {rowData.length > 0 && ( */}
         <div className={styles.tableWrapper}>
@@ -144,7 +138,6 @@ function TagPage() {
           />
         </div>
         {/* )} */}
-        {errorMessage && <p>{errorMessage}</p>}
       </div>
 
       {/* 
