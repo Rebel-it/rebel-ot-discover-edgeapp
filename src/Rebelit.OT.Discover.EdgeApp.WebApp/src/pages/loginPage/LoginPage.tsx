@@ -4,11 +4,12 @@ import styles from "./LoginPage.module.css"
 import { useNavigate } from "react-router-dom"
 import { getCompanyConfiguration } from "../../services/companyConfigurationService.ts"
 import type { ServiceAccountObject } from "../../models/ServiceAccountObject.ts"
-import FormField from "../../components/atoms/formField/FormField.tsx"
+import FormField from "../../components/molecules/formField/FormField.tsx"
 import WizardPage from "../wizardPage/WizardPage.tsx"
 import { useWizard } from "../../context/WizardContext.tsx"
 import { Pages } from "../../models/Pages.ts"
 import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle.tsx"
+import WarningTag from "../../components/atoms/warningTag/WarningTag.tsx"
 
 const defaultAuthObject: ServiceAccountObject = {
   apiApplicationID: "",
@@ -20,6 +21,8 @@ function LoginPage() {
   const [loginSucceeded, setLoginSucceeded] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [applicationIdMissing, setapplicationIdMissing] = useState(false);
+  const [accessTokenMissing, setAccessTokenMissing] = useState(false);
   const navigate = useNavigate();
   const { markStepCompleted } = useWizard();
 
@@ -30,7 +33,31 @@ function LoginPage() {
     }));
   }
 
+  function validFormInput() {
+    let valid = true;
+
+    if (!serviceAccount.apiApplicationID.trim()) {
+      setapplicationIdMissing(true);
+      valid = false;
+    } else {
+      setapplicationIdMissing(false);
+    }
+
+    if (!serviceAccount.accessToken.trim()) {
+      setAccessTokenMissing(true);
+      valid = false;
+    } else {
+      setAccessTokenMissing(false);
+    }
+
+    return valid;
+  }
+
   async function handleLogin() {
+    if (!validFormInput()) {
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const result = await getCompanyConfiguration(serviceAccount);
@@ -65,6 +92,7 @@ function LoginPage() {
             onChange={(value) => setAuthProperty("apiApplicationID", value)}
             required
             placeholder="..."
+            invalidText={applicationIdMissing ? "API Application ID is required" : ""}
           />
           <FormField
             id="accesstoken"
@@ -74,16 +102,10 @@ function LoginPage() {
             onChange={(value) => setAuthProperty("accessToken", value)}
             required
             placeholder="..."
+            invalidText={accessTokenMissing ? "Access Token is required" : ""}
           />
+          {errorMessage && <WarningTag invalidText={errorMessage} />}
         </div>
-
-        {errorMessage && <p className={`${styles.formMessage} ${styles.errorMessage}`}>{errorMessage}</p>}
-
-        {loginSucceeded && (
-          <p className={`${styles.formMessage} ${styles.successMessage}`}>
-            Login succeeded. Continue to the next step.
-          </p>
-        )}
       </form>
     </WizardPage>
   )

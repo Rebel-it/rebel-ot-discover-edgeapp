@@ -3,7 +3,7 @@ import { savePlcAuth } from "../../services/sessionStorageService.ts";
 import { connectToPlc } from "../../services/plcService.ts";
 import type { PlcAuthObject } from "../../models/PlcAuthObject.ts";
 import { useState } from "react";
-import FormField from "../../components/atoms/formField/FormField.tsx";
+import FormField from "../../components/molecules/formField/FormField.tsx";
 import WizardPage from "../wizardPage/WizardPage.tsx";
 import { useWizard } from "../../context/WizardContext.tsx";
 import { Pages } from "../../models/Pages.ts";
