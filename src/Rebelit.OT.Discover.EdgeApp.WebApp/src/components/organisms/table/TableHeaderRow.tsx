@@ -6,9 +6,9 @@ import ColumnHeader from "../../molecules/columnHeader/ColumnHeader";
 
 export interface TableHeaderRowProps {
   columns: ColumnDef[];
-  checkState: CheckState;
-  onSelectAll: () => void;
   onSort: (key: string) => void;
+  checkState?: CheckState;
+  onSelectAll?: () => void;
 }
 
 export default function TableHeaderRow({ columns, checkState, onSelectAll, onSort }: Readonly<TableHeaderRowProps>) {
@@ -22,11 +22,13 @@ export default function TableHeaderRow({ columns, checkState, onSelectAll, onSor
 
   return (
     <div className={style.headerRow}>
-      <CheckboxCell
-        checked={checkState === "all"}
-        onChange={onSelectAll}
-        ariaLabel="Select all rows"
-      />
+      {checkState !== undefined && onSelectAll && (
+        <CheckboxCell
+          checked={checkState === "all"}
+          onChange={onSelectAll}
+          ariaLabel="Select all rows"
+        />
+      )}
       {columns.map((column) => (
         <ColumnHeader
           key={column.key}

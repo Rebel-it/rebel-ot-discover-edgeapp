@@ -7,8 +7,8 @@ import type { ColumnDef, RowData } from "./types";
 export interface TableRowProps {
   row: RowData;
   columns: ColumnDef[];
-  selected: boolean;
-  onSelect: (id: string) => void;
+  selected?: boolean;
+  onSelect?: (id: string) => void;
 }
 
 export default function TableRow({ row, columns, selected, onSelect }: Readonly<TableRowProps>) {
@@ -16,11 +16,13 @@ export default function TableRow({ row, columns, selected, onSelect }: Readonly<
 
   return (
     <div className={rowClass}>
-      <CheckboxCell
-        checked={selected}
-        onChange={() => onSelect(row.id)}
-        ariaLabel={`Select row ${row.id}`}
-      />
+      {onSelect && (
+        <CheckboxCell
+          checked={selected ?? false}
+          onChange={() => onSelect(row.id)}
+          ariaLabel={`Select row ${row.id}`}
+        />
+      )}
       {columns.map((column) => {
         const cell = row.cells[column.key];
         if (!cell) {

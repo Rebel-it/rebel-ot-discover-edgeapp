@@ -6,10 +6,10 @@ import type { CheckState, ColumnDef, RowData } from "./types";
 export interface TableProps {
     rows: RowData[];
     columns: ColumnDef[];
-    selectedIds: string[];
-    onRowSelect: (id: string) => void;
-    onSelectAll: () => void;
     onSort: (key: string) => void;
+    selectedIds?: string[];
+    onRowSelect?: (id: string) => void;
+    onSelectAll?: () => void;
 }
 
 function getCheckState(rows: RowData[], selectedIds: string[]): CheckState {
@@ -25,7 +25,7 @@ function getCheckState(rows: RowData[], selectedIds: string[]): CheckState {
 }
 
 export default function Table({ rows, columns, selectedIds, onRowSelect, onSelectAll, onSort }: Readonly<TableProps>) {
-    const checkState = getCheckState(rows, selectedIds);
+    const checkState = selectedIds ? getCheckState(rows, selectedIds) : undefined;
 
     return (
         <div className={style.table}>

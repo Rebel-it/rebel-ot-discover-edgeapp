@@ -84,9 +84,6 @@ function DeviceConfigPage() {
           <Table
             rows={rowData}
             columns={columnDefs}
-            selectedIds={[]}
-            onRowSelect={() => { }}
-            onSelectAll={() => { }}
             onSort={() => { }}
           />
         </div>

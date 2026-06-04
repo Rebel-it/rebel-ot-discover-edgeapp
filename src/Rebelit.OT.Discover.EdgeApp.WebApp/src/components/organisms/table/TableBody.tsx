@@ -5,8 +5,8 @@ import { type ColumnDef, type RowData } from "./types";
 export interface TableBodyProps {
   rows: RowData[];
   columns: ColumnDef[];
-  selectedIds: string[];
-  onRowSelect: (id: string) => void;
+  selectedIds?: string[];
+  onRowSelect?: (id: string) => void;
 }
 
 export default function TableBody({ rows, columns, selectedIds, onRowSelect }: Readonly<TableBodyProps>) {
@@ -17,7 +17,7 @@ export default function TableBody({ rows, columns, selectedIds, onRowSelect }: R
           key={row.id}
           row={row}
           columns={columns}
-          selected={selectedIds.includes(row.id)}
+          selected={selectedIds?.includes(row.id)}
           onSelect={onRowSelect}
         />
       ))}
