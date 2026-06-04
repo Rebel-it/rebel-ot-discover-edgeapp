@@ -16,7 +16,7 @@ public sealed class TagService(
     private const string DefaultLoggingInterval = "500ms";
     private const string DefaultRetentionPolicy = "260w";
     private const string DefaultEdgeAggregator = "last";
-
+        
     public async Task<IReadOnlyList<Tag>> GetTagsAsync()
     {
         var response = await apiClient.GetTagsAsync();
@@ -33,7 +33,7 @@ public sealed class TagService(
     public async Task<IReadOnlyList<Tag>> GetPrefilledTagsAsync()
     {
         var variables = await variableService.GetVariablesAsync();
-        var existingTags = await GetExistingTagsAsync();
+        var existingTags = await GetTagsAsync();
         List<Tag> tags = [];
 
         foreach (var variable in variables)
@@ -61,15 +61,8 @@ public sealed class TagService(
 
         return tags;
     }
-    public async Task<IReadOnlyList<Tag>> GetExistingTagsAsync()
-    {
-        var response = await apiClient.GetTagsAsync();
-        var tags = response.Data ?? [];
 
-        return tags;
-    }
-
-    public async Task CreateTagsAsync(IEnumerable<Tag> requests)
+    public async Task<IReadOnlyList<Tag>> CreateTagsAsync(IEnumerable<Tag> requests)
     {
         if (logger.IsEnabled(LogLevel.Information))
         {
@@ -88,7 +81,7 @@ public sealed class TagService(
                 );
             }
 
-            return;
+            return result.Data;
         }
 
         if (logger.IsEnabled(LogLevel.Warning))
@@ -99,6 +92,8 @@ public sealed class TagService(
                 requests.Count()
             );
         }
+
+        return [];
     }
 
     public async Task<Tag?> CreateTagAsync(Tag request)

@@ -17,11 +17,6 @@ public interface ITagService
     Task<IReadOnlyList<Tag>> GetPrefilledTagsAsync();
 
     /// <summary>
-    /// Returns a list of tags that already exist in the current authentication context
-    /// </summary>
-    Task<IReadOnlyList<Tag>> GetExistingTagsAsync();
-
-    /// <summary>
     /// Create a single tag 
     /// </summary>
     Task<Tag?> CreateTagAsync(Tag request);
@@ -29,7 +24,7 @@ public interface ITagService
     /// <summary>
     /// Create multiple tags at once
     /// </summary>
-    Task CreateTagsAsync(IEnumerable<Tag> requests);
+    Task<IReadOnlyList<Tag>> CreateTagsAsync (IEnumerable<Tag> requests);
 
     /// <summary>
     /// Update an existing tag on the Ixon fleet manager
