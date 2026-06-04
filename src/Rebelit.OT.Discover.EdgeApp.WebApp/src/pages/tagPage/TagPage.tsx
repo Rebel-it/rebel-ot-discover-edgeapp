@@ -11,6 +11,7 @@ import { getFormulaLabel, getTagKey } from "../../models/Tag";
 import { useTags } from "../../context/TagContext";
 import type { RowData } from "../../components/organisms/table/types";
 import WarningTag from "../../components/atoms/warningTag/WarningTag";
+import Spinner from "../../components/atoms/spinner/Spinner";
 
 function TagPage() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ function TagPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [sortedRows, setSortedRows] = useState<RowData[]>([]);
   const selectAllRef = useRef<HTMLInputElement | null>(null);
-  const isSubmittingRef = useRef(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const tagKeys = tags.map(getTagKey);
   const allSelected = tagKeys.length > 0 && tagKeys.every((key) => selectedTagKeys.includes(key));
@@ -80,11 +81,12 @@ function TagPage() {
   }
 
   async function handleCreateTags() {
-    if (selectedTagKeys.length === 0 || isSubmittingRef.current) {
+    setHasSubmitted(true);
+    
+    if (selectedTagKeys.length === 0 || isSubmitting) {
       return;
     }
 
-    isSubmittingRef.current = true;
     setIsSubmitting(true);
     setErrorMessage("");
 
@@ -99,9 +101,21 @@ function TagPage() {
     } catch {
       setErrorMessage("Unable to reach the tag service. Check that the API is running.");
     } finally {
-      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
+  }
+
+  const noTagsAvailable = !tagsLoading && tags.length === 0 && !tagsError;
+
+  function buttonClickable() {
+    if (noTagsAvailable) {
+      return true;
+    }
+
+    if (isSubmitting || selectedCount === 0) {
+      return false;
+    }
+    return true;
   }
 
   const columnDefs = [
@@ -114,19 +128,19 @@ function TagPage() {
   return (
     <WizardPage
       wizardStep="tags"
-      continueButtonText="Create tags"
-      onContinue={handleCreateTags}
-      loading={isSubmitting || selectedCount === 0}>
+      continueButtonText={noTagsAvailable ? "Finish" : "Create tags"}
+      onContinue={noTagsAvailable ? () => navigate(Pages.start) : handleCreateTags}
+      loading={!buttonClickable()}>
 
       <div className={styles.page}>
         <WizardPageTitle title="Tags" />
 
-        <div className={styles.messageWrapper}>
-          {tagsLoading && <p className={styles.empty}>Loading tags...</p>}
+        <div className={styles.statusIndicatorWrapper}>
+          {(tagsLoading || isSubmitting) && <Spinner />}
 
           {!tagsLoading && tagsError && <WarningTag invalidText={tagsError} />}
-          {!tagsLoading && !tagsError && tags.length === 0 && (
-            <WarningTag invalidText={"No prefilled tags available."} />
+          {noTagsAvailable && (
+            <WarningTag invalidText={"No tags available"} />
           )}
 
           {errorMessage && <WarningTag invalidText={errorMessage} />}
@@ -147,6 +161,11 @@ function TagPage() {
             />
           </div>
         )}
+
+        {hasSubmitted && selectedCount === 0 && (
+          <WarningTag invalidText={"No tags selected"} />
+        )}
+
       </div>
     </WizardPage>
   )
