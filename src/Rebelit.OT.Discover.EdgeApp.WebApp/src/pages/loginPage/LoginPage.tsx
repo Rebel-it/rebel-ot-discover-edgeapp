@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { saveIxonAuth, clearIxonAuthenticationHeaders } from "../../services/sessionStorageService.ts"
 import styles from "./LoginPage.module.css"
 import { useNavigate } from "react-router-dom"
@@ -17,14 +17,17 @@ const defaultAuthObject: ServiceAccountObject = {
 }
 
 function LoginPage() {
+  const navigate = useNavigate();
+  const { markStepCompleted, deleteCompletedSteps } = useWizard();
   const [serviceAccount, setServiceAccount] = useState<ServiceAccountObject>(defaultAuthObject);
-  const [loginSucceeded, setLoginSucceeded] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [applicationIdMissing, setapplicationIdMissing] = useState(false);
   const [accessTokenMissing, setAccessTokenMissing] = useState(false);
-  const navigate = useNavigate();
-  const { markStepCompleted } = useWizard();
+
+  useEffect(() => {
+    deleteCompletedSteps();
+  }, []);
 
   function setAuthProperty<K extends keyof ServiceAccountObject>(property: K, value: ServiceAccountObject[K]) {
     setServiceAccount((currentServiceAccount) => ({
@@ -62,7 +65,6 @@ function LoginPage() {
       setIsSubmitting(true);
       const result = await getCompanyConfiguration(serviceAccount);
       saveIxonAuth(serviceAccount, result);
-      setLoginSucceeded(true);
       setErrorMessage("");
       markStepCompleted("login");
       navigate(Pages.plcConnect);

@@ -10,6 +10,7 @@ import { Pages } from "../../models/Pages.ts";
 import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle.tsx";
 import styles from "./PlcConnect.module.css";
 import Checkbox from "../../components/atoms/checkbox/Checkbox.tsx";
+import WarningTag from "../../components/atoms/warningTag/WarningTag.tsx";
 
 const defaultPlcObject: PlcAuthObject = {
   OpcUaServerAddress: "",
@@ -23,8 +24,10 @@ function PlcConnect() {
   const [plcObject, setPlcObject] = useState<PlcAuthObject>(defaultPlcObject);
   const [useCredentials, setUseCredentials] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [connectionSucceeded, setConnectionSucceeded] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [opcUaServerAddressMissing, setOpcUaServerAddressMissing] = useState(false);
+  const [opcUaUsernameMissing, setOpcUaUsernameMissing] = useState(false);
+  const [opcUaPasswordMissing, setOpcUaPasswordMissing] = useState(false);
 
   function setPlcProperty<K extends keyof PlcAuthObject>(property: K, value: PlcAuthObject[K]) {
     setPlcObject((currentPlcObject) => ({
@@ -45,15 +48,46 @@ function PlcConnect() {
     }
   }
 
+  function validFormInput() {
+    let valid = true;
+
+    if (!plcObject.OpcUaServerAddress.trim()) {
+      setOpcUaServerAddressMissing(true);
+      valid = false;
+    } else {
+      setOpcUaServerAddressMissing(false);
+    }
+
+    if (useCredentials) {
+      if (!plcObject.OpcUaUsername.trim()) {
+        setOpcUaUsernameMissing(true);
+        valid = false;
+      } else {
+        setOpcUaUsernameMissing(false);
+      }
+
+      if (!plcObject.OpcUaPassword.trim()) {
+        setOpcUaPasswordMissing(true);
+        valid = false;
+      } else {
+        setOpcUaPasswordMissing(false);
+      }
+    }
+
+    return valid;
+  }
+
   async function handlePlcConnect() {
+    if (!validFormInput()) {
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMessage("");
-    setConnectionSucceeded(false);
 
     try {
       await connectToPlc(plcObject);
       savePlcAuth(plcObject);
-      setConnectionSucceeded(true);
       markStepCompleted("plcConnect");
       navigate(Pages.source);
     } catch (error) {
@@ -81,6 +115,7 @@ function PlcConnect() {
             onChange={(value) => setPlcProperty("OpcUaServerAddress", value)}
             required
             placeholder="OPC://"
+            invalidText={opcUaServerAddressMissing ? "OPC Server Address is required" : ""}
           />
 
           <Checkbox
@@ -96,6 +131,8 @@ function PlcConnect() {
                 label="OPC username"
                 value={plcObject.OpcUaUsername}
                 onChange={(value) => setPlcProperty("OpcUaUsername", value)}
+                placeholder="..."
+                invalidText={opcUaUsernameMissing ? "OPC Username is required" : ""}
               />
 
               <FormField
@@ -104,18 +141,13 @@ function PlcConnect() {
                 type="password"
                 value={plcObject.OpcUaPassword}
                 onChange={(value) => setPlcProperty("OpcUaPassword", value)}
+                placeholder="..."
+                invalidText={opcUaPasswordMissing ? "OPC Password is required" : ""}
               />
             </>
           )}
+          {errorMessage && <WarningTag invalidText={errorMessage} />}
         </div>
-
-        {errorMessage && <p className={`${styles.formMessage} ${styles.errorMessage}`}>{errorMessage}</p>}
-
-        {connectionSucceeded && (
-          <p className={`${styles.formMessage} ${styles.successMessage}`}>
-            PLC connection succeeded. Continue to the next step.
-          </p>
-        )}
       </form>
     </WizardPage>
   )
