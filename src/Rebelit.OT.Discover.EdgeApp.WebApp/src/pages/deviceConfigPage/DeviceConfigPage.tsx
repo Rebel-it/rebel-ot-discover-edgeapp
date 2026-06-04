@@ -7,13 +7,10 @@ import { useWizard } from "../../context/WizardContext"
 import WizardPage from "../wizardPage/WizardPage"
 import { Pages } from "../../models/Pages"
 import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle"
-import Table from "../../components/organisms/table/Table";
-import { useTags } from "../../context/TagContext";
-import { getFormulaLabel, getTagKey } from "../../models/Tag";
+import SelectedTagsTable from "../../components/organisms/selectedTagsTable/SelectedTagsTable";
 
 function DeviceConfigPage() {
   const navigate = useNavigate();
-  const { tags } = useTags();
   const { markStepCompleted } = useWizard();
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -40,23 +37,6 @@ function DeviceConfigPage() {
     }
   }
 
-  const columnDefs = [
-    { key: "name", label: "Name", sortable: true },
-    { key: "logOn", label: "Log on", sortable: false },
-    { key: "interval", label: "Interval", sortable: false },
-    { key: "formula", label: "Formula", sortable: false },
-  ]
-
-  const rowData = tags.map((tag) => ({
-    id: getTagKey(tag),
-    cells: {
-      name: tag.name,
-      logOn: tag.logEvent,
-      interval: tag.loggingInterval,
-      formula: getFormulaLabel(tag)
-    }
-  }));
-
   return (
     <WizardPage
       wizardStep="deviceConfig"
@@ -81,11 +61,7 @@ function DeviceConfigPage() {
           </p>
         )}
         <div className={styles.tableWrapper}>
-          <Table
-            rows={rowData}
-            columns={columnDefs}
-            onSort={() => { }}
-          />
+          <SelectedTagsTable />
         </div>
       </div>
     </WizardPage>
