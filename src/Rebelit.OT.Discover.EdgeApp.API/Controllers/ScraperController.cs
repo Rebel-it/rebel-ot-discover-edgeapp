@@ -4,7 +4,7 @@ namespace Rebelit.OT.Discover.EdgeApp.API.Controllers;
 
 public class ScraperController(IScraper scraper) : BaseController
 {
-    [HttpPost("variables")]
+    [HttpPost("Variables")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> RunVariableScrapeAsync(CancellationToken cancellationToken)
     {

@@ -25,7 +25,7 @@ public class IxonSettingsController(
         return Ok(result);
     }
 
-    [HttpPost("pushConfiguration")]
+    [HttpPost("PushConfiguration")]
     public async Task<IActionResult> PushDeviceConfiguration()
     {
         var result = await ixonSettingService.PushDeviceConfigAsync();

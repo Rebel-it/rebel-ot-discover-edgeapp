@@ -8,7 +8,7 @@ public class PlcController(
     IUAClientFactory uaClientFactory
 ) : BaseController
 {
-    [HttpPost("connect")]
+    [HttpPost("Connect")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> TestOpcConnection([FromBody] OpcCredentials settings)
