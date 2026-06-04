@@ -10,10 +10,10 @@ public class IxonSettingsController(
     IIxonSettingService ixonSettingService
 ) : BaseController
 {
-    [HttpPost("datasource")]
+    [HttpPost("DataSource")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> SaveDataSourceId([FromBody] SaveDataSourceRequest saveDataSourceRequest)
+    public async Task<IActionResult> PostNewSource([FromBody] SaveDataSourceRequest saveDataSourceRequest)
     {
         var result = await dataSourceResolver.ResolveAsync(saveDataSourceRequest.DataSourceName);
 
@@ -26,7 +26,7 @@ public class IxonSettingsController(
     }
 
     [HttpPost("pushConfiguration")]
-    public async Task<IActionResult> PushConfiguration()
+    public async Task<IActionResult> PushDeviceConfiguration()
     {
         var result = await ixonSettingService.PushDeviceConfigAsync();
         if (result != "success")

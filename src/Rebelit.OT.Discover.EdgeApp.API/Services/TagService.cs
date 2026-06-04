@@ -76,7 +76,7 @@ public sealed class TagService(
             logger.LogInformation("Posting {Count} tags for agent {AgentId}.", requests.Count(), ixonAuthenticationContext.IxonHeaders.AgentId);
         }
         var result = await apiClient.PostTagsAsync(requests);
-
+        
         if (result is not null && result.Data is not null)
         {
             if (logger.IsEnabled(LogLevel.Information))
@@ -87,6 +87,7 @@ public sealed class TagService(
                     ixonAuthenticationContext.IxonHeaders.AgentId
                 );
             }
+
             return;
         }
 

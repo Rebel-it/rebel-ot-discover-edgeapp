@@ -8,10 +8,10 @@ public class ScraperController(IScraper scraper) : BaseController
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> RunVariableScrapeAsync(CancellationToken cancellationToken)
     {
-        await scraper.ExecuteVariableScraperAsync(cancellationToken);
+        var createdVariables = await scraper.ScrapeVariablesAsync(cancellationToken);
         return Ok(new
         {
-            count = scraper.CreatedVariables.Count,
+            count = createdVariables.Count,
         });
     }
 }

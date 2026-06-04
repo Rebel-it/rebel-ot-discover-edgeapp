@@ -9,7 +9,7 @@ namespace Rebelit.OT.Discover.EdgeApp.API.Controllers;
 [Route("api/[controller]")]
 public class TagsController(ITagService tagService) : BaseController
 {
-    private readonly ITagService _tagService = tagService;
+    public readonly ITagService _tagService = tagService;
 
     /// <summary>
     /// Retrieves all available tags.
@@ -62,6 +62,10 @@ public class TagsController(ITagService tagService) : BaseController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateTagsAsync([FromBody] IEnumerable<Tag> model)
     {
+        if (model == null)
+        {
+            return BadRequest(new { message = "Tag list cannot be empty." });
+        }
         await _tagService.CreateTagsAsync(model);
 
         return Ok();

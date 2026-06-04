@@ -5,10 +5,10 @@ using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.API.Services;
 
-public class CompanyConfigurationService(
+public class IxonCompanyConfigurationService(
     IApiClient apiClient, 
     IIxonAuthenticationContext authenticationContext,
-    Connections.SecureEdgePro.IApiClient secureEdgeApiClient) : ICompanyConfigurationService
+    Connections.SecureEdgePro.IApiClient secureEdgeApiClient) : IIxonCompanyConfigurationService
 {
     public async Task<Result<CompanyConfigurationDto>> GetConfigurationAsync()
     {
