@@ -8,12 +8,12 @@ import { Pages } from "../../models/Pages"
 import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle"
 import Spinner from "../../components/atoms/spinner/Spinner"
 import taskFinished from '../../assets/taskfinished.png';
+import WarningTag from "../../components/atoms/warningTag/WarningTag"
 
 function VariablesPage() {
   const navigate = useNavigate();
   const { markStepCompleted } = useWizard();
   const [isSubmitting, setIsSubmitting] = useState(true);
-  const [synchronizationSucceeded, setSynchronizationSucceeded] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -21,7 +21,6 @@ function VariablesPage() {
 
     async function runSynchronization() {
       setErrorMessage("");
-      setSynchronizationSucceeded(false);
 
       try {
         await synchronizeVariablesRequest();
@@ -30,7 +29,6 @@ function VariablesPage() {
           return;
         }
 
-        setSynchronizationSucceeded(true);
       } catch (error) {
         if (!isActive) {
           return;
@@ -86,15 +84,7 @@ function VariablesPage() {
             }
           </div>
         </>
-
-        {errorMessage && <p className={`${styles.formMessage} ${styles.errorMessage}`}>{errorMessage}</p>}
-
-        {synchronizationSucceeded && (
-          <p className={`${styles.formMessage} ${styles.successMessage}`}>
-            Variable synchronization succeeded. Continue to the next step.
-          </p>
-        )}
-
+        {errorMessage && <WarningTag invalidText={errorMessage} />}
       </div>
     </WizardPage>
   )

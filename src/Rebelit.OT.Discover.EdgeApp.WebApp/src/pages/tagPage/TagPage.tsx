@@ -10,6 +10,7 @@ import Table from "../../components/organisms/table/Table";
 import { getFormulaLabel, getTagKey } from "../../models/Tag";
 import { useTags } from "../../context/TagContext";
 import type { RowData } from "../../components/organisms/table/types";
+import WarningTag from "../../components/atoms/warningTag/WarningTag";
 
 function TagPage() {
   const navigate = useNavigate();
@@ -122,11 +123,13 @@ function TagPage() {
 
         <div className={styles.messageWrapper}>
           {tagsLoading && <p className={styles.empty}>Loading tags...</p>}
-          {!tagsLoading && tagsError && <p className={styles.empty}>{tagsError}</p>}
+
+          {!tagsLoading && tagsError && <WarningTag invalidText={tagsError} />}
           {!tagsLoading && !tagsError && tags.length === 0 && (
-            <p className={styles.empty}>No prefilled tags available.</p>
+            <WarningTag invalidText={"No prefilled tags available."} />
           )}
-          {errorMessage && <p>{errorMessage}</p>}
+
+          {errorMessage && <WarningTag invalidText={errorMessage} />}
         </div>
 
         {sortedRows.length > 0 && (

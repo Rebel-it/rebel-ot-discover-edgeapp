@@ -8,6 +8,7 @@ import WizardPage from "../wizardPage/WizardPage"
 import { Pages } from "../../models/Pages"
 import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle"
 import SelectedTagsTable from "../../components/organisms/selectedTagsTable/SelectedTagsTable";
+import WarningTag from "../../components/atoms/warningTag/WarningTag";
 
 function DeviceConfigPage() {
   const navigate = useNavigate();
@@ -55,11 +56,16 @@ function DeviceConfigPage() {
           </p>
         </div>
 
-        {status && (
-          <p className={`${styles.formMessage} ${status.type === "success" ? styles.successMessage : styles.errorMessage}`}>
+        {status && status.type === "success" && (
+          <p>
             {status.message}
           </p>
         )}
+
+        {status && status.type === "error" && (
+          <WarningTag invalidText={status.message} />
+        )}
+
         <div className={styles.tableWrapper}>
           <SelectedTagsTable />
         </div>
