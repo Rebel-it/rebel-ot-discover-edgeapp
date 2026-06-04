@@ -9,6 +9,7 @@ import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTi
 import Table from "../../components/organisms/table/Table";
 import { getFormulaLabel, getTagKey } from "../../models/Tag";
 import { useTags } from "../../context/TagContext";
+import type { RowData } from "../../components/organisms/table/types";
 
 function TagPage() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ function TagPage() {
   const [selectedTagKeys, setSelectedTagKeys] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [sortedRows, setSortedRows] = useState<RowData[]>([]);
   const selectAllRef = useRef<HTMLInputElement | null>(null);
   const isSubmittingRef = useRef(false);
 
@@ -30,7 +32,19 @@ function TagPage() {
 
   useEffect(() => {
     getFilledTags()
-      .then(setTags)
+      .then((fetchedTags) => {
+        setTags(fetchedTags);
+        const rowData = fetchedTags.map((tag) => ({
+          id: getTagKey(tag),
+          cells: {
+            name: tag.name,
+            logOn: tag.logEvent,
+            interval: tag.loggingInterval,
+            formula: getFormulaLabel(tag)
+          }
+        }));
+        setSortedRows(rowData);
+      })
       .catch(() => setTagsError("Unable to load prefilled tags. Check that the API is running."))
       .finally(() => setTagsLoading(false));
   }, [])
@@ -41,9 +55,7 @@ function TagPage() {
     }
   }, [someSelected, allSelected])
 
-  function toggleTagSelection(tag: ApiTag) {
-    const tagKey = getTagKey(tag);
-
+  function toggleTagSelection(tagKey: string) {
     setSelectedTagKeys((prev) => {
       const next = [...prev];
       const index = next.indexOf(tagKey);
@@ -64,7 +76,6 @@ function TagPage() {
     }
 
     setSelectedTagKeys([...tagKeys]);
-    console.log("Selected all tags");
   }
 
   async function handleCreateTags() {
@@ -99,20 +110,10 @@ function TagPage() {
     { key: "formula", label: "Formula", sortable: false },
   ]
 
-  const rowData = tags.map((tag) => ({
-    id: getTagKey(tag),
-    cells: {
-      name: tag.name,
-      logOn: tag.logEvent,
-      interval: tag.loggingInterval,
-      formula: getFormulaLabel(tag)
-    }
-  }));
-
   return (
     <WizardPage
       wizardStep="tags"
-      continueButtonText="I'm done creating tags"
+      continueButtonText="Create tags"
       onContinue={handleCreateTags}
       loading={isSubmitting || selectedCount === 0}>
 
@@ -128,64 +129,22 @@ function TagPage() {
           {errorMessage && <p>{errorMessage}</p>}
         </div>
 
-        {/* {rowData.length > 0 && ( */}
-        <div className={styles.tableWrapper}>
-          <Table
-            rows={rowData}
-            columns={columnDefs}
-            selectedIds={selectedTagKeys}
-            onSelectAll={toggleSelectAll}
-            onRowSelect={() => { }}
-            onSort={() => { }}
-          />
-        </div>
-        {/* )} */}
+        {sortedRows.length > 0 && (
+          <div className={styles.tableWrapper}>
+            <Table
+              rows={sortedRows}
+              columns={columnDefs}
+              selectedIds={selectedTagKeys}
+              onSelectAll={toggleSelectAll}
+              onRowSelect={(id) => toggleTagSelection(id)}
+              onSort={() => {
+                const newRows = [...sortedRows].sort((a, b) => a.cells.name.localeCompare(b.cells.name));
+                setSortedRows(newRows);
+              }}
+            />
+          </div>
+        )}
       </div>
-
-      {/* 
-      
-      {!tagsLoading && !tagsError && tags.length > 0 && (
-        <div className={styles.tableWrapper}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th aria-label="Select all tags">
-                  <input
-                    ref={selectAllRef}
-                    type="checkbox"
-                    checked={allSelected}
-                    onChange={toggleSelectAll}
-                    aria-label="Select all tags"
-                  />
-                </th>
-                <th>Name</th>
-                <th>Logging on</th>
-                <th>Interval</th>
-                <th>Formula</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tags.map((tag) => (
-                <tr key={getTagKey(tag)}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={selectedTagKeys.has(getTagKey(tag))}
-                      onChange={() => toggleTagSelection(tag)}
-                      aria-label={`Select tag ${tag.name || tag.slug}`}
-                    />
-                  </td>
-                  <td>{tag.name}</td>
-                  <td>{tag.logEvent}</td>
-                  <td>{tag.loggingInterval}</td>
-                  <td>{getFormulaLabel(tag)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      {errorMessage && <p>{errorMessage}</p>} */}
     </WizardPage>
   )
 }

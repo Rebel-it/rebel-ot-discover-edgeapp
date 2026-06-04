@@ -1,4 +1,10 @@
 .page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 35px;
+  width: 100%;
+  align-items: center;
 
   .descriptionWrapper {
     padding-top: 40px;
