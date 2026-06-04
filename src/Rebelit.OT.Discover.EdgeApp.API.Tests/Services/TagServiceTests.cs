@@ -9,7 +9,6 @@ namespace Rebelit.OT.Discover.EdgeApp.Tests.Services;
 [TestFixture]
 public class TagServiceTests
 {
-
     [Test]
     public async Task GetTagsAsync_WhenApiReturnsTags()
     {
@@ -343,6 +342,3 @@ public class TagServiceTests
     }
 
 }
-
-
-

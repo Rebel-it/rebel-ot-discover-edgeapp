@@ -21,6 +21,4 @@ public class UnitTestHelpers
                 AgentId = agentId,
             },
         };
-
-    
 }

@@ -66,5 +66,4 @@ public class VariableServiceTests
         var infoLog = logger.Entries.Single(e => e.LogLevel == LogLevel.Information);
         Assert.That(infoLog.Message, Is.EqualTo("Retrieved 2 variables for agent agent-42."));
     }
-
 }
