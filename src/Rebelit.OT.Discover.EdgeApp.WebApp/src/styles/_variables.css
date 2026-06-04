@@ -1,13 +1,14 @@
 :root {
-    --white: #FDFEFF;
-    --grey-100: #EEF1FF;
-    
-    --orange-500: #EF7D00;
+  --black: #1A1A1A;
+  --white: #FDFEFF;
+  --grey-100: #EEF1FF;
 
-    --purple-100: #DABCFB;
-    --purple-200: #A77ADA;
-    --purple-500: #6C4796;
+  --orange-500: #EF7D00;
 
-    --indicator-size: 48px;
-    --step-gap: 40px;
+  --purple-100: #DABCFB;
+  --purple-200: #A77ADA;
+  --purple-500: #6C4796;
+
+  --indicator-size: 48px;
+  --step-gap: 40px;
 }

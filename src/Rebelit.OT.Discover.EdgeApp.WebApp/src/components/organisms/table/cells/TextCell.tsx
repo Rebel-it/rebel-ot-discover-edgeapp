@@ -7,7 +7,7 @@ export type TextCellProps = {
 export default function TextCell({ value }: Readonly<TextCellProps>) {
     return (
         <Cell>
-            {value}
+            <p>{value}</p>
         </Cell>
     );
 }
