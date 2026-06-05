@@ -4,12 +4,10 @@
 
   .content {
     flex: 1;
-    position: relative;
-    display: flex;
-    flex-direction: column;
+    padding: 80px 35px 40px 35px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
     background-color: var(--orange-500);
-    align-items: center;
-    padding: 120px 20px 80px 20px;
 
     > :first-child {
       flex: 1;
@@ -21,18 +19,10 @@
       font-family: Zilla Slab, serif;
       font-weight: 400;
       font-size: 3.2rem;
-      position: absolute;
-      top: 80px;
-
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
     }
 
     .buttonWrapper {
-      position: absolute;
-      bottom: 40px;
-      right: 80px;
+      justify-self: end;
     }
   }
 
