@@ -84,7 +84,6 @@ function LoginPage() {
       loading={isSubmitting}>
 
       <form className={styles.loginForm} noValidate>
-
         <div className={styles.formFieldWrapper}>
           <FormField
             id="applicationid"
