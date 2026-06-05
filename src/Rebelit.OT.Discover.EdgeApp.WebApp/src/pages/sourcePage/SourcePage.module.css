@@ -1,10 +1,18 @@
 .sourceForm {
-  display: flex;
-  flex-direction: column;
+  justify-self: center;
   width: 100%;
   max-width: 600px;
+  display: grid;
+  grid-template-rows: repeat(5, 1fr);
+  overflow: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &:webkit-scrollbar {
+    display: none;
+  }
 
   .formFieldWrapper {
-    padding-top: 20rem;
+    grid-area: 2;
   }
 }

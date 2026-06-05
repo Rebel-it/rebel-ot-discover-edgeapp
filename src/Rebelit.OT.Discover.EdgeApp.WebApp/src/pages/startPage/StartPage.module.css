@@ -1,4 +1,13 @@
 .page {
+  justify-self: center;
+  overflow: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &:webkit-scrollbar {
+    display: none;
+  }
+
   .title {
     font-weight: 400;
     font-size: 5.4rem;

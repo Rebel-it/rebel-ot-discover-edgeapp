@@ -48,10 +48,11 @@ function DeviceConfigPage() {
       <div className={styles.page}>
         <div className={styles.descriptionWrapper}>
           <p>
-            The following data will be written to your edge router, there could be additional costs after doing this?
+            The following data will be written to your IXON Secure Edge Pro.
           </p>
+          <br/>
           <p className={styles.warning}>
-            Note: when you push this, everyone on the VPN will be disconnected
+            Warning: Pushing configuration may disconnect VPN users
           </p>
         </div>
 

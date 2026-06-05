@@ -3,16 +3,13 @@
   height: 100vh;
 
   .content {
+    position: relative;
     flex: 1;
     padding: 80px 35px 40px 35px;
+    background-color: var(--orange-500);
     display: grid;
     grid-template-rows: auto 1fr auto;
-    background-color: var(--orange-500);
-
-    > :first-child {
-      flex: 1;
-      overflow: hidden;
-    }
+    gap: 20px;
 
     .title {
       text-align: center;
