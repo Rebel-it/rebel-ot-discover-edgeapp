@@ -66,9 +66,7 @@ function DeviceConfigPage() {
           <WarningTag invalidText={status.message} />
         )}
 
-        <div className={styles.tableWrapper}>
-          <SelectedTagsTable />
-        </div>
+        <SelectedTagsTable />
       </div>
     </WizardPage>
   )

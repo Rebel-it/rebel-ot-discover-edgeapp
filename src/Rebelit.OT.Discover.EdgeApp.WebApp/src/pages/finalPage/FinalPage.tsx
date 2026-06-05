@@ -1,4 +1,4 @@
-import styles  from "./FinalPage.module.css";
+import styles from "./FinalPage.module.css";
 import { useNavigate } from "react-router-dom";
 import WizardPage from "../wizardPage/WizardPage";
 import { Pages } from "../../models/Pages";
@@ -17,9 +17,7 @@ function FinalPage() {
       }}>
       <div className={styles.page}>
         <WizardPageTitle title="Finish" />
-        <div className={styles.tableWrapper}>
-          <SelectedTagsTable />
-        </div>
+        <SelectedTagsTable />
       </div>
     </WizardPage>
   )

@@ -5,9 +5,4 @@
   padding: 0 35px;
   width: 100%;
   align-items: center;
-
-  .tableWrapper {
-    width: 100%;
-    max-width: 1200px;
-  }
 }

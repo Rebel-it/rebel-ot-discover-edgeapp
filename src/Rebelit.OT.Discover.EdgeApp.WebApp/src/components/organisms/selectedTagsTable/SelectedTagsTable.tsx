@@ -1,3 +1,4 @@
+import styles from "./SelectedTagsTable.module.css";
 import { useTags } from "../../../context/TagContext";
 import { getFormulaLabel, getTagKey } from "../../../models/Tag";
 import Table from "../table/Table";
@@ -23,10 +24,12 @@ export default function SelectedTagsTable() {
   }));
 
   return (
-    <Table
-      rows={rowData}
-      columns={columnDefs}
-      onSort={() => { }}
-    />
+    <div className={styles.tableWrapper}>
+      <Table
+        rows={rowData}
+        columns={columnDefs}
+        onSort={() => { }}
+      />
+    </div>
   );
 }
