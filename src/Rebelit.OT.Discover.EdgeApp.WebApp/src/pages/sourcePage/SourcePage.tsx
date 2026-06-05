@@ -8,7 +8,6 @@ import FormField from "../../components/molecules/formField/FormField.tsx"
 import WizardPage from "../wizardPage/WizardPage.tsx"
 import { Pages } from "../../models/Pages.ts"
 import { useWizard } from "../../context/WizardContext.tsx"
-import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle.tsx"
 import WarningTag from "../../components/atoms/warningTag/WarningTag.tsx"
 
 function getDefaultDataSourceName(): string {
@@ -73,13 +72,12 @@ function SourcePage() {
   return (
     <WizardPage
       wizardStep="source"
+      title="Create data source"
       continueButtonText="Create"
       onContinue={handleCreateDataSource}
       loading={isSubmitting}
     >
       <form className={style.sourceForm} noValidate>
-        <WizardPageTitle title="Create data source" />
-
         <div className={style.formFieldWrapper}>
           <FormField
             id="sourceName"

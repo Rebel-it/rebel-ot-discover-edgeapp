@@ -5,7 +5,6 @@ import styles from "./VariablesPage.module.css"
 import { useWizard } from "../../context/WizardContext"
 import WizardPage from "../wizardPage/WizardPage"
 import { Pages } from "../../models/Pages"
-import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle"
 import Spinner from "../../components/atoms/spinner/Spinner"
 import taskFinished from '../../assets/taskfinished.png';
 import WarningTag from "../../components/atoms/warningTag/WarningTag"
@@ -51,6 +50,7 @@ function VariablesPage() {
 
   return (
     <WizardPage
+      title="Synchronize variables"
       wizardStep="variables"
       continueButtonText="Continue"
       onContinue={() => {
@@ -60,8 +60,6 @@ function VariablesPage() {
       loading={isSubmitting}
     >
       <div className={styles.page}>
-        <WizardPageTitle title="Synchronize variables" />
-
         <>
           {isSubmitting && (
             <div className={styles.statusDescriptionWrapper}>

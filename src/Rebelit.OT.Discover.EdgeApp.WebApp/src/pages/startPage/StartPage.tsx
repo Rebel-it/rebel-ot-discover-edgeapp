@@ -16,6 +16,7 @@ function StartPage() {
 
   return (
     <WizardPage
+      title=""
       continueButtonText="Start"
       onContinue={() => navigate(Pages.login)}
     >

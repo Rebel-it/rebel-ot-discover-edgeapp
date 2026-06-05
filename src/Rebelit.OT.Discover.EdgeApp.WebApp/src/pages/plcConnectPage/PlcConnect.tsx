@@ -7,7 +7,6 @@ import FormField from "../../components/molecules/formField/FormField.tsx";
 import WizardPage from "../wizardPage/WizardPage.tsx";
 import { useWizard } from "../../context/WizardContext.tsx";
 import { Pages } from "../../models/Pages.ts";
-import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle.tsx";
 import styles from "./PlcConnect.module.css";
 import Checkbox from "../../components/atoms/checkbox/Checkbox.tsx";
 import WarningTag from "../../components/atoms/warningTag/WarningTag.tsx";
@@ -100,13 +99,12 @@ function PlcConnect() {
   return (
     <WizardPage
       wizardStep="plcConnect"
+      title="PLC connection"
       continueButtonText="Connect"
       onContinue={handlePlcConnect}
       loading={isSubmitting}
     >
       <form className={styles.plcConnectForm} noValidate>
-        <WizardPageTitle title="PLC connection" />
-
         <div className={styles.formFieldWrapper}>
           <FormField
             id="ipAddress"

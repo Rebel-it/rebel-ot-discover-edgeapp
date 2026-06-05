@@ -1,9 +1,16 @@
 .loginForm {
   width: 100%;
   max-width: 600px;
+  padding-top: 20%;
+  overflow: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &:webkit-scrollbar {
+    display: none;
+  }
 
   .formFieldWrapper {
-    padding-top: 20rem;
     display: flex;
     flex-direction: column;
     gap: 40px;

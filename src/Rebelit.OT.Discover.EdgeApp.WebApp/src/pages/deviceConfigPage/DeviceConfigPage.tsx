@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { useWizard } from "../../context/WizardContext"
 import WizardPage from "../wizardPage/WizardPage"
 import { Pages } from "../../models/Pages"
-import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle"
 import SelectedTagsTable from "../../components/organisms/selectedTagsTable/SelectedTagsTable";
 import WarningTag from "../../components/atoms/warningTag/WarningTag";
 
@@ -41,12 +40,12 @@ function DeviceConfigPage() {
   return (
     <WizardPage
       wizardStep="deviceConfig"
+      title="Device Configuration"
       continueButtonText="Push to device"
       onContinue={handlePushConfiguration}
       loading={loading}>
 
       <div className={styles.page}>
-        <WizardPageTitle title="Device Configuration" />
         <div className={styles.descriptionWrapper}>
           <p>
             The following data will be written to your edge router, there could be additional costs after doing this?

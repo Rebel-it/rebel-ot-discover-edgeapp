@@ -6,17 +6,20 @@ import poweredByRebel from '../../assets/poweredbyrebel.png';
 
 type Props = {
   children: React.ReactNode;
+  title: string;
   wizardStep?: WizardStepKey;
   continueButtonText?: string;
   onContinue?: () => void;
   loading?: boolean;
 }
 
-export default function WizardPage({ children, wizardStep, continueButtonText, 
+export default function WizardPage({ children, title,
+  wizardStep, continueButtonText,
   onContinue, loading }: Readonly<Props>) {
   return (
     <div className={styles.wizardPage}>
       <div className={styles.content}>
+        <h1 className={styles.title}>{title}</h1>
         {children}
         <div className={styles.buttonWrapper}>
           {continueButtonText && onContinue && (

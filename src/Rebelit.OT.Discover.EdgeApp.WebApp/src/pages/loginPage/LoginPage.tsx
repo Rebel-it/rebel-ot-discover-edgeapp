@@ -8,7 +8,6 @@ import FormField from "../../components/molecules/formField/FormField.tsx"
 import WizardPage from "../wizardPage/WizardPage.tsx"
 import { useWizard } from "../../context/WizardContext.tsx"
 import { Pages } from "../../models/Pages.ts"
-import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle.tsx"
 import WarningTag from "../../components/atoms/warningTag/WarningTag.tsx"
 
 const defaultAuthObject: ServiceAccountObject = {
@@ -79,12 +78,12 @@ function LoginPage() {
   return (
     <WizardPage
       wizardStep="login"
+      title="Log in"
       continueButtonText="Log in"
       onContinue={handleLogin}
       loading={isSubmitting}>
 
       <form className={styles.loginForm} noValidate>
-        <WizardPageTitle title="Log in" />
 
         <div className={styles.formFieldWrapper}>
           <FormField

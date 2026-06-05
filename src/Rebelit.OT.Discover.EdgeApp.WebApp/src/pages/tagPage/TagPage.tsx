@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import WizardPage from "../wizardPage/WizardPage";
 import { Pages } from "../../models/Pages";
 import { useWizard } from "../../context/WizardContext";
-import WizardPageTitle from "../../components/atoms/wizardPageTitle/WizardPageTitle";
 import Table from "../../components/organisms/table/Table";
 import { getFormulaLabel, getTagKey } from "../../models/Tag";
 import { useTags } from "../../context/TagContext";
@@ -128,13 +127,12 @@ function TagPage() {
   return (
     <WizardPage
       wizardStep="tags"
+      title="Tags"
       continueButtonText={noTagsAvailable ? "Finish" : "Create tags"}
       onContinue={noTagsAvailable ? () => navigate(Pages.start) : handleCreateTags}
       loading={!buttonClickable()}>
 
       <div className={styles.page}>
-        <WizardPageTitle title="Tags" />
-
         <div className={styles.statusIndicatorWrapper}>
           {(tagsLoading || isSubmitting) && <Spinner />}
 
