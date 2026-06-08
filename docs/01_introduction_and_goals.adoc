@@ -21,7 +21,8 @@ It reads the existing variable and tag configurations from connected industrial 
 ==== Constraints
 
 * The application must run on the SecureEdge gateway, which has limited resources (CPU, memory) and runs a Linux-based OS. IXrouter3 does not support running custom code within the network.
-* The application targets *.NET 10* and is designed as a console-based edge process.
+* The application targets *.NET 10* for the backend
+* And uses React for the wizard frontend
 * Page sizes for IXON API queries are capped at 4,000 entries per request.
 
 === Quality Goals

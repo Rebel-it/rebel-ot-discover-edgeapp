@@ -7,14 +7,6 @@ The following table summarises the fundamental decisions that shape the architec
 |===
 | Quality Goal | Decision | Justification
 
-| *Reliability*
-| Scheduler loop with per-iteration exception isolation (`Application.cs`)
-| A top-level `try/catch` around each 15-minute cycle ensures a transient failure -- network outage, OPC UA disconnect, API rate limit -- is logged and discarded without terminating the process. The next cycle starts normally.
-
-| *Reliability*
-| OPC UA session keep-alive and exponential back-off reconnect (`UAClient.cs`)
-| The OPC UA session uses a 5-second keep-alive. On loss, reconnection retries with exponential back-off up to 15 seconds. This recovers from short PLC reboots or network glitches without operator intervention.
-
 | *Maintainability*
 | Port-and-adapter decomposition: core app depends on interfaces, not implementations
 | `IScraper`, `IApiClient`, `IUAClientFactory`, and `IClientSamplerFactory` decouple the orchestration logic from the protocol connectors. A new industrial protocol (e.g. Modbus, MQTT) is added as a new project implementing the factory interface -- no changes to `Scraper` or `Application` are needed.
@@ -34,6 +26,10 @@ The following table summarises the fundamental decisions that shape the architec
 | *Portability*
 | .NET 10 console application packaged as a Docker container
 | A single `linux/arm64/v8` image runs on the IXON SecureEdge Pro. The same solution builds and runs on macOS and Linux developer workstations via `dotnet run`, with no platform-specific code paths.
+
+| *Portability*
+| React wizard frontend application served from ASP.NET Core API project
+| The React app is built and bundled into static files at Docker build time
 
 | *Performance Efficiency*
 | Single-pass, paged API reads with O(1) duplicate checking
@@ -64,7 +60,7 @@ flowchart TD
 
 === Decomposition Approach
 
-The system is divided into three independently deployable projects, each with a single responsibility:
+The system is divided into six independently deployable projects, each with a single responsibility:
 
 [mermaid]
 ....
@@ -87,6 +83,10 @@ flowchart LR
 
     subgraph secureedge["Rebelit.OT.Discover.EdgeApp\n.Connections.SecureEdgePro"]
         edgeDeviceApiClient["ApiClient\nHTTPS REST"]
+    end
+
+    subgraph installationWizard["Rebelit.OT.InstallationWizard"]
+        InstallWizard["executable installer\nfor edge deployment"]
     end
 
     frontendNode -->|"HTTP REST"| backendNode
