@@ -108,16 +108,17 @@ function PlcConnect() {
         <div className={styles.formFieldWrapper}>
           <FormField
             id="ipAddress"
-            label="OPC Server Address"
+            label="OPC UA Server Address"
             value={plcObject.OpcUaServerAddress}
             onChange={(value) => setPlcProperty("OpcUaServerAddress", value)}
             required
-            placeholder="OPC://"
+            placeholder="127.0.0.1:4840"
             invalidText={opcUaServerAddressMissing ? "OPC Server Address is required" : ""}
+            prefix="opc.tcp://"
           />
 
           <Checkbox
-            label="Use PLC username and password"
+            label="This server requires authentication"
             checked={useCredentials}
             onChange={handleUseCredentialsChange}
           />

@@ -11,22 +11,27 @@ type Props = {
   required?: boolean;
   placeholder?: string;
   invalidText?: string;
+  prefix?: string;
 }
 
 function FormField({ id, label, value, onChange,
-  type = 'text', required, placeholder, invalidText }: Readonly<Props>) {
+  type = 'text', required, placeholder, invalidText, prefix }: Readonly<Props>) {
   return (
     <div className={styles.formField}>
       <label htmlFor={id}>{label}</label>
-      <input
-        id={id}
-        type={type}
-        value={value}
-        inputMode={type === 'password' ? undefined : 'text'}
-        onChange={(e) => onChange(e.target.value)}
-        required={required}
-        placeholder={placeholder}
-      />
+      <div className={styles.inputWrapper}>
+        {prefix && <span className={styles.prefix}>{prefix}</span>}
+        <input
+          id={id}
+          type={type}
+          value={value}
+          inputMode={type === 'password' ? undefined : 'text'}
+          onChange={(e) => onChange(e.target.value)}
+          required={required}
+          placeholder={placeholder}
+        />
+      </div>
+
       {invalidText && <WarningTag invalidText={invalidText} />}
     </div>
   )

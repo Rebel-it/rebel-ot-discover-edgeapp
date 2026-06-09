@@ -31,5 +31,9 @@
   .description {
     padding-left: 76px;
     font-size: 1.8rem;
+
+    p {
+      white-space: pre-line;
+    }
   }
 }

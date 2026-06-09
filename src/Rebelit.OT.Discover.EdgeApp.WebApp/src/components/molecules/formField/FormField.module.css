@@ -10,18 +10,33 @@
     color: var(--white);
   }
 
-  input {
-    background-color: var(--white);
-    font-family: Lato, serif;
-    font-weight: 400;
-    font-size: 1.8rem;
-    border-radius: 8px;
-    border: 1px solid #6C4796;
-    height: 46px;
-    padding: 12px 20px;
+  .inputWrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 
-    &::placeholder {
-      color: #747474;
+    .prefix {
+      font-family: Lato, serif;
+      font-weight: 400;
+      font-size: 1.8rem;
+      color: var(--white);
+    }
+
+    input {
+      flex: 1;
+      background-color: var(--white);
+      font-family: Lato, serif;
+      font-weight: 400;
+      font-size: 1.8rem;
+      border-radius: 8px;
+      border: 1px solid #6C4796;
+      height: 46px;
+      padding: 12px 20px;
+
+      &::placeholder {
+        color: #747474;
+        font-style: italic;
+      }
     }
   }
 }

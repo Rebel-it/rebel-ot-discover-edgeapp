@@ -8,7 +8,7 @@ import { useWizard } from "../../context/WizardContext";
 function StartPage() {
   const navigate = useNavigate();
   const { deleteCompletedSteps } = useWizard();
-  const description = "With the [OPC & Discovery App], you can easily connect your machines to the cloud using your IXON device. This enables you to remotely monitor your factory and keep full visibility over your operations.\n\nTo get started, we’ll guide you through a simple setup wizard. In just 7 steps, you’ll configure your IXON device. The process takes approximately [X] minutes.\n\nNote: you need to be connected to your machine via VPN.";
+  const description = "With the [OPC UA & Discovery App], you can easily connect your machines to the cloud using your IXON Secure Edge Pro. This enables you to remotely monitor and keep full visibility over your operations.\n\nTo get started, we’ll guide you through a simple setup wizard. In just 7 easy steps, you’ll configure your IXON Secure Edge Pro. The process takes approximately [X] minutes.\n\nNote: You need to be connected to your IXON Secure Edge Proc via VPN.";
 
   useEffect(() => {
     deleteCompletedSteps();
