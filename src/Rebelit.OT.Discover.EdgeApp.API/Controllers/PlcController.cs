@@ -14,7 +14,7 @@ public class PlcController(
     public async Task<IActionResult> SaveOpcSettings([FromBody] OpcCredentials settings)
     {
         using var client = await uaClientFactory.Create(
-            settings.OpcUaServerAddress,
+            $"opc.tcp://{settings.OpcUaServerAddress}",
             settings.OpcUaUsername ?? string.Empty,
             settings.OpcUaPassword ?? string.Empty
         );
