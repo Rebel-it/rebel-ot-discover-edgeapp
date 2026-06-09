@@ -9,6 +9,9 @@ import WizardPage from "../wizardPage/WizardPage.tsx"
 import { useWizard } from "../../context/WizardContext.tsx"
 import { Pages } from "../../models/Pages.ts"
 import WarningTag from "../../components/atoms/warningTag/WarningTag.tsx"
+import Modal from "../../components/modals/Modal.tsx"
+import Video from "../../components/atoms/video/Video.tsx"
+import VideoPreview from "../../components/atoms/videoPreview/VideoPreview.tsx"
 
 const defaultAuthObject: ServiceAccountObject = {
   apiApplicationID: "",
@@ -23,6 +26,7 @@ function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [applicationIdMissing, setapplicationIdMissing] = useState(false);
   const [accessTokenMissing, setAccessTokenMissing] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(false);
 
   useEffect(() => {
     deleteCompletedSteps();
@@ -107,6 +111,12 @@ function LoginPage() {
           {errorMessage && <WarningTag invalidText={errorMessage} />}
         </div>
       </form>
+
+      <VideoPreview onClick={() => setVideoOpen(true)} />
+
+      <Modal isOpen={videoOpen} onClose={() => setVideoOpen(false)}>
+        <Video />
+      </Modal>
     </WizardPage>
   )
 }
