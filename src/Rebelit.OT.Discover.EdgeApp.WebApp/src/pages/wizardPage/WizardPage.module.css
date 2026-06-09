@@ -1,0 +1,41 @@
+.wizardPage {
+  display: flex;
+  height: 100vh;
+
+  .content {
+    position: relative;
+    flex: 1;
+    padding: 80px 35px 40px 35px;
+    background-color: var(--orange-500);
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 20px;
+
+    .title {
+      text-align: center;
+      font-family: Zilla Slab, serif;
+      font-weight: 400;
+      font-size: 3.2rem;
+    }
+
+    .buttonWrapper {
+      justify-self: end;
+    }
+  }
+
+  .progressPanelWrapper {
+    display: flex;
+    width: 34vw;
+    max-width: 650px;
+
+    > :first-child {
+      flex: 1;
+    }
+  }
+
+  .poweredByRebel {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+  }
+}

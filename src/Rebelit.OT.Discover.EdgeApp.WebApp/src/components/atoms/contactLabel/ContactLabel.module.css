@@ -1,0 +1,12 @@
+.contactLabel {
+  display: flex;
+  gap: 8px;
+
+  .label {
+    font-family: Lato, serif;
+    font-size: 1.8rem;
+    font-weight: 400;
+    color: var(--white);
+    text-decoration: underline;
+  }
+}

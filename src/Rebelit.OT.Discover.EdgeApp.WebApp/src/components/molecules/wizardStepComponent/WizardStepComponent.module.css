@@ -1,0 +1,39 @@
+.wizardStep {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: calc(var(--indicator-size) / 2 - 1px);
+    top: var(--indicator-size);
+    bottom: calc(-1 * var(--step-gap));
+    border-left: 2px dashed #FDFEFF;
+  }
+
+  &.done:not(:last-child)::after {
+    border-left-style: solid;
+  }
+
+  .header {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+
+    h2 {
+      font-family: Zilla Slab;
+      font-weight: 400;
+      font-size: 2.4rem;
+    }
+  }
+
+  .description {
+    padding-left: 76px;
+    font-size: 1.8rem;
+
+    p {
+      white-space: pre-line;
+    }
+  }
+}

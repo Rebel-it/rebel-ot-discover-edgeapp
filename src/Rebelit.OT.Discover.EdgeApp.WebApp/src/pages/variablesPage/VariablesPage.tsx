@@ -1,75 +1,98 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { synchronizeVariables as synchronizeVariablesRequest } from '../../services/scraperService'
-import sharedStyles from '../loginPage/LoginPage.module.css'
-import styles from './VariablesPage.module.css'
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { synchronizeVariables as synchronizeVariablesRequest } from "../../services/scraperService"
+import styles from "./VariablesPage.module.css"
+import { useWizard } from "../../context/WizardContext"
+import WizardPage from "../wizardPage/WizardPage"
+import { Pages } from "../../models/Pages"
+import Spinner from "../../components/atoms/spinner/Spinner"
+import taskFinished from '../../assets/taskfinished.png';
+import WarningTag from "../../components/atoms/warningTag/WarningTag"
 
 function VariablesPage() {
-    const navigate = useNavigate()
-    const [isSubmitting, setIsSubmitting] = useState(true)
-    const [synchronizationSucceeded, setSynchronizationSucceeded] = useState(false)
-    const [errorMessage, setErrorMessage] = useState('')
+  const navigate = useNavigate();
+  const { markStepCompleted } = useWizard();
+  const [isSubmitting, setIsSubmitting] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
-    useEffect(() => {
-        let isActive = true
+  useEffect(() => {
+    let isActive = true
 
-        async function runSynchronization() {
-            setIsSubmitting(true)
-            setErrorMessage('')
-            setSynchronizationSucceeded(false)
+    async function runSynchronization() {
+      setErrorMessage("");
 
-            try {
-                await synchronizeVariablesRequest()
+      try {
+        await synchronizeVariablesRequest();
 
-                if (!isActive) return
+        if (!isActive) {
+          return;
+        }
 
-                setSynchronizationSucceeded(true)
-            } catch (error) {
-                if (!isActive) return
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
 
-                setErrorMessage(error instanceof Error ? error.message : 'Variable synchronization failed. Please try again.')
-            } finally {
-                if (isActive) {
-                    setIsSubmitting(false)
-                }
+        setErrorMessage(error instanceof Error ? error.message : "Variable synchronization failed. Please try again.");
+      } finally {
+        if (isActive) {
+          setIsSubmitting(false);
+        }
+      }
+    }
+
+    void runSynchronization();
+
+    return () => {
+      isActive = false;
+    }
+  }, [])
+
+  return (
+    <WizardPage
+      title="Synchronize variables"
+      wizardStep="variables"
+      continueButtonText="Continue"
+      onContinue={() => {
+        markStepCompleted("variables");
+        navigate(Pages.tags);
+      }}
+      loading={isSubmitting}
+    >
+      <div className={styles.page}>
+        <>
+          <div className={styles.statusDescriptionWrapper}>
+            {isSubmitting ? (
+              <>
+                <p>The following steps will now be performed:</p>
+                <ol>
+                  <li>Retrieving variables from your OPC UA Server</li>
+                  <li>Synchronizing variables to the data source in the IXON Cloud</li>
+                </ol>
+                <br />
+                <p>This may take a while</p>
+              </>
+            ) : (
+              <p>Sync completed</p>
+            )
             }
-        }
+          </div>
 
-        void runSynchronization()
-
-        return () => {
-            isActive = false
-        }
-    }, [])
-
-    return (
-        <div className={sharedStyles.wrapper}>
-            <div className={sharedStyles.loginForm}>
-                <h1>Synchronize variables</h1>
-
-                {isSubmitting && (
-                    <div className={styles.statusBlock}>
-                        <div className={styles.spinner} aria-hidden="true" />
-                        <p className={styles.statusText}>Variable synchronization is in progress. This may take a few moments.</p>
-                    </div>
-                )}
-
-                {errorMessage && <p className={`${sharedStyles.formMessage} ${sharedStyles.errorMessage}`}>{errorMessage}</p>}
-
-                {synchronizationSucceeded && (
-                    <p className={`${sharedStyles.formMessage} ${sharedStyles.successMessage}`}>
-                        Variable synchronization succeeded. Continue to the next step.
-                    </p>
-                )}
-            </div>
-
-            {synchronizationSucceeded && (
-                <button type="button" className={sharedStyles.nextButton} onClick={() => navigate('/tags')}>
-                    Next
-                </button>
-            )}
-        </div>
-    )
+          <div className={styles.statusIndicatorWrapper}>
+            {isSubmitting ?
+              (
+                <Spinner />
+              )
+              : (
+                <img src={taskFinished} alt="Variables sync completed" />
+              )
+            }
+          </div>
+        </>
+        {errorMessage && <WarningTag invalidText={errorMessage} />}
+      </div>
+    </WizardPage>
+  )
 }
 
-export default VariablesPage
+export default VariablesPage;

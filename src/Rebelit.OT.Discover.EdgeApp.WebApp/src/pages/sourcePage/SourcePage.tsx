@@ -1,88 +1,96 @@
-import { useNavigate } from 'react-router-dom'
-import { useState, type ComponentProps } from 'react'
-import { loadPlcServerAddress, saveSourceId } from '../../services/sessionStorageService.ts'
-import Loginstyles from '../loginPage/LoginPage.module.css'
-import type { SourceObject } from '../../models/SourceObject.ts'
-import { createSource } from '../../services/dataSourceService.ts'
-import FormField from '../../components/atoms/formField/FormField.tsx'
-
-type SourceFormSubmitEvent = Parameters<NonNullable<ComponentProps<'form'>['onSubmit']>>[0]
+import style from "./SourcePage.module.css";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { loadPlcServerAddress, saveSourceId } from "../../services/sessionStorageService.ts";
+import type { SourceObject } from "../../models/SourceObject.ts";
+import { createSource } from "../../services/dataSourceService.ts";
+import FormField from "../../components/molecules/formField/FormField.tsx";
+import WizardPage from "../wizardPage/WizardPage.tsx";
+import { Pages } from "../../models/Pages.ts";
+import { useWizard } from "../../context/WizardContext.tsx";
+import WarningTag from "../../components/atoms/warningTag/WarningTag.tsx";
 
 function getDefaultDataSourceName(): string {
-    const opcAddress = loadPlcServerAddress().trim()
-    if (!opcAddress) {
-        return ''
-    }
-    const addressWithoutProtocol = opcAddress.replace(/^opc\.tcp:\/\//i, '')
-    const host = addressWithoutProtocol.split(/[/:]/)[0]
-    return host ? `Datasource_${host}` : ''
+  const opcAddress = loadPlcServerAddress().trim();
+  if (!opcAddress) {
+    return "";
+  }
+  const addressWithoutProtocol = opcAddress.replace(/^opc\.tcp:\/\//i, "");
+  const host = addressWithoutProtocol.split(/[/:]/)[0];
+  return host ? `Datasource_${host}` : "";
 }
 
 function SourcePage() {
+  const navigate = useNavigate();
+  const { markStepCompleted } = useWizard();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [sourceIsMissing, setSourceIsMissing] = useState(false);
 
-    const navigate = useNavigate()
-    const [sourceObject, setSourceObject] = useState<SourceObject>(() => ({
-        DataSourceName: getDefaultDataSourceName(),
-    }))
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [sourceCreationSucceeded, setSourceCreationSucceeded] = useState(false)
-    const [errorMessage, setErrorMessage] = useState('')
+  const [sourceObject, setSourceObject] = useState<SourceObject>(() => ({
+    DataSourceName: getDefaultDataSourceName(),
+  }));
 
-    function setSourceProperty<K extends keyof SourceObject>(property: K, value: SourceObject[K]) {
-        setSourceObject((currentSourceObject) => ({
-            ...currentSourceObject,
-            [property]: value,
-        }))
+  function setSourceProperty<K extends keyof SourceObject>(property: K, value: SourceObject[K]) {
+    setSourceObject((currentSourceObject) => ({
+      ...currentSourceObject,
+      [property]: value,
+    }));
+  }
+
+  function validateFormInput() {
+    if (!sourceObject.DataSourceName.trim()) {
+      setSourceIsMissing(true);
+      return false;
+    } else {
+      setSourceIsMissing(false);
     }
 
-    async function handleSubmit(event: SourceFormSubmitEvent) {
-        event.preventDefault()
-        if (isSubmitting) return
-        setIsSubmitting(true)
-        setErrorMessage('')
-        setSourceCreationSucceeded(false)
-        try {
-            const result: string = await createSource(sourceObject);
-            
-            saveSourceId(result);
-            setSourceCreationSucceeded(true);
-        } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : 'Source creation failed. Please check your input and try again.')
-        } finally {
-            setIsSubmitting(false)
-        }
+    return true;
+  }
+
+  async function handleCreateDataSource() {
+    if (isSubmitting || !validateFormInput()) {
+      return;
     }
 
-    return (
-        <div className={Loginstyles.wrapper}>
-            <form className={Loginstyles.loginForm} onSubmit={handleSubmit} noValidate>
-                <h1>Create data source</h1>
-                <FormField
-                    id="sourceName"
-                    label="Source name"
-                    value={sourceObject.DataSourceName}
-                    onChange={(value) => setSourceProperty('DataSourceName', value)}
-                />
+    setIsSubmitting(true);
+    setErrorMessage("");
+    try {
+      const result: string = await createSource(sourceObject);
+      saveSourceId(result);
+      markStepCompleted("source");
+      navigate(Pages.variables);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Source creation failed. Please check your input and try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
-                {errorMessage && <p className={`${Loginstyles.formMessage} ${Loginstyles.errorMessage}`}>{errorMessage}</p>}
-
-                {sourceCreationSucceeded && (
-                    <p className={`${Loginstyles.formMessage} ${Loginstyles.successMessage}`}>
-                        Source creation succeeded. Continue to the next step.
-                    </p>
-                )}
-
-                <button type="submit" className={Loginstyles.loginButton} disabled={isSubmitting || sourceCreationSucceeded}>
-                    {isSubmitting ? 'Creating...' : 'Create'}
-                </button>
-            </form>
-            {sourceCreationSucceeded && (
-                <button type="button" className={Loginstyles.nextButton} onClick={() => navigate('/variables')}>
-                    Next
-                </button>
-            )}
+  return (
+    <WizardPage
+      wizardStep="source"
+      title="Create data source"
+      continueButtonText="Create data source"
+      onContinue={handleCreateDataSource}
+      loading={isSubmitting}
+    >
+      <form className={style.sourceForm} noValidate>
+        <div className={style.formFieldWrapper}>
+          <FormField
+            id="sourceName"
+            label="Data source name"
+            value={sourceObject.DataSourceName}
+            onChange={(value) => setSourceProperty("DataSourceName", value)}
+            placeholder="DataSource_IPAdressPLC"
+            invalidText={sourceIsMissing ? "Data source name is required" : ""}
+          />
+          {errorMessage && <WarningTag invalidText={errorMessage} />}
         </div>
-    )
+      </form>
+    </WizardPage>
+  )
 }
 
-export default SourcePage
+export default SourcePage;

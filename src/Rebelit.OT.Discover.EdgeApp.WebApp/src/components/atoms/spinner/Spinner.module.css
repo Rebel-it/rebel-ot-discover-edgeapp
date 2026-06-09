@@ -1,0 +1,49 @@
+.spinnerContainer,
+.spinnerContainer div {
+  box-sizing: border-box;
+}
+
+.spinnerContainer {
+  color: var(--purple-500);
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.spinnerContainer div {
+  display: inline-block;
+  position: absolute;
+  left: 8px;
+  width: 16px;
+  background: var(--purple-500);
+  animation: spinnerAnimation 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite;
+}
+
+.spinnerContainer div:nth-child(1) {
+  left: 8px;
+  animation-delay: -0.24s;
+}
+
+.spinnerContainer div:nth-child(2) {
+  left: calc(8px + 24px);
+  animation-delay: -0.12s;
+}
+
+.spinnerContainer div:nth-child(3) {
+  left: calc(8px + 2 * 24px);
+  animation-delay: 0s;
+}
+
+@keyframes spinnerAnimation {
+  0% {
+    top: 8px;
+    height: 64px;
+  }
+
+  50%,
+  100% {
+    top: 24px;
+    height: 32px;
+  }
+}

@@ -1,206 +1,23 @@
-.pageWrapper {
+.page {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  padding: 32px 40px;
-  gap: 24px;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-
-  h1 {
-    margin: 0;
-    font-size: 28px;
-    letter-spacing: -0.5px;
-    color: var(--text-h);
-  }
-}
-
-.addButton {
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  font-size: 22px;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.2s;
-
-  &:hover {
-    opacity: 0.88;
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 3px;
-  }
-}
-
-.empty {
-  color: var(--text);
-  font-size: 14px;
-}
-
-.tableWrapper {
-  overflow-x: auto;
-}
-
-.table {
+  gap: 20px;
+  padding: 0 35px;
   width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-
-  th,
-  td {
-    padding: 10px 14px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-  }
-
-  th {
-    font-weight: 600;
-    color: var(--text-h);
-    white-space: nowrap;
-  }
-
-  td {
-    color: var(--text);
-  }
-
-  tbody tr:hover {
-    background: var(--accent-bg);
-  }
-}
-
-/* Modal */
-.modal {
-  width: 100%;
-  max-width: 440px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  box-shadow: var(--shadow);
-
-  &::backdrop {
-    background: rgba(0, 0, 0, 0.45);
-  }
-
-  h2 {
-    margin: 0 0 4px;
-    font-size: 22px;
-    color: var(--text-h);
-  }
-}
-
-.formField {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-
-  label {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-h);
-  }
-
-  input,
-  select {
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--bg);
-    color: var(--text-h);
-    font: inherit;
-    font-size: 15px;
-    transition: border-color 0.2s, box-shadow 0.2s;
-
-    &:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-bg);
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-  }
-}
-
-.checkboxField {
-  display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: var(--text);
+  overflow: hidden;
 
-  input[type='checkbox'] {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--accent);
-    cursor: pointer;
+  .statusIndicatorWrapper {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 
-  label {
-    font-weight: 500;
-    color: var(--text-h);
-    cursor: pointer;
-  }
-}
-
-.modalActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.cancelButton {
-  padding: 9px 18px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 15px;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  &:hover {
-    background: var(--accent-bg);
-  }
-}
-
-.saveButton {
-  padding: 9px 18px;
-  border: none;
-  border-radius: 6px;
-  background: var(--accent);
-  color: #fff;
-  font: inherit;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.2s;
-
-  &:hover {
-    opacity: 0.88;
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 3px;
+  .tableWrapper {
+    width: 100%;
+    max-width: 1200px;
+    overflow: hidden;
+    display: flex;
   }
 }

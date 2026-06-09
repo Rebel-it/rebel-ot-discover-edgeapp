@@ -1,64 +1,80 @@
-import { useState } from 'react'
-import styles from './DeviceConfigPage.module.css'
-import sharedStyles from '../loginPage/LoginPage.module.css'
-import { PushDeviceConfiguration } from '../../services/IxonSettingService'
-import { loadIxonAuthenticationHeaders } from '../../services/sessionStorageService'
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react"
+import styles from "./DeviceConfigPage.module.css"
+import { PushDeviceConfiguration } from "../../services/IxonSettingService"
+import { loadIxonAuthenticationHeaders } from "../../services/sessionStorageService"
+import { useNavigate } from "react-router-dom";
+import { useWizard } from "../../context/WizardContext"
+import WizardPage from "../wizardPage/WizardPage"
+import { Pages } from "../../models/Pages"
+import SelectedTagsTable from "../../components/organisms/selectedTagsTable/SelectedTagsTable";
+import WarningTag from "../../components/atoms/warningTag/WarningTag";
+import warningIcon from "../../assets/warningiconwhite.svg";
 
 function DeviceConfigPage() {
-    const navigate = useNavigate();
-    const [loading, setLoading] = useState(false)
-    const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
-    const [pushDeviceSuccess, setPushDeviceSuccess] = useState(false);
-    async function handlePushConfiguration() {
-        const auth = loadIxonAuthenticationHeaders()
-        if (!auth?.AgentId) {
-            setStatus({ type: 'error', message: 'No agent ID found. Please log in again.' })
-            return
-        }
+  const navigate = useNavigate();
+  const { markStepCompleted } = useWizard();
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-        setLoading(true)
-        setStatus(null)
-
-        try {
-            await PushDeviceConfiguration(auth.AgentId)
-            setStatus({ type: 'success', message: 'Configuration pushed successfully.' })
-            setPushDeviceSuccess(true);
-        } catch {
-            setStatus({ type: 'error', message: 'Failed to push configuration. Please try again.' })
-        } finally {
-            setLoading(false)
-        }
+  async function handlePushConfiguration() {
+    const auth = loadIxonAuthenticationHeaders();
+    if (!auth?.AgentId) {
+      setStatus({ type: "error", message: "No agent ID found. Please log in again." });
+      return;
     }
 
-    return (
-        <div className={sharedStyles.wrapper}>
-            <div className={styles.card}>
-                <h1>Device Configuration</h1>
-                <p>
-                    Push the latest configuration to your edge devices to ensure they are up to date with the latest settings and ready for discovery workflows.
-                </p>
-                {status && (
-                    <p className={`${styles.formMessage} ${status.type === 'success' ? styles.successMessage : styles.errorMessage}`}>
-                        {status.message}
-                    </p>
-                )}
-                <button
-                    type="button"
-                    className={sharedStyles.loginButton}
-                    onClick={handlePushConfiguration}
-                    disabled={loading}
-                >
-                    {loading ? 'Pushing...' : 'Push Configuration'}
-                </button>
-            </div>
-             {pushDeviceSuccess && (
-                <button type="button" className={sharedStyles.nextButton} onClick={() => navigate('/final')}>
-                    Finish
-                </button>
-            )}
+    setLoading(true);
+    setStatus(null);
+
+    try {
+      await PushDeviceConfiguration(auth.AgentId);
+      setStatus({ type: "success", message: "Configuration pushed successfully." });
+      markStepCompleted("deviceConfig");
+      navigate(Pages.final);
+    } catch {
+      setStatus({ type: "error", message: "Failed to push configuration. Please try again." })
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <WizardPage
+      wizardStep="deviceConfig"
+      title="Push device configuration"
+      continueButtonText="Push to device"
+      onContinue={handlePushConfiguration}
+      loading={loading}>
+
+      <div className={styles.page}>
+        <div className={styles.descriptionWrapper}>
+          <p>
+            The following data will be written to your IXON Secure Edge Pro.
+          </p>
+          <br />
+          <span className={styles.warningWrapper}>
+            <img src={warningIcon} alt="Warning" />
+            <p className={styles.warning}>
+              Warning: Pushing configuration may disconnect VPN users
+            </p>
+          </span>
+
         </div>
-    )
+
+        {status && status.type === "success" && (
+          <p>
+            {status.message}
+          </p>
+        )}
+
+        {status && status.type === "error" && (
+          <WarningTag invalidText={status.message} />
+        )}
+
+        <SelectedTagsTable />
+      </div>
+    </WizardPage>
+  )
 }
 
-export default DeviceConfigPage
+export default DeviceConfigPage;

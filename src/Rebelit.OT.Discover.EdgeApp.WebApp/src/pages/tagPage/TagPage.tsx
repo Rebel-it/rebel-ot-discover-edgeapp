@@ -1,169 +1,172 @@
-﻿import { useState, useEffect, useRef } from 'react'
-import styles from './TagPage.module.css'
-import sharedStyles from '../loginPage/LoginPage.module.css'
-import { createTags, getFilledTags, type Tag as ApiTag } from '../../services/tagService'
-import { useNavigate } from 'react-router-dom';
+﻿import { useState, useEffect, useRef } from "react"
+import styles from "./TagPage.module.css"
+import { createTags, getFilledTags, type Tag as ApiTag } from "../../services/tagService"
+import { useNavigate } from "react-router-dom";
+import WizardPage from "../wizardPage/WizardPage";
+import { Pages } from "../../models/Pages";
+import { useWizard } from "../../context/WizardContext";
+import Table from "../../components/organisms/table/Table";
+import { getFormulaLabel, getTagKey } from "../../models/Tag";
+import { useTags } from "../../context/TagContext";
+import type { RowData } from "../../components/organisms/table/types";
+import WarningTag from "../../components/atoms/warningTag/WarningTag";
+import Spinner from "../../components/atoms/spinner/Spinner";
 
 function TagPage() {
   const navigate = useNavigate();
-  const [tags, setTags] = useState<ApiTag[]>([])
-  const [tagsLoading, setTagsLoading] = useState(true)
-  const [tagsError, setTagsError] = useState('')
-  const [selectedTagKeys, setSelectedTagKeys] = useState<Set<string>>(new Set())
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
-  const selectAllRef = useRef<HTMLInputElement | null>(null)
-  const isSubmittingRef = useRef(false)
-  const [initialTagsCreated, setInitialTagsCreated] = useState(false);
+  const { saveTags } = useTags();
+  const { markStepCompleted } = useWizard();
+  const [tags, setTags] = useState<ApiTag[]>([]);
+  const [tagsLoading, setTagsLoading] = useState(true);
+  const [tagsError, setTagsError] = useState("");
+  const [selectedTagKeys, setSelectedTagKeys] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [sortedRows, setSortedRows] = useState<RowData[]>([]);
+  const selectAllRef = useRef<HTMLInputElement | null>(null);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  const tagKeys = tags.map(getTagKey)
-  const allSelected = tagKeys.length > 0 && tagKeys.every((key) => selectedTagKeys.has(key))
-  const someSelected = tagKeys.some((key) => selectedTagKeys.has(key))
-  const selectedCount = selectedTagKeys.size
+  const tagKeys = tags.map(getTagKey);
+  const allSelected = tagKeys.length > 0 && tagKeys.every((key) => selectedTagKeys.includes(key));
+  const someSelected = tagKeys.some((key) => selectedTagKeys.includes(key));
+  const selectedCount = selectedTagKeys.length;
 
   useEffect(() => {
     getFilledTags()
-      .then(setTags)
-      .catch(() => setTagsError('Unable to load prefilled tags. Check that the API is running.'))
-      .finally(() => setTagsLoading(false))
+      .then((fetchedTags) => {
+        setTags(fetchedTags);
+        const rowData = fetchedTags.map((tag) => ({
+          id: getTagKey(tag),
+          cells: {
+            name: tag.name,
+            logOn: tag.logEvent,
+            interval: `Every ${tag.loggingInterval}`,
+            formula: getFormulaLabel(tag).toUpperCase()
+          }
+        }));
+        setSortedRows(rowData);
+      })
+      .catch(() => setTagsError("Unable to load prefilled tags. Check that the API is running."))
+      .finally(() => setTagsLoading(false));
   }, [])
 
   useEffect(() => {
     if (selectAllRef.current) {
-      selectAllRef.current.indeterminate = someSelected && !allSelected
+      selectAllRef.current.indeterminate = someSelected && !allSelected;
     }
   }, [someSelected, allSelected])
 
-  function getTagKey(tag: ApiTag) {
-    return `${tag.slug}-${tag.variable.publicId}`
-  }
-
-  function toggleTagSelection(tag: ApiTag) {
-    const tagKey = getTagKey(tag)
-
+  function toggleTagSelection(tagKey: string) {
     setSelectedTagKeys((prev) => {
-      const next = new Set(prev)
-      if (next.has(tagKey)) {
-        next.delete(tagKey)
+      const next = [...prev];
+      const index = next.indexOf(tagKey);
+      if (index !== -1) {
+        next.splice(index, 1);
       } else {
-        next.add(tagKey)
+        next.push(tagKey);
       }
 
-      return next
-    })
+      return next;
+    });
   }
 
   function toggleSelectAll() {
     if (allSelected) {
-      setSelectedTagKeys(new Set())
-      return
+      setSelectedTagKeys([]);
+      return;
     }
 
-    setSelectedTagKeys(new Set(tagKeys))
+    setSelectedTagKeys([...tagKeys]);
   }
 
-  function getFormulaLabel(tag: ApiTag) {
-    if (tag.logEvent === 'change') {
-      return tag.onChangeExpiry === '1h' ? 'value_changes_hourly' : 'value_changes_only'
+  async function handleCreateTags() {
+    setHasSubmitted(true);
+    
+    if (selectedTagKeys.length === 0 || isSubmitting) {
+      return;
     }
 
-    return tag.edgeAggregator ?? ''
-  }
-
-  async function handleCreateSelected() {
-    if (selectedTagKeys.size === 0 || isSubmittingRef.current) {
-      return
-    }
-
-    isSubmittingRef.current = true
-    setIsSubmitting(true)
-    setErrorMessage('')
+    setIsSubmitting(true);
+    setErrorMessage("");
 
     try {
-      const selectedTags = tags.filter((tag) => selectedTagKeys.has(getTagKey(tag)))
-      await createTags(selectedTags)
+      const selectedTags = tags.filter((tag) => selectedTagKeys.includes(getTagKey(tag)));
+      await createTags(selectedTags);
 
-      setTags((prev) => prev.filter((tag) => !selectedTagKeys.has(getTagKey(tag))))
-      setSelectedTagKeys(new Set())
-      setInitialTagsCreated(true)
+      saveTags(selectedTags);
+      setSelectedTagKeys([]);
+      markStepCompleted("tags");
+      navigate(Pages.deviceConfig);
     } catch {
-      setErrorMessage('Unable to reach the tag service. Check that the API is running.')
+      setErrorMessage("Unable to reach the tag service. Check that the API is running.");
     } finally {
-      isSubmittingRef.current = false
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 
+  const noTagsAvailable = !tagsLoading && tags.length === 0 && !tagsError;
+
+  function buttonClickable() {
+    if (noTagsAvailable) {
+      return true;
+    }
+
+    if (isSubmitting || selectedCount === 0) {
+      return false;
+    }
+    return true;
+  }
+
+  const columnDefs = [
+    { key: "name", label: "Name", sortable: true },
+    { key: "logOn", label: "Log on", sortable: false },
+    { key: "interval", label: "Interval", sortable: false },
+    { key: "formula", label: "Formula", sortable: false },
+  ]
+
   return (
-    <div className={styles.pageWrapper}>
-      <div className={styles.header}>
-        <h1>Tags</h1>
-        <button
-          type="button"
-          className={styles.saveButton}
-          onClick={handleCreateSelected}
-          disabled={isSubmitting || selectedCount === 0}
-        >
-          {isSubmitting ? 'Creating...' : `Create selected (${selectedCount})`}
-        </button>
-      </div>
+    <WizardPage
+      wizardStep="tags"
+      title="Tags"
+      continueButtonText={noTagsAvailable ? "Finish" : "Create tags"}
+      onContinue={noTagsAvailable ? () => navigate(Pages.start) : handleCreateTags}
+      loading={!buttonClickable()}>
 
-      {tagsLoading && <p className={styles.empty}>Loading tags...</p>}
-      {!tagsLoading && tagsError && <p className={styles.empty}>{tagsError}</p>}
-      {!tagsLoading && !tagsError && tags.length === 0 && (
-        <p className={styles.empty}>No prefilled tags available.</p>
-      )}
-      {!tagsLoading && !tagsError && tags.length > 0 && (
-        <div className={styles.tableWrapper}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th aria-label="Select all tags">
-                  <input
-                    ref={selectAllRef}
-                    type="checkbox"
-                    checked={allSelected}
-                    onChange={toggleSelectAll}
-                    aria-label="Select all tags"
-                  />
-                </th>
-                <th>Name</th>
-                <th>Logging on</th>
-                <th>Interval</th>
-                <th>Formula</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tags.map((tag) => (
-                <tr key={getTagKey(tag)}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={selectedTagKeys.has(getTagKey(tag))}
-                      onChange={() => toggleTagSelection(tag)}
-                      aria-label={`Select tag ${tag.name || tag.slug}`}
-                    />
-                  </td>
-                  <td>{tag.name}</td>
-                  <td>{tag.logEvent}</td>
-                  <td>{tag.loggingInterval}</td>
-                  <td>{getFormulaLabel(tag)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className={styles.page}>
+        <div className={styles.statusIndicatorWrapper}>
+          {(tagsLoading || isSubmitting) && <Spinner />}
+
+          {!tagsLoading && tagsError && <WarningTag invalidText={tagsError} />}
+          {noTagsAvailable && (
+            <WarningTag invalidText={"No tags available"} />
+          )}
+
+          {errorMessage && <WarningTag invalidText={errorMessage} />}
         </div>
-      )}
-      
-      {initialTagsCreated && (
-        <button type="button" className={sharedStyles.nextButton}  onClick={() => navigate('/deviceconfig')}>
-          I'm done creating tags
-        </button>
-      )}
 
-      {errorMessage && <p>{errorMessage}</p>}
-    </div>
+        {sortedRows.length > 0 && (
+          <div className={styles.tableWrapper}>
+            <Table
+              rows={sortedRows}
+              columns={columnDefs}
+              selectedIds={selectedTagKeys}
+              onSelectAll={toggleSelectAll}
+              onRowSelect={(id) => toggleTagSelection(id)}
+              onSort={() => {
+                const newRows = [...sortedRows].sort((a, b) => a.cells.name.localeCompare(b.cells.name));
+                setSortedRows(newRows);
+              }}
+            />
+          </div>
+        )}
+
+        {hasSubmitted && selectedCount === 0 && (
+          <WarningTag invalidText={"No tags selected"} />
+        )}
+
+      </div>
+    </WizardPage>
   )
 }
 
-export default TagPage
+export default TagPage;

@@ -1,0 +1,16 @@
+.warningTag {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8cccc;
+  border-radius: 12px;
+  padding: 8px 10px;
+  width: fit-content;
+
+  p {
+    color: #f4453c;
+    font-size: 18px;
+    font-family: "Lato", sans-serif;
+  }
+}

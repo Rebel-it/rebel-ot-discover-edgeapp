@@ -1,0 +1,35 @@
+.checkbox {
+  label {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-family: Lato, serif;
+    color: var(--white);
+    font-weight: 400;
+    font-size: 1.8rem;
+
+    input {
+      background-color: var(--grey-100);
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      border: none;
+      appearance: none;
+      cursor: pointer;
+
+      &:checked {
+        background-image: url("../../../assets/checkmarkorange.svg");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 16px 16px;
+      }
+    }
+  }
+
+  &.orangeBorder {
+    input {
+      border: 1px solid var(--orange-500);
+    }
+  }
+}
