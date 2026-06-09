@@ -1,6 +1,7 @@
 import styles from "./VideoPreview.module.css";
 import rebelVideo from "../../../assets/rebelVideo.mp4";
 import openVideoIcon from "../../../assets/openvideoicon.svg";
+import OpenVideoButton from "../openVideoButton/OpenVideoButton";
 
 type Props = {
   onClick: () => void;
@@ -13,9 +14,7 @@ export default function VideoPreview({ onClick }: Readonly<Props>) {
         <source src={rebelVideo} type="video/mp4" />
       </video>
       <div className={styles.overlay}>
-        <div className={styles.openVideoButton}>
-          <img src={openVideoIcon} alt="Play Icon" className={styles.playIcon} />
-        </div>
+        <OpenVideoButton />
       </div>
     </button>
   );

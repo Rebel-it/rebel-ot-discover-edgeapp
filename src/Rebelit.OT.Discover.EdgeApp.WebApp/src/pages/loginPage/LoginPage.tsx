@@ -115,7 +115,7 @@ function LoginPage() {
       <VideoPreview onClick={() => setVideoOpen(true)} />
 
       <Modal isOpen={videoOpen} onClose={() => setVideoOpen(false)}>
-        <Video />
+        <Video onClose={() => setVideoOpen(false)} />
       </Modal>
     </WizardPage>
   )

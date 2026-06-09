@@ -1,4 +1,6 @@
 .videoWrapper {
+  position: relative;
+  
   video {
     display: block;
     width: 100%;
