@@ -9,6 +9,11 @@
   .descriptionWrapper {
     font-size: 1.8rem;
 
+    .warningWrapper {
+      display: flex;
+      gap: 8px;
+    }
+
     .warning {
       font-weight: 700;
     }

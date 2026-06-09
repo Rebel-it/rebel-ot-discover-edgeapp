@@ -11,6 +11,8 @@ public class UAClientFactory(
     ITelemetryContext telemetryContext
 ) : IUAClientFactory
 {
+    private const string OpcServerAddressDefaultPrefix = "opc.tcp://";
+    
     /// <summary>
     /// Creates and connects a new OPC UA client session using the specified server URI without credentials.
     /// </summary>
@@ -24,7 +26,7 @@ public class UAClientFactory(
     /// Creates and connects a new OPC UA client session using the specified server URI and user credentials.
     /// </summary>
     /// <returns>A connected UAClient instance if the connection is successful; otherwise, <see langword="null"/>.</returns>
-    public async Task<UAClient?> Create(string uri, string username, string password)
+    public async Task<UAClient?> Create(string opcServerAddress, string username, string password)
     {
         var userIdentity = string.IsNullOrWhiteSpace(username)
             ? new UserIdentity()
@@ -41,6 +43,8 @@ public class UAClientFactory(
             SessionLifeTime = 60_000,
             UserIdentity = userIdentity,
         };
+        
+        var uri = $"{OpcServerAddressDefaultPrefix}{opcServerAddress}";
 
         try
         {

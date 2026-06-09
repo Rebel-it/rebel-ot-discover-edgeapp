@@ -8,6 +8,7 @@ import WizardPage from "../wizardPage/WizardPage"
 import { Pages } from "../../models/Pages"
 import SelectedTagsTable from "../../components/organisms/selectedTagsTable/SelectedTagsTable";
 import WarningTag from "../../components/atoms/warningTag/WarningTag";
+import warningIcon from "../../assets/warningiconwhite.svg";
 
 function DeviceConfigPage() {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ function DeviceConfigPage() {
   return (
     <WizardPage
       wizardStep="deviceConfig"
-      title="Device Configuration"
+      title="Push device configuration"
       continueButtonText="Push to device"
       onContinue={handlePushConfiguration}
       loading={loading}>
@@ -50,10 +51,14 @@ function DeviceConfigPage() {
           <p>
             The following data will be written to your IXON Secure Edge Pro.
           </p>
-          <br/>
-          <p className={styles.warning}>
-            Warning: Pushing configuration may disconnect VPN users
-          </p>
+          <br />
+          <span className={styles.warningWrapper}>
+            <img src={warningIcon} alt="Warning" />
+            <p className={styles.warning}>
+              Warning: Pushing configuration may disconnect VPN users
+            </p>
+          </span>
+
         </div>
 
         {status && status.type === "success" && (

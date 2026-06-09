@@ -40,8 +40,8 @@ function TagPage() {
           cells: {
             name: tag.name,
             logOn: tag.logEvent,
-            interval: tag.loggingInterval,
-            formula: getFormulaLabel(tag)
+            interval: `Every ${tag.loggingInterval}`,
+            formula: getFormulaLabel(tag).toUpperCase()
           }
         }));
         setSortedRows(rowData);

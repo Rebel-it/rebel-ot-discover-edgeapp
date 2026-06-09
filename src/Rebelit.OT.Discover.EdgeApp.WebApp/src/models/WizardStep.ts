@@ -21,11 +21,11 @@ export const WizardStep = {
     },
     tags: {
       title: "Tags",
-      description: "In this step, you select the variables that are relevant to you and that you want to use.\n\nWe automatically populate default values to help you get started quickly. These values are based on common use cases and are often a good starting point. \n\nHowever, please note that you have more advanced configuration options available in the portal. If you want to create custom tags or adjust the setup in more detail, you can do so there.\n\nThis is especially useful if you are not sure what values to configure or if you need more flexibility beyond the default settings.",
+      description: "In this step, you select the variables that are relevant to you and that you want to use.\n\nWe automatically populate default values to help you get started quickly. These values are based on common use cases and are often a good starting point.\n\nHowever, please note that you have more advanced configuration options available in the IXON Fleet Manager. If you want to create custom tags or adjust the setup in more detail, you can do so there.\n\nThis is especially useful if you are not sure what values to configure or if you need more flexibility beyond the default settings.",
     },
     deviceConfig: {
-      title: "Device configuration",
-      description: "All tags that you select will be sent to your IXON device. This step is essential to enable data flow from your machine to the cloud.\n\nWithout this configuration, the IXON device will not know which data to collect, and your dashboards will not display any information.\n\nTo give you clarity, we provide an overview of the tags that will be pushed before completing this step. This allows you to review and confirm your selection.",
+      title: "Push device configuration",
+      description: "All tags that you select will be sent to your IXON Secure Edge Pro. This step is essential to enable data flow from your machine to the cloud.\n\nWithout this configuration, the IXON Secure Edge Pro will not know which data to collect, and your dashboards will not display any information.",
     },
     final: {
       title: "Finish",
