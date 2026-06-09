@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { WizardStep as step } from '../../../models/WizardStep';
 import WizardStepIndicator from '../../atoms/wizardStepIndicator/WizardStepIndicator';
 import styles from './WizardStepComponent.module.css';
+import RichTextRenderer from '../../atoms/richTextRenderer/RichTextRenderer';
 
 type Props = {
   stepNumber: number;
@@ -31,7 +32,7 @@ export default function WizardStepComponent({
       </div>
       <div className={styles.description}>
         {isCurrentStep && (
-          <p>{wizardStep.description}</p>
+          <RichTextRenderer text={wizardStep.description} />
         )}
       </div>
     </div>
