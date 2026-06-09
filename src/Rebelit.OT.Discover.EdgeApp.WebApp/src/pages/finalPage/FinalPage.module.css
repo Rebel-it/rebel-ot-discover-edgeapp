@@ -1,6 +1,6 @@
 .page {
   justify-self: center;
-
+  max-width: 600px;
   overflow: auto;
   -ms-overflow-style: none;
   scrollbar-width: none;
