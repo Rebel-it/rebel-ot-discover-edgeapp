@@ -3,6 +3,8 @@
   overflow: auto;
   -ms-overflow-style: none;
   scrollbar-width: none;
+  display: grid;
+  grid-template-rows: auto 1fr 1fr 1fr 1fr 1fr;
 
   &:webkit-scrollbar {
     display: none;
@@ -11,10 +13,11 @@
   .title {
     font-weight: 400;
     font-size: 5.4rem;
+    grid-area: 1;
   }
 
   .description {
-    padding-top: 15rem;
+    grid-area: 3;
     max-width: 600px;
     font-size: 1.8rem;
   }
