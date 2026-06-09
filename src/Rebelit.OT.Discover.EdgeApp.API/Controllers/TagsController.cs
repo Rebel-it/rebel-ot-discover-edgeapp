@@ -9,8 +9,11 @@ namespace Rebelit.OT.Discover.EdgeApp.API.Controllers;
 [Route("api/[controller]")]
 public class TagsController(ITagService tagService) : BaseController
 {
-    private readonly ITagService _tagService = tagService;
+    public readonly ITagService _tagService = tagService;
 
+    /// <summary>
+    /// Retrieves all available tags.
+    /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -20,44 +23,67 @@ public class TagsController(ITagService tagService) : BaseController
         return Ok(tags);
     }
 
-    [HttpGet("prefilled")]
+    /// <summary>
+    /// Retrieves prefilled tags.
+    /// </summary>
+    [HttpGet("Prefilled")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetPrefilledTagsAsync()
     {
         var tags = await _tagService.GetPrefilledTagsAsync();
-        return Ok(tags); 
+        return Ok(tags);
     }
 
+    /// <summary>
+    /// Creates a single new tag.
+    /// </summary>
+    /// <param name="model">The tag payload to create.</param>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateTagAsync([FromBody] Tag model)
     {
         if (string.IsNullOrWhiteSpace(model.Name))
+        {
             return BadRequest(new { message = "Tag name is required." });
+        }
 
         var createdTag = await _tagService.CreateTagAsync(model);
         return Ok(createdTag);
     }
 
+    /// <summary>
+    /// Creates multiple tags.
+    /// </summary>
+    /// <param name="model">The list of tag payloads to create.</param>
     [HttpPost("CreateTags")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreateTagsAsync([FromBody] List<Tag> model)
+    public async Task<IActionResult> CreateTagsAsync([FromBody] IEnumerable<Tag> model)
     {
-        var createdTags = await _tagService.CreateTagsAsync(model); 
+        if (model == null)
+        {
+            return BadRequest(new { message = "Tag list cannot be empty." });
+        }
+        await _tagService.CreateTagsAsync(model);
 
-        return Ok(createdTags);
+        return Ok();
     }
 
+    /// <summary>
+    /// Updates an existing tag.
+    /// </summary>
+    /// <param name="model">The tag update payload.</param>
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateTagAsync([FromBody] UpdateTagRequest model)
     {
         if (string.IsNullOrWhiteSpace(model.PublicId))
+        {
             return BadRequest(new { message = "Tag public ID is required." });
+        }
 
         var updatedTag = await _tagService.UpdateTagAsync(model);
         return Ok(updatedTag);

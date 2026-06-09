@@ -82,16 +82,19 @@ flowchart LR
         p4["sourcePage\n(data source select / create)"]
         p5["variablesPage\n(browse &amp; scrape variables)"]
         p6["tagPage\n(review &amp; create tags)"]
+        p7["deviceConfigPage\n(Push device config)"]
+        p8["finalPage\n(last page)"]
     end
 
     subgraph services["Services"]
         s1["companyConfigurationService"]
+        s7["sessionStorageService\n(stores service account headers)"]
         s2["plcService"]
         s3["dataSourceService"]
         s4["scraperService"]
         s5["variableService"]
         s6["tagService"]
-        s7["sessionStorageService\n(stores service account headers)"]
+        s8["IxonSettingService"]
     end
 
     p1 --> s7
@@ -101,6 +104,7 @@ flowchart LR
     p5 --> s4
     p5 --> s5
     p6 --> s6
+    p7 --> s8
 ....
 
 [options="header", cols="2,4"]
@@ -130,7 +134,11 @@ flowchart LR
 
 | `tagService`
 | Calls `GET /api/tags`, `GET /api/tags/prefilled`, `POST /api/tags`, `POST /api/tags/CreateTags`, and `PUT /api/tags`. Manages tag retrieval and creation/update.
+
+| `IxonSettingService`
+| Calls `POST /api/ixonsettings`. Manages IXON settings for the configured agent.
 |===
+
 
 ==== 5.2.2 Whitebox API (ASP.NET Core)
 
@@ -185,6 +193,7 @@ flowchart TD
 
 | `IxonSettingsController`
 | `POST /api/ixonsettings/datasource`. Delegates to `IDataSourceResolver` to find an existing OPC UA data source by name or create a new one on the agent.
+| `POST /api/ixonsettings/pushConfiguration`. Pushes all the changes to the IXON Edge Pro
 
 | `PlcController`
 | `POST /api/plc/connect`. Attempts an OPC UA connection using the supplied credentials; returns `200 OK` on success or `400 Bad Request` on failure.

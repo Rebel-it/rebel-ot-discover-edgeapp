@@ -12,14 +12,9 @@ public interface ITagService
 
     /// <summary>
     /// Returns a list of pre filled tags
+    /// Filled with prefilled in values for Ixon Tags
     /// </summary>
     Task<IReadOnlyList<Tag>> GetPrefilledTagsAsync();
-
-    /// <summary>
-    /// Returns a list of tags that already exist in the current authentication context
-    /// </summary>
-    Task<IReadOnlyList<Tag>> GetExistingTagsAsync();
-    Task<Tag?> UploadTagAsync(Tag tag);
 
     /// <summary>
     /// Create a single tag 
@@ -29,7 +24,7 @@ public interface ITagService
     /// <summary>
     /// Create multiple tags at once
     /// </summary>
-    Task<List<Tag>?> CreateTagsAsync(List<Tag> requests);
+    Task<IReadOnlyList<Tag>> CreateTagsAsync (IEnumerable<Tag> requests);
 
     /// <summary>
     /// Update an existing tag on the Ixon fleet manager

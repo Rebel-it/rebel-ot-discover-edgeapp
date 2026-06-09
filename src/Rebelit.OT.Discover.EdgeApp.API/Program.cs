@@ -1,5 +1,4 @@
 ﻿using Rebelit.OT.Discover.EdgeApp.API;
-using Rebelit.OT.Discover.EdgeApp.API.Exporters;
 using Rebelit.OT.Discover.EdgeApp.API.Filters;
 using Rebelit.OT.Discover.EdgeApp.API.Mappers;
 using Rebelit.OT.Discover.EdgeApp.API.Resolvers;
@@ -12,12 +11,6 @@ using Serilog;
 using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Configuration.AddJsonFile(
-    Path.Combine(AppContext.BaseDirectory, "settings.json"),
-    optional: true,
-    reloadOnChange: true
-);
 
 var logLevelStr = builder.Configuration["LOG_LEVEL"] ?? "Information";
 var logLevel = Enum.TryParse<LogEventLevel>(logLevelStr, ignoreCase: true, out var parsed)
@@ -45,12 +38,11 @@ if (builder.Environment.IsDevelopment())
 
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IVariableService, VariableService>();
-builder.Services.AddSingleton<ICsvExporters, CsvExporters>();
 builder.Services.AddScoped<IScraper, Scraper>();
 builder.Services.AddSingleton<IOpcUaVariableMapper, OpcUaVariableMapper>();
 builder.Services.AddScoped<IDataSourceResolver, DataSourceResolver>();
 builder.Services.AddScoped<INodeSynchronizer, NodeSynchronizer>();
-builder.Services.AddScoped<ICompanyConfigurationService, CompanyConfigurationService>();
+builder.Services.AddScoped<IIxonCompanyConfigurationService, IxonCompanyConfigurationService>();
 builder.Services.AddScoped<IIxonSettingService, IxonSettingService>();
 builder.Services.AddOPCUAClient("Rebelit.OT.Scraper");
 builder.Services.AddIXONClient();

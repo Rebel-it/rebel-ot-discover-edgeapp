@@ -1,28 +1,39 @@
 using Rebelit.OT.Discover.EdgeApp.API.Models;
+using Rebelit.OT.Discover.EdgeApp.API.Utilities;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.API.Services;
 
-internal sealed class TagService(
+public sealed class TagService(
     IApiClient apiClient,
     IIxonAuthenticationContext ixonAuthenticationContext,
     IVariableService variableService,
     ILogger<TagService> logger) : ITagService
 {
+    private const string DefaultLogEvent = "interval";
+    private const string DefaultLoggingInterval = "500ms";
+    private const string DefaultRetentionPolicy = "260w";
+    private const string DefaultEdgeAggregator = "last";
+        
     public async Task<IReadOnlyList<Tag>> GetTagsAsync()
     {
         var response = await apiClient.GetTagsAsync();
         var tags = response.Data ?? [];
 
-        logger.LogInformation("Retrieved {Count} tags for agent {AgentId}.", tags.Length, ixonAuthenticationContext.IxonHeaders.AgentId);
+        if(logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Retrieved {Count} tags for agent {AgentId}.", tags.Length, ixonAuthenticationContext.IxonHeaders.AgentId);
+        }
+
         return tags;
     }
+
     public async Task<IReadOnlyList<Tag>> GetPrefilledTagsAsync()
     {
         var variables = await variableService.GetVariablesAsync();
-        var existingTags = await GetExistingTagsAsync();
+        var existingTags = await GetTagsAsync();
         List<Tag> tags = [];
 
         foreach (var variable in variables)
@@ -34,14 +45,14 @@ internal sealed class TagService(
             var tag = new Tag
             {
                 Name = variable.Name,
-                Slug = variable.Name.ToLower().Replace(" ", "-"),
-                LogEvent = "interval",
-                LoggingInterval = "500ms",
-                RetentionPolicy = "260w",
-                EdgeAggregator = "last",
+                Slug = SlugGenerator.CreateFromNameAndAddress(variable.Name, variable.Address),
+                LogEvent = DefaultLogEvent,
+                LoggingInterval = DefaultLoggingInterval,
+                RetentionPolicy = DefaultRetentionPolicy,
+                EdgeAggregator = DefaultEdgeAggregator,
                 Variable = new TagVariable { PublicId = variable.PublicId },
             };
-            if(existingTags.Any(t => t.Variable.PublicId == variable.PublicId || !variable.Address.Contains("ns=")))
+            if(existingTags.Any(t => t.Variable.PublicId == variable.PublicId || !variable.Address.Contains("ns=", StringComparison.Ordinal)))
             {
                 continue; 
             }
@@ -50,84 +61,78 @@ internal sealed class TagService(
 
         return tags;
     }
-    public async Task<IReadOnlyList<Tag>> GetExistingTagsAsync()
+
+    public async Task<IReadOnlyList<Tag>> CreateTagsAsync(IEnumerable<Tag> requests)
     {
-        var response = await apiClient.GetTagsAsync();
-        var tags = response.Data ?? [];
-
-        return tags;
-    }
-
-    public async Task<Tag?> UploadTagAsync(Tag tag)
-    {
-        ArgumentNullException.ThrowIfNull(tag);
-
-        var response = await apiClient.PostTagAsync(tag);
-        var createdTag = response?.Data;
-
-        logger.LogInformation(
-            "Created tag {TagName} for agent {AgentId}.",
-            createdTag?.Name ?? tag.Name,
-            ixonAuthenticationContext.IxonHeaders.AgentId);
-
-        return createdTag;
-    }
-    public async Task<List<Tag>?> CreateTagsAsync(List<Tag> requests)
-    {
-        ArgumentNullException.ThrowIfNull(requests);
-        List<Tag> createdTags = [];
-        foreach(var tag in requests)
+        if (logger.IsEnabled(LogLevel.Information))
         {
-            var createdTag = await UploadTagAsync(tag);
-            if (createdTag != null)
+            logger.LogInformation("Posting {Count} tags for agent {AgentId}.", requests.Count(), ixonAuthenticationContext.IxonHeaders.AgentId);
+        }
+        var result = await apiClient.PostTagsAsync(requests);
+        
+        if (result is not null && result.Data is not null)
+        {
+            if (logger.IsEnabled(LogLevel.Information))
             {
-                createdTags.Add(createdTag);
+                logger.LogInformation(
+                    "Successfully posted {Count} tags for agent {AgentId}.",
+                    result.Data.Length,
+                    ixonAuthenticationContext.IxonHeaders.AgentId
+                );
             }
-        } 
-        return createdTags;
-    }
 
-    public async Task<Tag?> UpdateTagAsync(Tag tag, string publicId)
-    {
-        var response = await apiClient.UpdateTagAsync(publicId, tag);
-        var updatedTag = response?.Data;
+            return result.Data;
+        }
 
-        logger.LogInformation(
-             "Updated tag {TagName} for agent {AgentId}.",
-             updatedTag?.Name ?? tag.Name,
-             ixonAuthenticationContext.IxonHeaders.AgentId);
+        if (logger.IsEnabled(LogLevel.Warning))
+        {
+            logger.LogWarning(
+                "Posting tags for agent {AgentId} returned an unexpected empty response. Attempted to post {Count} tags.",
+                ixonAuthenticationContext.IxonHeaders.AgentId,
+                requests.Count()
+            );
+        }
 
-        return updatedTag;
+        return [];
     }
 
     public async Task<Tag?> CreateTagAsync(Tag request)
     {
-        return await UploadTagAsync(request);
+        var response = await apiClient.PostTagAsync(request);
+        var createdTag = response?.Data;
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Created tag {TagName} for agent {AgentId}.",
+                createdTag?.Name ?? request.Name,
+                ixonAuthenticationContext.IxonHeaders.AgentId);
+        }
+        return createdTag;
     }
-
-    private static Tag MapToTag(CreateTagRequest request) => new()
-    {
-        Name = request.Name,
-        Slug = request.Slug,
-        LogEvent = request.LogEvent,
-        LoggingInterval = request.LoggingInterval,
-        OnChangeExpiry = request.OnChangeExpiry,
-        RetentionPolicy = request.RetentionPolicy,
-        EdgeAggregator = request.EdgeAggregator,
-        Variable = new TagVariable { PublicId = request.Variable },
-    };
 
     public async Task<Tag?> UpdateTagAsync(UpdateTagRequest request)
     {
-        var tag = MapToTag(request);
-        ArgumentNullException.ThrowIfNull(tag);
+        var tag = new Tag
+        {
+            Name = request.Name,
+            Slug = request.Slug,
+            LogEvent = request.LogEvent,
+            LoggingInterval = request.LoggingInterval,
+            OnChangeExpiry = request.OnChangeExpiry,
+            RetentionPolicy = request.RetentionPolicy,
+            EdgeAggregator = request.EdgeAggregator,
+            Variable = new TagVariable { PublicId = request.Variable },
+        };
         var response = await apiClient.UpdateTagAsync(request.PublicId, tag);
         var updatedTag = response?.Data;
 
-        logger.LogInformation(
-             "Updated tag {TagName} for agent {AgentId}.",
-             updatedTag?.Name ?? tag.Name,
-             ixonAuthenticationContext.IxonHeaders.AgentId);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                 "Updated tag {TagName} for agent {AgentId}.",
+                 updatedTag?.Name ?? tag.Name,
+                 ixonAuthenticationContext.IxonHeaders.AgentId);
+        }
 
         return updatedTag;
     }

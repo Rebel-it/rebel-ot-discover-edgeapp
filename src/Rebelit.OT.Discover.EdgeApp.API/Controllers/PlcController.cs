@@ -8,12 +8,12 @@ public class PlcController(
     IUAClientFactory uaClientFactory
 ) : BaseController
 {
-    [HttpPost("connect")]
+    [HttpPost("Connect")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> SaveOpcSettings([FromBody] OpcCredentials settings)
+    public async Task<IActionResult> TestOpcConnection([FromBody] OpcCredentials settings)
     {
-        using var client = await uaClientFactory.Create(
+        using var client = await uaClientFactory.CreateAsync(
             settings.OpcUaServerAddress,
             settings.OpcUaUsername ?? string.Empty,
             settings.OpcUaPassword ?? string.Empty
@@ -23,6 +23,6 @@ public class PlcController(
         {
             return BadRequest(new { message = "Failed to connect to the OPC UA server with the provided settings." });
         }
-        return Ok(new { message = "OPC UA settings saved successfully." });
+        return Ok(new { message = "Successfully tested connection to the OPC UA server." });
     }
 }

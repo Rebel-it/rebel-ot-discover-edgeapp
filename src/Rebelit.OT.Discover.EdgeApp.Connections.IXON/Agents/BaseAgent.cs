@@ -4,83 +4,105 @@ using Polly;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Factories;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
+using System.Globalization;
 
 namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 
-internal abstract class BaseAgent
-{
-    private readonly IOptionsMonitor<Configuration> _configuration;
-    private readonly ILogger<BaseAgent> _logger;
-    private readonly ResiliencePipeline<HttpResponseMessage> _pipeline;
-    private readonly IIxonAuthenticationContext _ixonAuthenticationContext;
-
-    protected BaseAgent(
-        IOptionsMonitor<Configuration> configuration,
-        ILogger<BaseAgent> logger,
-        TimeProvider timeProvider,
-        IIxonAuthenticationContext ixonAuthenticationContext
+internal abstract class BaseAgent(
+    IOptionsMonitor<Configuration> configuration,
+    ILogger<BaseAgent> logger,
+    TimeProvider timeProvider,
+    IIxonAuthenticationContext ixonAuthenticationContext
     )
-    {
-        _configuration = configuration;
-        _logger = logger;
-        _pipeline = IxonResiliencePipelineFactory.Create(timeProvider, logger);
-        _ixonAuthenticationContext = ixonAuthenticationContext;
-    }
+{
+    private readonly IOptionsMonitor<Configuration> _configuration = configuration;
+    private readonly ResiliencePipeline<HttpResponseMessage> _pipeline = IxonResiliencePipelineFactory.Create(timeProvider, logger);
+    private readonly IIxonAuthenticationContext _ixonAuthenticationContext = ixonAuthenticationContext;
 
-    protected async Task<T> Get<T>(string uri)
+    protected async Task<T> GetAsync<T>(
+        Uri uri,
+        System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>? jsonTypeInfo = null
+    )
     {
         var response = await ExecuteRequestAsync(http =>
             http.GetAsync($"{_configuration.CurrentValue.BaseUrl}{uri}")
         );
         var content = await response.Content.ReadAsStringAsync();
-        return System.Text.Json.JsonSerializer.Deserialize<T>(content)!;
+
+        return jsonTypeInfo is null
+            ? System.Text.Json.JsonSerializer.Deserialize<T>(content)!
+            : System.Text.Json.JsonSerializer.Deserialize(content, jsonTypeInfo)!;
     }
 
-    protected async Task<T?> Post<T>(string uri, object body)
+    protected async Task<T?> PostAsync<T>(
+        Uri uri,
+        object body,
+        System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>? jsonTypeInfo = null
+    )
     {
         var response = await ExecuteRequestAsync(http =>
             http.PostAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
         );
-        return System.Text.Json.JsonSerializer.Deserialize<T>(
-            await response.Content.ReadAsStringAsync()
-        );
+        var content = await response.Content.ReadAsStringAsync();
+
+        return jsonTypeInfo is null
+            ? System.Text.Json.JsonSerializer.Deserialize<T>(content)
+            : System.Text.Json.JsonSerializer.Deserialize(content, jsonTypeInfo);
     }
-    protected async Task Post(string uri, object body)
+    protected async Task PostAsync(Uri uri, object body)
     {
         await ExecuteRequestAsync(http =>
             http.PostAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
         );
     }
 
-    protected async Task<T?> Patch<T>(string uri, object body)
+    protected async Task<T?> PatchAsync<T>(
+        Uri uri,
+        object body,
+        System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>? jsonTypeInfo = null
+    )
     {
         var response = await ExecuteRequestAsync(http =>
            http.PatchAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
         );
-        return System.Text.Json.JsonSerializer.Deserialize<T>(
-            await response.Content.ReadAsStringAsync()
-        );
+        var content = await response.Content.ReadAsStringAsync();
+
+        return jsonTypeInfo is null
+            ? System.Text.Json.JsonSerializer.Deserialize<T>(content)
+            : System.Text.Json.JsonSerializer.Deserialize(content, jsonTypeInfo);
     }
 
-    protected async Task<T?> Put<T>(string uri, object body)
+    protected async Task<T?> PutAsync<T>(
+        Uri uri,
+        object body,
+        System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>? jsonTypeInfo = null
+    )
     {
         var response = await ExecuteRequestAsync(http =>
             http.PutAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
         );
-        return System.Text.Json.JsonSerializer.Deserialize<T>(
-            await response.Content.ReadAsStringAsync()
-        );
+        var content = await response.Content.ReadAsStringAsync();
+
+        return jsonTypeInfo is null
+            ? System.Text.Json.JsonSerializer.Deserialize<T>(content)
+            : System.Text.Json.JsonSerializer.Deserialize(content, jsonTypeInfo);
     }
 
-    protected async Task<T?> PostCsv<T>(string uri, string csv)
+    protected async Task<T?> PostCsvAsync<T>(
+        Uri uri,
+        string csv,
+        System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>? jsonTypeInfo = null
+    )
     {
         var content = new StringContent(csv, System.Text.Encoding.UTF8, "text/csv");
         var response = await ExecuteRequestAsync(http =>
             http.PostAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", content)
         );
-        return System.Text.Json.JsonSerializer.Deserialize<T>(
-            await response.Content.ReadAsStringAsync()
-        );
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        return jsonTypeInfo is null
+            ? System.Text.Json.JsonSerializer.Deserialize<T>(responseContent)
+            : System.Text.Json.JsonSerializer.Deserialize(responseContent, jsonTypeInfo);
     }
 
     private async Task<HttpResponseMessage> ExecuteRequestAsync(
@@ -93,6 +115,8 @@ internal abstract class BaseAgent
             return await send(httpClient);
         });
     }
+
+    protected string AgentId => _ixonAuthenticationContext.IxonHeaders.GetRequiredAgentId();
 
     protected virtual HttpMessageHandler? GetHttpMessageHandler() => null;
 
@@ -109,7 +133,7 @@ internal abstract class BaseAgent
                 headers.ServiceAccount.AccessToken
             );
         httpClient.DefaultRequestHeaders.Add("Api-Application", headers.ServiceAccount.ApiApplicationId);
-        httpClient.DefaultRequestHeaders.Add("Api-Version", _configuration.CurrentValue.Version.ToString());
+        httpClient.DefaultRequestHeaders.Add("Api-Version", _configuration.CurrentValue.Version.ToString(CultureInfo.InvariantCulture));
 
         if (!string.IsNullOrEmpty(headers.CompanyId))
         {

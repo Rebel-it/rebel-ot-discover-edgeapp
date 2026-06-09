@@ -1,12 +1,8 @@
 using Opc.Ua;
+using Rebelit.OT.Discover.EdgeApp.API.Utilities;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 
 namespace Rebelit.OT.Discover.EdgeApp.API.Mappers;
-
-public interface IOpcUaVariableMapper
-{
-    Variable? Map(NodeId dataTypeNodeId, ReferenceDescription referenceDescription, string dataSourceId);
-}
 
 internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
     : IOpcUaVariableMapper
@@ -32,43 +28,53 @@ internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
         var builtInType = ResolveBuiltInType(dataTypeNodeId);
         if (builtInType is null)
         {
-            logger.LogWarning(
-                "Node '{DisplayName}' ({NodeId}) could not be mapped: TypeDefinition NodeId is not a known numeric type.",
-                referenceDescription.DisplayName,
-                referenceDescription.NodeId
-            );
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning(
+                    "Node '{DisplayName}' ({NodeId}) could not be mapped: TypeDefinition NodeId is not a known numeric type.",
+                    referenceDescription.DisplayName,
+                    referenceDescription.NodeId
+                );
+            }
             return null;
         }
 
         if (!TypeMap.TryGetValue(builtInType.Value, out var mapping))
         {
-            logger.LogWarning(
-                "Node '{DisplayName}' ({NodeId}) could not be mapped: built-in type '{BuiltInType}' is not supported.",
-                referenceDescription.DisplayName,
-                referenceDescription.NodeId,
-                builtInType.Value
-            );
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning(
+                    "Node '{DisplayName}' ({NodeId}) could not be mapped: built-in type '{BuiltInType}' is not supported.",
+                    referenceDescription.DisplayName,
+                    referenceDescription.NodeId,
+                    builtInType.Value
+                );
+            }
             return null;
         }
 
         var (type, width, MaxStringLength) = mapping;
 
         if (width is null)
-            logger.LogWarning(
-                "The built-in type '{BuiltInType}' does not have a defined width.",
-                builtInType
-            );
+        {
+            if(logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning(
+                    "The built-in type '{BuiltInType}' does not have a defined width.",
+                    builtInType);
+            }
+        }
+
+        var address = referenceDescription.NodeId.ToString();
 
         return new Variable
         {
             Name = referenceDescription.DisplayName.ToString(),
-            Address = referenceDescription.NodeId.ToString(),
+            Address = address,
             Type = type,
             Width = width ?? null,
             MaxStringLength = MaxStringLength ?? null,
-            Slug = new string([
-                .. referenceDescription.DisplayName.ToString().Where(char.IsLetterOrDigit),
-            ]).ToLower(),
+            Slug = SlugGenerator.CreateFromNameAndAddress(referenceDescription.DisplayName.ToString(), address),
             Source = new Source { PublicId = dataSourceId },
             Signed = true,
         };
@@ -76,12 +82,17 @@ internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
 
     private static BuiltInType? ResolveBuiltInType(ExpandedNodeId dataTypeId)
     {
+        const int maxNumericId = 25; // The highest numeric ID for built-in types in OPC UA
         if (dataTypeId.IdType != IdType.Numeric || dataTypeId.Identifier == null)
+        {
             return null;
+        }
 
         uint numericId = (uint)dataTypeId.Identifier;
-        if (numericId >= 1 && numericId <= 25)
+        if (numericId >= 1 && numericId <= maxNumericId)
+        {
             return (BuiltInType)numericId;
+        }
 
         return null;
     }

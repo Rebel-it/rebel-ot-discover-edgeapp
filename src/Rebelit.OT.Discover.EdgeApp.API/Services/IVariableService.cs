@@ -4,7 +4,8 @@ namespace Rebelit.OT.Discover.EdgeApp.API.Services;
 
 public interface IVariableService
 {
-    Task<IReadOnlyList<Variable>> GetVariablesAsync(CancellationToken cancellationToken = default);
-    Task<Variable?> CreateVariableAsync(Variable variable, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Variable>> CreateVariablesAsync(IEnumerable<Variable> variables, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Returns a list variables
+    /// </summary>
+    Task<IReadOnlyList<Variable>> GetVariablesAsync();
 }

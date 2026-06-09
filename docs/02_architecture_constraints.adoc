@@ -12,5 +12,4 @@ These constraints have a significant influence on architectural decisions and tr
 | *Target .NET 10* and be designed as a console-based edge process.
 | 3
 | *Page sizes for IXON API queries are capped at 4,000 entries per request.*
-| 4
 |===
