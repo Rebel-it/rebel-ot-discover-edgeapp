@@ -73,7 +73,7 @@ function SourcePage() {
     <WizardPage
       wizardStep="source"
       title="Create data source"
-      continueButtonText="Create"
+      continueButtonText="Create data source"
       onContinue={handleCreateDataSource}
       loading={isSubmitting}
     >
@@ -81,11 +81,11 @@ function SourcePage() {
         <div className={style.formFieldWrapper}>
           <FormField
             id="sourceName"
-            label="Source name"
+            label="Data source name"
             value={sourceObject.DataSourceName}
             onChange={(value) => setSourceProperty("DataSourceName", value)}
-            placeholder="..."
-            invalidText={sourceIsMissing ? "Source name is required" : ""}
+            placeholder="DataSource_IPAdressPLC"
+            invalidText={sourceIsMissing ? "Data source name is required" : ""}
           />
           {errorMessage && <WarningTag invalidText={errorMessage} />}
 

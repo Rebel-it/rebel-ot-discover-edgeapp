@@ -13,11 +13,11 @@ export const WizardStep = {
     },
     source: {
       title: "Create data source",
-      description: "A data source is used to group variables together. Here, you can create a new data source, which will then appear in your IXON Manager.\n\nThe name field is prefilled with a suggested placeholder, which you can keep or modify as needed. If you enter the name of an existing data source, it will be updated and extended instead of creating a new one.",
+      description: "A data source is used to group variables together. Here, you can create a new data source, which will then appear in your IXON Fleet Manager.\n\nThe name field is prefilled with a suggested placeholder, which you can keep or modify as needed. If you enter the name of an existing data source, it will be updated and extended instead of creating a new one.",
     },
     variables: {
       title: "Synchronize variables",
-      description: "",
+      description: "During this process, all your variables are collected and then securely transmitted to your IXON environment. This enables your data to become available for monitoring and visualisation in your dashboards.",
     },
     tags: {
       title: "Tags",

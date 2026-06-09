@@ -61,15 +61,22 @@ function VariablesPage() {
     >
       <div className={styles.page}>
         <>
-          {isSubmitting && (
-            <div className={styles.statusDescriptionWrapper}>
-              <p>The following steps will now be performed:</p>
-              <ol>
-                <li>Retrieving variables from your machine</li>
-                <li>Sending data to the IXON Cloud</li>
-              </ol>
-            </div>
-          )}
+          <div className={styles.statusDescriptionWrapper}>
+            {isSubmitting ? (
+              <>
+                <p>The following steps will now be performed:</p>
+                <ol>
+                  <li>Retrieving variables from your OPC UA Server</li>
+                  <li>Synchronizing variables to the data source in the IXON Cloud</li>
+                </ol>
+                <br />
+                <p>This may take a while</p>
+              </>
+            ) : (
+              <p>Sync completed</p>
+            )
+            }
+          </div>
 
           <div className={styles.statusIndicatorWrapper}>
             {isSubmitting ?
