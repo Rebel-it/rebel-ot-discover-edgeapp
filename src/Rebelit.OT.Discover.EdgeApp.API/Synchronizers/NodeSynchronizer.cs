@@ -14,13 +14,13 @@ internal sealed class NodeSynchronizer(
 {
     private HashSet<string> _existingAddresses = [];
 
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(string sourceId)
     {
         var response = await apiClient.GetDataVariablesAsync();
 
         _existingAddresses =
         [
-            .. (response.Data ?? []).Select(v => v.Address),
+            .. (response.Data ?? []).Where(x => x.Source?.PublicId == sourceId).Select(v => v.Address),
         ];
     }
 

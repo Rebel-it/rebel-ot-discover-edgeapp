@@ -36,7 +36,7 @@ public class Variable
     public int? MaxStringLength { get; set; }
 
     [JsonPropertyName("source")]
-    public Source Source { get; set; } = null!;
+    public Source? Source { get; set; }
 
     [JsonPropertyName("signed")]
     public bool? Signed { get; set; }

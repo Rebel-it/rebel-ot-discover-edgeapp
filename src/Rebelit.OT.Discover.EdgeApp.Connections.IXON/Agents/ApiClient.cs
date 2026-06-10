@@ -16,7 +16,7 @@ internal class ApiClient(
 
     public async Task<Response<Variable[]>> GetDataVariablesAsync()
     {
-        var uri = new Uri($"/api/agents/{AgentId}/data-variables?fields=address,publicId,name,slug,type&page-size=4000", UriKind.Relative);
+        var uri = new Uri($"/api/agents/{AgentId}/data-variables?fields=address,publicId,name,slug,type,source.publicid&page-size=4000", UriKind.Relative);
         return await GetAsync<Response<Variable[]>>(uri);
     }
 
