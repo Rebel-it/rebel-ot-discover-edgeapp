@@ -59,7 +59,7 @@ public class Scraper(
             }
         }
 
-        await nodeSynchronizer.InitializeAsync();
+        await nodeSynchronizer.InitializeAsync(dataSourceId);
 
         var filteredNodes = nodes.Where(rd =>
         {

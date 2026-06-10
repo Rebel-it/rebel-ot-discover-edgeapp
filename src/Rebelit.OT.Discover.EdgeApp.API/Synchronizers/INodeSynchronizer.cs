@@ -7,10 +7,11 @@ namespace Rebelit.OT.Discover.EdgeApp.API.Synchronizers;
 public interface INodeSynchronizer
 {
     /// <summary>
-    /// Get the current existing variables in the system and store them in memory for later use during the synchronization process.
+    /// Get the current existing variables for the given data source in the system and store them in memory for later use during the synchronization process.
     /// </summary>
+    /// <param name="dataSourceId">The identifier of the data source to retrieve variables for.</param>
     /// <returns></returns>
-    Task InitializeAsync();
+    Task InitializeAsync(string dataSourceId);
 
     /// <summary>
     ///  Synchronizes the provided variables with the existing variables in the system for the specified agent. This method compares the provided variables with the existing ones and performs necessary create, update, or delete operations to ensure that the system's state reflects the provided variables accurately.
