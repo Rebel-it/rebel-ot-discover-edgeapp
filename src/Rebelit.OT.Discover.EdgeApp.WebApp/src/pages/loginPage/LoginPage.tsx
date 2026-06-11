@@ -26,7 +26,7 @@ function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [applicationIdMissing, setapplicationIdMissing] = useState(false);
   const [accessTokenMissing, setAccessTokenMissing] = useState(false);
-  const [videoOpen, setVideoOpen] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(true);
 
   useEffect(() => {
     deleteCompletedSteps();
