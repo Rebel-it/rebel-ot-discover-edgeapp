@@ -21,8 +21,8 @@ public class PlcController(
 
         if (client is null)
         {
-            return BadRequest(new { message = "Failed to connect to the OPC UA server with the provided settings." });
+            return BadRequest("Failed to connect to the OPC UA server. Please validate the service address and credentials if applicable.");
         }
-        return Ok(new { message = "Successfully tested connection to the OPC UA server." });
+        return Ok("Successfully connected with the OPC UA server.");
     }
 }

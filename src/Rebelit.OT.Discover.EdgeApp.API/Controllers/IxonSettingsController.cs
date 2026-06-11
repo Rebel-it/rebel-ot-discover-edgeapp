@@ -19,7 +19,7 @@ public class IxonSettingsController(
 
         if (string.IsNullOrEmpty(result))
         {
-            return BadRequest(new { message = "Failed to resolve data source ID." });
+            return BadRequest("Failed to resolve data source ID.");
         }
 
         return Ok(result);
@@ -31,7 +31,7 @@ public class IxonSettingsController(
         var result = await ixonSettingService.PushDeviceConfigAsync();
         if (result != "success")
         {
-            return BadRequest(new { message = "Failed to push device configuration." });
+            return BadRequest("Failed to push device configuration.");
         }
 
         return Ok(result);
