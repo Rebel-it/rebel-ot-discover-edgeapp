@@ -101,7 +101,7 @@ function LoginPage() {
       title="Log in"
       continueButtonText="Log in"
       onContinue={handleLogin}
-      loading={isSubmitting}>
+      continueDisabled={isSubmitting || !serviceAccount.apiApplicationID || !serviceAccount.accessToken}>
 
       <form className={styles.loginForm} noValidate>
         <div className={styles.formFieldWrapper}>

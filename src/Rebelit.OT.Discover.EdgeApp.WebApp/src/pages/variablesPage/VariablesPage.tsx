@@ -57,7 +57,7 @@ function VariablesPage() {
         markStepCompleted("variables");
         navigate(Pages.tags);
       }}
-      loading={isSubmitting}
+      continueDisabled={isSubmitting}
     >
       <div className={styles.page}>
         <>

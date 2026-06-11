@@ -130,7 +130,7 @@ function TagPage() {
       title="Tags"
       continueButtonText={noTagsAvailable ? "Finish" : "Create tags"}
       onContinue={noTagsAvailable ? () => navigate(Pages.start) : handleCreateTags}
-      loading={!buttonClickable()}>
+      continueDisabled={!buttonClickable()}>
 
       <div className={styles.page}>
         <div className={styles.statusIndicatorWrapper}>

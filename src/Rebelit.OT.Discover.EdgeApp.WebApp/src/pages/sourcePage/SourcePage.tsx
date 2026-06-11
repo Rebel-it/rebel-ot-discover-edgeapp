@@ -74,7 +74,7 @@ function SourcePage() {
       title="Create data source"
       continueButtonText="Create data source"
       onContinue={handleCreateDataSource}
-      loading={isSubmitting}
+      continueDisabled={isSubmitting}
     >
       <form className={style.sourceForm} noValidate>
         <div className={style.formFieldWrapper}>

@@ -102,7 +102,7 @@ function PlcConnect() {
       title="PLC connection"
       continueButtonText="Connect"
       onContinue={handlePlcConnect}
-      loading={isSubmitting}
+      continueDisabled={isSubmitting}
     >
       <form className={styles.plcConnectForm} noValidate>
         <div className={styles.formFieldWrapper}>

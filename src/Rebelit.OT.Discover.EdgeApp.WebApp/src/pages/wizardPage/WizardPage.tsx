@@ -10,12 +10,12 @@ type Props = {
   wizardStep?: WizardStepKey;
   continueButtonText?: string;
   onContinue?: () => void;
-  loading?: boolean;
+  continueDisabled?: boolean;
 }
 
 export default function WizardPage({ children, title,
   wizardStep, continueButtonText,
-  onContinue, loading }: Readonly<Props>) {
+  onContinue, continueDisabled }: Readonly<Props>) {
   return (
     <div className={styles.wizardPage}>
       <div className={styles.content}>
@@ -23,7 +23,7 @@ export default function WizardPage({ children, title,
         {children}
         <div className={styles.buttonWrapper}>
           {continueButtonText && onContinue && (
-            <Button text={continueButtonText} onClick={onContinue} loading={loading} />
+            <Button text={continueButtonText} onClick={onContinue} disabled={continueDisabled} />
           )}
         </div>
       </div>
