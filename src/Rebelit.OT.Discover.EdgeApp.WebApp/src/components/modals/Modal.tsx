@@ -27,7 +27,7 @@ export default function Modal({ isOpen, onClose, children }: Readonly<Props>) {
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
     </div>

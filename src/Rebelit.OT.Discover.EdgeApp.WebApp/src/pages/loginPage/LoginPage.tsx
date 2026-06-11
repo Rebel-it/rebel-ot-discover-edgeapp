@@ -28,6 +28,22 @@ function LoginPage() {
   const [accessTokenMissing, setAccessTokenMissing] = useState(false);
   const [videoOpen, setVideoOpen] = useState(true);
 
+  function openVideo() {
+    if ('startViewTransition' in document) {
+      document.startViewTransition(() => setVideoOpen(true));
+    } else {
+      setVideoOpen(true);
+    }
+  }
+
+  function closeVideo() {
+    if ('startViewTransition' in document) {
+      document.startViewTransition(() => setVideoOpen(false));
+    } else {
+      setVideoOpen(false);
+    }
+  }
+
   useEffect(() => {
     deleteCompletedSteps();
   }, []);
@@ -110,10 +126,10 @@ function LoginPage() {
         </div>
       </form>
 
-      <VideoPreview onClick={() => setVideoOpen(true)} />
+      {!videoOpen && <VideoPreview onClick={openVideo} />}
 
-      <Modal isOpen={videoOpen} onClose={() => setVideoOpen(false)}>
-        <Video onClose={() => setVideoOpen(false)} />
+      <Modal isOpen={videoOpen} onClose={closeVideo}>
+        <Video onClose={closeVideo} />
       </Modal>
     </WizardPage>
   )
