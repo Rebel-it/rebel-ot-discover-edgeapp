@@ -130,7 +130,6 @@ function PlcConnect() {
                 label="OPC username"
                 value={plcObject.OpcUaUsername}
                 onChange={(value) => setPlcProperty("OpcUaUsername", value)}
-                placeholder="..."
                 invalidText={opcUaUsernameMissing ? "OPC Username is required" : ""}
               />
 
@@ -140,7 +139,6 @@ function PlcConnect() {
                 type="password"
                 value={plcObject.OpcUaPassword}
                 onChange={(value) => setPlcProperty("OpcUaPassword", value)}
-                placeholder="..."
                 invalidText={opcUaPasswordMissing ? "OPC Password is required" : ""}
               />
             </>

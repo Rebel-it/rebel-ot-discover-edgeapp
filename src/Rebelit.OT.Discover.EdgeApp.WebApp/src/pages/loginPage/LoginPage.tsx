@@ -95,7 +95,6 @@ function LoginPage() {
             value={serviceAccount.apiApplicationID}
             onChange={(value) => setAuthProperty("apiApplicationID", value)}
             required
-            placeholder="..."
             invalidText={applicationIdMissing ? "API Application ID is required" : ""}
           />
           <FormField
@@ -105,7 +104,6 @@ function LoginPage() {
             value={serviceAccount.accessToken}
             onChange={(value) => setAuthProperty("accessToken", value)}
             required
-            placeholder="..."
             invalidText={accessTokenMissing ? "Access Token is required" : ""}
           />
           {errorMessage && <WarningTag invalidText={errorMessage} />}
