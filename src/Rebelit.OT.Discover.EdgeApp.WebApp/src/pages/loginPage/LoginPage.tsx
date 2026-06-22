@@ -112,6 +112,7 @@ function LoginPage() {
             onChange={(value) => setAuthProperty("apiApplicationID", value)}
             required
             invalidText={applicationIdMissing ? "API Application ID is required" : ""}
+            tooltip="API application id as displayed in the ixon cloud. See video for more details."
           />
           <FormField
             id="accesstoken"
@@ -121,6 +122,7 @@ function LoginPage() {
             onChange={(value) => setAuthProperty("accessToken", value)}
             required
             invalidText={accessTokenMissing ? "Access Token is required" : ""}
+            tooltip="Access token assigned to application id"
           />
           {errorMessage && <WarningTag invalidText={errorMessage} />}
         </div>

@@ -85,6 +85,7 @@ function SourcePage() {
             onChange={(value) => setSourceProperty("DataSourceName", value)}
             placeholder="DataSource_IPAdressPLC"
             invalidText={sourceIsMissing ? "Data source name is required" : ""}
+            tooltip="A data source name groups variables"
           />
           {errorMessage && <WarningTag invalidText={errorMessage} />}
         </div>
