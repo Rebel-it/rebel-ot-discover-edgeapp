@@ -27,5 +27,5 @@
 }
 
 .tableBody>.row.selected {
-  background-color: var(--purple-500);
+  background-color: var(--purple-200);
 }
