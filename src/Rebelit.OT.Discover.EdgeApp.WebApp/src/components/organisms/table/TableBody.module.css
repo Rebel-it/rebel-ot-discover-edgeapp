@@ -16,7 +16,6 @@
 .row {
   display: flex;
   align-items: stretch;
-  min-height: 48px;
 }
 
 .tableBody>.row:nth-child(odd) {
