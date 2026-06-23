@@ -7,7 +7,7 @@ export default function SelectedTagsTable() {
   const { tags } = useTags();
 
   const columnDefs = [
-    { key: "name", label: "Name", sortable: true },
+    { key: "name", label: "Name", sortable: true, width: 3 },
     { key: "logOn", label: "Log on", sortable: false },
     { key: "interval", label: "Interval", sortable: false },
     { key: "formula", label: "Formula", sortable: false },
