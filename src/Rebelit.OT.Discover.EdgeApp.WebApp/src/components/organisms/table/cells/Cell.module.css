@@ -12,6 +12,7 @@
     font-size: 1.8rem;
     color: var(--black);
     word-break: break-word;
+    text-transform: capitalize;
   }
 
   &.selected {
