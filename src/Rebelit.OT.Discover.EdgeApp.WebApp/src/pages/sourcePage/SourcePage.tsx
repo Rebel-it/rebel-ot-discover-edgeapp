@@ -76,7 +76,7 @@ function SourcePage() {
       onContinue={handleCreateDataSource}
       continueDisabled={isSubmitting}
     >
-      <form className={style.sourceForm} noValidate>
+      <form className={style.sourceForm} noValidate onSubmit={(e) => { e.preventDefault(); handleCreateDataSource(); }}>
         <div className={style.formFieldWrapper}>
           <FormField
             id="sourceName"
@@ -89,6 +89,7 @@ function SourcePage() {
           />
           {errorMessage && <WarningTag invalidText={errorMessage} />}
         </div>
+        <button type="submit" style={{ display: 'none' }} aria-hidden="true" />
       </form>
     </WizardPage>
   )

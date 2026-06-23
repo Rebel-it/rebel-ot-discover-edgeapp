@@ -104,7 +104,7 @@ function PlcConnect() {
       onContinue={handlePlcConnect}
       continueDisabled={isSubmitting}
     >
-      <form className={styles.plcConnectForm} noValidate>
+      <form className={styles.plcConnectForm} noValidate onSubmit={(e) => { e.preventDefault(); handlePlcConnect(); }}>
         <div className={styles.formFieldWrapper}>
           <FormField
             id="ipAddress"
@@ -146,6 +146,7 @@ function PlcConnect() {
           )}
           {errorMessage && <WarningTag invalidText={errorMessage} />}
         </div>
+        <button type="submit" style={{ display: 'none' }} aria-hidden="true" />
       </form>
     </WizardPage>
   )

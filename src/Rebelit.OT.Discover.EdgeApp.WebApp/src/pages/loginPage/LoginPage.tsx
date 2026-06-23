@@ -90,7 +90,7 @@ function LoginPage() {
     } catch (error) {
       clearIxonAuthenticationHeaders();
       setErrorMessage(error instanceof Error ? error.message : "Failed to login. Please check your credentials and try again.");
-    } finally {
+    } finally { 
       setIsSubmitting(false);
     }
   }
@@ -103,7 +103,7 @@ function LoginPage() {
       onContinue={handleLogin}
       continueDisabled={isSubmitting || !serviceAccount.apiApplicationID || !serviceAccount.accessToken}>
 
-      <form className={styles.loginForm} noValidate>
+      <form className={styles.loginForm} noValidate onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
         <div className={styles.formFieldWrapper}>
           <FormField
             id="applicationid"
@@ -126,6 +126,7 @@ function LoginPage() {
           />
           {errorMessage && <WarningTag invalidText={errorMessage} />}
         </div>
+        <button type="submit" style={{ display: 'none' }} aria-hidden="true" />
       </form>
 
       {!videoOpen && <VideoPreview onClick={openVideo} />}
