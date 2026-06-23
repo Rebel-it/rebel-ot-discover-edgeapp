@@ -15,14 +15,6 @@ export type Tag = {
   edgeAggregator: string | null
 }
 
-export function getFormulaLabel(tag: Tag) {
-  if (tag.logEvent === "change") {
-    return tag.onChangeExpiry === "1h" ? "value_changes_hourly" : "value_changes_only";
-  }
-
-  return tag.edgeAggregator ?? "";
-}
-
 export function getTagKey(tag: Tag) {
   return `${tag.slug}-${tag.variable.publicId}`;
 }
