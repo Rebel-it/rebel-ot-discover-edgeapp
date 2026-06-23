@@ -128,7 +128,7 @@ function PlcConnect() {
             <>
               <FormField
                 id="OpcUaUsername"
-                label="OPC username"
+                label="Username required to access OPC UA server"
                 value={plcObject.OpcUaUsername}
                 onChange={(value) => setPlcProperty("OpcUaUsername", value)}
                 invalidText={opcUaUsernameMissing ? "OPC Username is required" : ""}
@@ -136,7 +136,7 @@ function PlcConnect() {
 
               <FormField
                 id="OpcUaPassword"
-                label="OPC password"
+                label="Password required to access OPC UA server"
                 type="password"
                 value={plcObject.OpcUaPassword}
                 onChange={(value) => setPlcProperty("OpcUaPassword", value)}
