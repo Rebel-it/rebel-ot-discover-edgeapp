@@ -24,8 +24,8 @@ function VariablesPage() {
       try {
         await synchronizeVariablesRequest();
         markStepCompleted("variables");
-
-        await new Promise(resolve => setTimeout(resolve, 3000)); 
+        setIsSubmitting(false);
+        await new Promise(resolve => setTimeout(resolve, 3000));
         navigate(Pages.tags);
       } catch (error) {
         if (!isActive) {
@@ -33,10 +33,7 @@ function VariablesPage() {
         }
 
         setErrorMessage(error instanceof Error ? error.message : "Variable synchronization failed. Please try again.");
-      } finally {
-        if (isActive) {
-          setIsSubmitting(false);
-        }
+        setIsSubmitting(false);
       }
     }
 
