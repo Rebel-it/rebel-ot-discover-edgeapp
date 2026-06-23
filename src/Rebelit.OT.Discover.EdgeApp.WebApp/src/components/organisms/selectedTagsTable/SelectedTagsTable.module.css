@@ -1,6 +1,5 @@
 .tableWrapper {
   width: 100%;
-  max-width: 1200px;
   display: flex;
   overflow: hidden;
 }
