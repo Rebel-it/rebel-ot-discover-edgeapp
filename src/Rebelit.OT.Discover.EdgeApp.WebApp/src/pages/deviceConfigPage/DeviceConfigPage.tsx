@@ -44,7 +44,7 @@ function DeviceConfigPage() {
       title="Push device configuration"
       continueButtonText="Push to device"
       onContinue={handlePushConfiguration}
-      loading={loading}>
+      continueDisabled={loading}>
 
       <div className={styles.page}>
         <div className={styles.descriptionWrapper}>

@@ -5,9 +5,20 @@ import { Pages } from "../../models/Pages";
 import ContactLabel from "../../components/atoms/contactLabel/ContactLabel";
 import mailIcon from "../../assets/mailicon.svg";
 import phoneIcon from "../../assets/phoneicon.svg";
+import RichTextRenderer from "../../components/atoms/richTextRenderer/RichTextRenderer";
+import { loadIxonAuthenticationHeaders } from "../../services/sessionStorageService";
 
 function FinalPage() {
   const navigate = useNavigate();
+  const auth = loadIxonAuthenticationHeaders();
+
+  const variablesLink = auth?.AgentId && auth?.SourceId
+    ? `https://portal.ixon.cloud/fleet-manager/device-configurator/${auth.AgentId}/services/data-source/${auth.SourceId}/variables`
+    : "https://portal.ixon.cloud/fleet-manager/devices";
+
+  const tagsLink = auth?.AgentId && auth?.SourceId
+    ? `https://portal.ixon.cloud/fleet-manager/device-configurator/${auth.AgentId}/services/data-source/${auth.SourceId}/tags`
+    : "https://portal.ixon.cloud/fleet-manager/devices";
 
   return (
     <WizardPage
@@ -23,8 +34,12 @@ function FinalPage() {
           <br />
           <p>Alternatively, you can:</p>
           <ul>
-            <li>Modify variables in the Variables Overview in the Fleet Manager</li>
-            <li>Adjust tags on the Tags page in the Fleet Manager</li>
+            <li>
+              <RichTextRenderer text={`Modify variables in the [Variables Overview in the Fleet Manager](${variablesLink})`} />
+            </li>
+            <li>
+              <RichTextRenderer text={`Adjust tags on the [Tags page in the Fleet Manager](${tagsLink})`} />
+            </li>
           </ul>
           <br />
           <p>Finally, if you wish to remove the application, you can run the provided remove_discover_edgeapp.sh script to uninstall the DiscoverEdgeApp from your Secure Edge Pro.</p>
