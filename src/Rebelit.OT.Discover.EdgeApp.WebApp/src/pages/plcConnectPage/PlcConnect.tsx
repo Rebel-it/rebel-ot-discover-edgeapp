@@ -121,6 +121,7 @@ function PlcConnect() {
             label="This server requires authentication"
             checked={useCredentials}
             onChange={handleUseCredentialsChange}
+            theme="purple"
           />
 
           {useCredentials && (

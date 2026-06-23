@@ -14,7 +14,6 @@
       height: 24px;
       border-radius: 4px;
       flex-shrink: 0;
-      border: 1px solid var(--purple-500);
       appearance: none;
       cursor: pointer;
 
@@ -23,14 +22,27 @@
         background-repeat: no-repeat;
         background-position: center;
         background-size: 16px 16px;
+      }
+    }
+  }
+
+  &.purple {
+    input {
+      border: 1px solid var(--purple-500);
+
+      &:checked {
         background-color: var(--purple-500);
       }
     }
   }
 
-  &.orangeBorder {
+  &.orange {
     input {
       border: 1px solid var(--orange-500);
+
+      &:checked {
+        background-color: var(--orange-500);
+      }
     }
   }
 }
