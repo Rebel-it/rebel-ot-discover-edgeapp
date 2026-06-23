@@ -1,5 +1,6 @@
 .headerRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 3fr 1fr 1fr 1fr;
   align-items: stretch;
   background-color: var(--purple-500);
   border: 2px solid var(--purple-500);
