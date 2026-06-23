@@ -23,11 +23,10 @@ function VariablesPage() {
 
       try {
         await synchronizeVariablesRequest();
+        markStepCompleted("variables");
 
-        if (!isActive) {
-          return;
-        }
-
+        await new Promise(resolve => setTimeout(resolve, 3000)); 
+        navigate(Pages.tags);
       } catch (error) {
         if (!isActive) {
           return;
@@ -52,30 +51,17 @@ function VariablesPage() {
     <WizardPage
       title="Synchronize variables"
       wizardStep="variables"
-      continueButtonText="Continue"
-      onContinue={() => {
-        markStepCompleted("variables");
-        navigate(Pages.tags);
-      }}
-      continueDisabled={isSubmitting}
     >
       <div className={styles.page}>
         <>
-          <div className={styles.statusDescriptionWrapper}>
-            {isSubmitting ? (
-              <>
-                <p>The following steps will now be performed:</p>
-                <ol>
-                  <li>Retrieving variables from your OPC UA Server</li>
-                  <li>Synchronizing variables to the data source in the IXON Cloud</li>
-                </ol>
-                <br />
-                <p>This may take a while</p>
-              </>
-            ) : (
-              <p>Sync completed</p>
-            )
-            }
+          <div className={styles.statusDescriptionWrapper}>§
+            <p>The following steps will now be performed:</p>
+            <ol>
+              <li>Retrieving variables from your OPC UA Server</li>
+              <li>Synchronizing variables to the data source in the IXON Cloud</li>
+            </ol>
+            <br />
+            <p>This may take a while</p>
           </div>
 
           <div className={styles.statusIndicatorWrapper}>

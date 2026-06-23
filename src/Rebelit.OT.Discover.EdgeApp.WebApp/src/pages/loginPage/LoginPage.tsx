@@ -116,7 +116,7 @@ function LoginPage() {
           />
           <FormField
             id="accesstoken"
-            label="Access Token"
+            label="Access token"
             type="password"
             value={serviceAccount.accessToken}
             onChange={(value) => setAuthProperty("accessToken", value)}
