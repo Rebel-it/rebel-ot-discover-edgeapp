@@ -23,11 +23,7 @@ function FinalPage() {
   return (
     <WizardPage
       wizardStep="final"
-      title="Finish"
-      continueButtonText="Finish"
-      onContinue={() => {
-        navigate(Pages.start);
-      }}>
+      title="Finish">
       <div className={styles.page}>
         <>
           <p>You have successfully completed the setup! If needed, you can run the wizard again at any time to update your configuration.</p>
