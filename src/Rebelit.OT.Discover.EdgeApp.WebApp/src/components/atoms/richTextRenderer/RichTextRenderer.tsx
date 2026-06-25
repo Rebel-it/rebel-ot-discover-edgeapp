@@ -1,5 +1,6 @@
 import Markdown from 'react-markdown';
 import type { Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import styles from './RichTextRenderer.module.css';
 
 type Props = {
@@ -14,5 +15,5 @@ const components: Components = {
 };
 
 export default function RichTextRenderer({ text }: Readonly<Props>) {
-  return <Markdown components={components} allowedElements={['p', 'strong', 'em', 'a', 'br']} unwrapDisallowed>{text}</Markdown>;
+  return <Markdown components={components} remarkPlugins={[remarkGfm]} allowedElements={['p', 'strong', 'em', 'a', 'br']} unwrapDisallowed>{text}</Markdown>;
 }

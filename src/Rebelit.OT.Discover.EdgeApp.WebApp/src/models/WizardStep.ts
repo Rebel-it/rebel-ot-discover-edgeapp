@@ -5,7 +5,7 @@ export const WizardStep = {
     },
     login: {
       title: "Log in",
-      description: "For security reasons, you can not use personal user credentials. Instead, create a dedicated [App Name] service account. This is required because our application will write data to your cloud environment and needs appropriate access.\n\nAfter setup, you can delete this service account if needed.\n\nGo to:\nhttps://portal.ixon.cloud/admin/service-accounts and add a new Service Account\n\nOnce you create the service account, you will receive an access token.\nMake sure to copy both required values immediately\nIf you close or navigate away, you will not be able to retrieve the access token again",
+      description: "For security reasons, you can not use personal user credentials. Instead, create a dedicated service account. This is required because our application will write data to your cloud environment and needs appropriate access.\n\nAfter setup, you can delete this service account if needed.\n\nGo to:\nhttps://portal.ixon.cloud/admin/service-accounts and add a new Service Account.\n\nOnce you create the service account, you will receive an access token.\nMake sure to copy both required values immediately\nIf you close or navigate away, you will not be able to retrieve the access token again.",
     },
     plcConnect: {
       title: "PLC connection",
