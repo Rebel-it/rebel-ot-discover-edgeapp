@@ -26,9 +26,14 @@ function getCheckState(rows: RowData[], selectedIds: string[]): CheckState {
 
 export default function Table({ rows, columns, selectedIds, onRowSelect, onSelectAll, onSort }: Readonly<TableProps>) {
     const checkState = selectedIds ? getCheckState(rows, selectedIds) : undefined;
+    const hasCheckbox = checkState !== undefined;
+    const gridTemplateColumns = [
+        ...(hasCheckbox ? ['max-content'] : []),
+        ...columns.map(col => `${col.width ?? 1}fr`),
+    ].join(' ');
 
     return (
-        <div className={style.table}>
+        <div className={style.table} style={{ '--gtc': gridTemplateColumns } as React.CSSProperties}>
             <TableHeaderRow
                 columns={columns}
                 checkState={checkState}

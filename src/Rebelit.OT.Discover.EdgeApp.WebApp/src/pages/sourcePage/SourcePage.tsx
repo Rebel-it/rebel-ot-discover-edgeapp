@@ -74,9 +74,9 @@ function SourcePage() {
       title="Create data source"
       continueButtonText="Create data source"
       onContinue={handleCreateDataSource}
-      loading={isSubmitting}
+      continueDisabled={isSubmitting}
     >
-      <form className={style.sourceForm} noValidate>
+      <form className={style.sourceForm} noValidate onSubmit={e => { e.preventDefault(); handleCreateDataSource(); }}>
         <div className={style.formFieldWrapper}>
           <FormField
             id="sourceName"
@@ -85,9 +85,11 @@ function SourcePage() {
             onChange={(value) => setSourceProperty("DataSourceName", value)}
             placeholder="DataSource_IPAdressPLC"
             invalidText={sourceIsMissing ? "Data source name is required" : ""}
+            tooltip="A data source name groups variables"
           />
           {errorMessage && <WarningTag invalidText={errorMessage} />}
         </div>
+        <button type="submit" style={{ display: 'none' }} />
       </form>
     </WizardPage>
   )

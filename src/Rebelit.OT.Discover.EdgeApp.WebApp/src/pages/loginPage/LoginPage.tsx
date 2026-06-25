@@ -26,7 +26,23 @@ function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [applicationIdMissing, setapplicationIdMissing] = useState(false);
   const [accessTokenMissing, setAccessTokenMissing] = useState(false);
-  const [videoOpen, setVideoOpen] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(true);
+
+  function openVideo() {
+    if ('startViewTransition' in document) {
+      document.startViewTransition(() => setVideoOpen(true));
+    } else {
+      setVideoOpen(true);
+    }
+  }
+
+  function closeVideo() {
+    if ('startViewTransition' in document) {
+      document.startViewTransition(() => setVideoOpen(false));
+    } else {
+      setVideoOpen(false);
+    }
+  }
 
   useEffect(() => {
     deleteCompletedSteps();
@@ -74,7 +90,7 @@ function LoginPage() {
     } catch (error) {
       clearIxonAuthenticationHeaders();
       setErrorMessage(error instanceof Error ? error.message : "Failed to login. Please check your credentials and try again.");
-    } finally {
+    } finally { 
       setIsSubmitting(false);
     }
   }
@@ -85,9 +101,9 @@ function LoginPage() {
       title="Log in"
       continueButtonText="Log in"
       onContinue={handleLogin}
-      loading={isSubmitting}>
+      continueDisabled={isSubmitting || !serviceAccount.apiApplicationID || !serviceAccount.accessToken}>
 
-      <form className={styles.loginForm} noValidate>
+      <form className={styles.loginForm} noValidate onSubmit={e => { e.preventDefault(); handleLogin(); }}>
         <div className={styles.formFieldWrapper}>
           <FormField
             id="applicationid"
@@ -95,27 +111,28 @@ function LoginPage() {
             value={serviceAccount.apiApplicationID}
             onChange={(value) => setAuthProperty("apiApplicationID", value)}
             required
-            placeholder="..."
             invalidText={applicationIdMissing ? "API Application ID is required" : ""}
+            tooltip="API application id as displayed in the ixon cloud. See video for more details."
           />
           <FormField
             id="accesstoken"
-            label="Access Token"
+            label="Access token"
             type="password"
             value={serviceAccount.accessToken}
             onChange={(value) => setAuthProperty("accessToken", value)}
             required
-            placeholder="..."
             invalidText={accessTokenMissing ? "Access Token is required" : ""}
+            tooltip="Access token assigned to application id"
           />
           {errorMessage && <WarningTag invalidText={errorMessage} />}
         </div>
+        <button type="submit" style={{ display: 'none' }} />
       </form>
 
-      <VideoPreview onClick={() => setVideoOpen(true)} />
+      {!videoOpen && <VideoPreview onClick={openVideo} />}
 
-      <Modal isOpen={videoOpen} onClose={() => setVideoOpen(false)}>
-        <Video onClose={() => setVideoOpen(false)} />
+      <Modal isOpen={videoOpen} onClose={closeVideo}>
+        <Video onClose={closeVideo} />
       </Modal>
     </WizardPage>
   )

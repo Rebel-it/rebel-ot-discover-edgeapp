@@ -6,7 +6,7 @@ import WizardPage from "../wizardPage/WizardPage";
 import { Pages } from "../../models/Pages";
 import { useWizard } from "../../context/WizardContext";
 import Table from "../../components/organisms/table/Table";
-import { getFormulaLabel, getTagKey } from "../../models/Tag";
+import { getTagKey } from "../../models/Tag";
 import { useTags } from "../../context/TagContext";
 import type { RowData } from "../../components/organisms/table/types";
 import WarningTag from "../../components/atoms/warningTag/WarningTag";
@@ -40,8 +40,7 @@ function TagPage() {
           cells: {
             name: tag.name,
             logOn: tag.logEvent,
-            interval: `Every ${tag.loggingInterval}`,
-            formula: getFormulaLabel(tag).toUpperCase()
+            interval: `Every ${tag.loggingInterval}`
           }
         }));
         setSortedRows(rowData);
@@ -118,10 +117,9 @@ function TagPage() {
   }
 
   const columnDefs = [
-    { key: "name", label: "Name", sortable: true },
+    { key: "name", label: "Name", sortable: true, width: 3 },
     { key: "logOn", label: "Log on", sortable: false },
-    { key: "interval", label: "Interval", sortable: false },
-    { key: "formula", label: "Formula", sortable: false },
+    { key: "interval", label: "Interval", sortable: false }
   ]
 
   return (
@@ -130,7 +128,7 @@ function TagPage() {
       title="Tags"
       continueButtonText={noTagsAvailable ? "Finish" : "Create tags"}
       onContinue={noTagsAvailable ? () => navigate(Pages.start) : handleCreateTags}
-      loading={!buttonClickable()}>
+      continueDisabled={!buttonClickable()}>
 
       <div className={styles.page}>
         <div className={styles.statusIndicatorWrapper}>

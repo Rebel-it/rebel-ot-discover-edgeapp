@@ -1,6 +1,7 @@
 import type { ComponentProps } from 'react'
 import styles from './FormField.module.css'
 import WarningTag from '../../atoms/warningTag/WarningTag';
+import Tooltip from '../../atoms/tooltip/Tooltip';
 
 type Props = {
   id: string;
@@ -12,13 +13,17 @@ type Props = {
   placeholder?: string;
   invalidText?: string;
   prefix?: string;
+  tooltip?: string;
 }
 
 function FormField({ id, label, value, onChange,
-  type = 'text', required, placeholder, invalidText, prefix }: Readonly<Props>) {
+  type = 'text', required, placeholder, invalidText, prefix, tooltip }: Readonly<Props>) {
   return (
     <div className={styles.formField}>
-      <label htmlFor={id}>{label}</label>
+      <div className={styles.labelRow}>
+        <label htmlFor={id}>{label}</label>
+        {tooltip && <Tooltip text={tooltip} />}
+      </div>
       <div className={styles.inputWrapper}>
         {prefix && <span className={styles.prefix}>{prefix}</span>}
         <input

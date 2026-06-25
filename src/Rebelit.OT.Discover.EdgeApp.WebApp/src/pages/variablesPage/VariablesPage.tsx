@@ -14,6 +14,7 @@ function VariablesPage() {
   const { markStepCompleted } = useWizard();
   const [isSubmitting, setIsSubmitting] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const msDelayNavigateToNextStep = 3000;
 
   useEffect(() => {
     let isActive = true
@@ -23,21 +24,17 @@ function VariablesPage() {
 
       try {
         await synchronizeVariablesRequest();
-
-        if (!isActive) {
-          return;
-        }
-
+        markStepCompleted("variables");
+        setIsSubmitting(false);
+        await new Promise(resolve => setTimeout(resolve, msDelayNavigateToNextStep));
+        navigate(Pages.tags);
       } catch (error) {
         if (!isActive) {
           return;
         }
 
         setErrorMessage(error instanceof Error ? error.message : "Variable synchronization failed. Please try again.");
-      } finally {
-        if (isActive) {
-          setIsSubmitting(false);
-        }
+        setIsSubmitting(false);
       }
     }
 
@@ -52,30 +49,17 @@ function VariablesPage() {
     <WizardPage
       title="Synchronize variables"
       wizardStep="variables"
-      continueButtonText="Continue"
-      onContinue={() => {
-        markStepCompleted("variables");
-        navigate(Pages.tags);
-      }}
-      loading={isSubmitting}
     >
       <div className={styles.page}>
         <>
-          <div className={styles.statusDescriptionWrapper}>
-            {isSubmitting ? (
-              <>
-                <p>The following steps will now be performed:</p>
-                <ol>
-                  <li>Retrieving variables from your OPC UA Server</li>
-                  <li>Synchronizing variables to the data source in the IXON Cloud</li>
-                </ol>
-                <br />
-                <p>This may take a while</p>
-              </>
-            ) : (
-              <p>Sync completed</p>
-            )
-            }
+          <div className={styles.statusDescriptionWrapper}>§
+            <p>The following steps will now be performed:</p>
+            <ol>
+              <li>Retrieving variables from your OPC UA Server</li>
+              <li>Synchronizing variables to the data source in the IXON Cloud</li>
+            </ol>
+            <br />
+            <p>This may take a while</p>
           </div>
 
           <div className={styles.statusIndicatorWrapper}>

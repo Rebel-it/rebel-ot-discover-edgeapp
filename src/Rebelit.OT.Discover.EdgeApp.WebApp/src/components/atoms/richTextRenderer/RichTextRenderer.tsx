@@ -1,19 +1,18 @@
+import Markdown from 'react-markdown';
+import type { Components } from 'react-markdown';
 import styles from './RichTextRenderer.module.css';
-
-const URL_REGEX = /(https?:\/\/[^\s]+)/g;
 
 type Props = {
   text: string;
 }
 
+const components: Components = {
+  p: ({ children }) => <p className={styles.text}>{children}</p>,
+  a: ({ href, children }) => (
+    <a className={styles.link} href={href} target="_blank" rel="noreferrer">{children}</a>
+  ),
+};
+
 export default function RichTextRenderer({ text }: Readonly<Props>) {
-  return (
-    <p className={styles.text}>
-      {text.split(URL_REGEX).map((part, i) =>
-        URL_REGEX.test(part)
-          ? <a className={styles.link} key={i} href={part} target="_blank" rel="noreferrer">{part}</a>
-          : part
-      )}
-    </p>
-  );
+  return <Markdown components={components} allowedElements={['p', 'strong', 'em', 'a', 'br']} unwrapDisallowed>{text}</Markdown>;
 }

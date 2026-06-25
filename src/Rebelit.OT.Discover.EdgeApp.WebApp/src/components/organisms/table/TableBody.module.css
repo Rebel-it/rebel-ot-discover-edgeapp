@@ -14,9 +14,9 @@
 }
 
 .row {
-  display: flex;
+  display: grid;
+  grid-template-columns: var(--gtc);
   align-items: stretch;
-  min-height: 48px;
 }
 
 .tableBody>.row:nth-child(odd) {
@@ -28,5 +28,5 @@
 }
 
 .tableBody>.row.selected {
-  background-color: var(--purple-500);
+  background-color: var(--purple-200);
 }

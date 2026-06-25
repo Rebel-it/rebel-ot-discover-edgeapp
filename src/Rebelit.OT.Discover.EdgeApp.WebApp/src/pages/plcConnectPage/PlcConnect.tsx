@@ -102,9 +102,9 @@ function PlcConnect() {
       title="PLC connection"
       continueButtonText="Connect"
       onContinue={handlePlcConnect}
-      loading={isSubmitting}
+      continueDisabled={isSubmitting}
     >
-      <form className={styles.plcConnectForm} noValidate>
+      <form className={styles.plcConnectForm} noValidate onSubmit={e => { e.preventDefault(); handlePlcConnect(); }}>
         <div className={styles.formFieldWrapper}>
           <FormField
             id="ipAddress"
@@ -121,32 +121,32 @@ function PlcConnect() {
             label="This server requires authentication"
             checked={useCredentials}
             onChange={handleUseCredentialsChange}
+            theme="purple"
           />
 
           {useCredentials && (
             <>
               <FormField
                 id="OpcUaUsername"
-                label="OPC username"
+                label="Username required to access OPC UA server"
                 value={plcObject.OpcUaUsername}
                 onChange={(value) => setPlcProperty("OpcUaUsername", value)}
-                placeholder="..."
                 invalidText={opcUaUsernameMissing ? "OPC Username is required" : ""}
               />
 
               <FormField
                 id="OpcUaPassword"
-                label="OPC password"
+                label="Password required to access OPC UA server"
                 type="password"
                 value={plcObject.OpcUaPassword}
                 onChange={(value) => setPlcProperty("OpcUaPassword", value)}
-                placeholder="..."
                 invalidText={opcUaPasswordMissing ? "OPC Password is required" : ""}
               />
             </>
           )}
           {errorMessage && <WarningTag invalidText={errorMessage} />}
         </div>
+        <button type="submit" style={{ display: 'none' }} />
       </form>
     </WizardPage>
   )

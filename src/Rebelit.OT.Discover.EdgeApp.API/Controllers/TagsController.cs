@@ -46,7 +46,7 @@ public class TagsController(ITagService tagService) : BaseController
     {
         if (string.IsNullOrWhiteSpace(model.Name))
         {
-            return BadRequest(new { message = "Tag name is required." });
+            return BadRequest("Tag name is required.");
         }
 
         var createdTag = await _tagService.CreateTagAsync(model);
@@ -64,7 +64,7 @@ public class TagsController(ITagService tagService) : BaseController
     {
         if (model == null)
         {
-            return BadRequest(new { message = "Tag list cannot be empty." });
+            return BadRequest("Tag list cannot be empty.");
         }
         await _tagService.CreateTagsAsync(model);
 
@@ -82,7 +82,7 @@ public class TagsController(ITagService tagService) : BaseController
     {
         if (string.IsNullOrWhiteSpace(model.PublicId))
         {
-            return BadRequest(new { message = "Tag public ID is required." });
+            return BadRequest("Tag public ID is required.");
         }
 
         var updatedTag = await _tagService.UpdateTagAsync(model);

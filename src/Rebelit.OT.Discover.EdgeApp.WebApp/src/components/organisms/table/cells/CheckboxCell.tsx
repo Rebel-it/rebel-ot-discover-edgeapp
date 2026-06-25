@@ -16,7 +16,7 @@ export default function CheckboxCell({ checked, onChange }: Readonly<CheckboxCel
         label=""
         checked={checked}
         onChange={onChange}
-        orangeBorder={true}
+        theme={"orange"}
       />
     </Cell>
   );

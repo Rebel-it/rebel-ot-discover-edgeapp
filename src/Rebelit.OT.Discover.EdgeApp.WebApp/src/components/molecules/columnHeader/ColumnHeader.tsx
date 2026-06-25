@@ -13,8 +13,8 @@ export default function ColumnHeader({ label, onSort, sortable = true }: Readonl
       className={`${style.columnHeader} ${sortable ? style.sortable : ''}`}
       onClick={sortable ? onSort : undefined}
     >
-      <p>{label}</p>
       {sortable && <Sort width={16} height={16} />}
+      <p>{label}</p>
     </button>
   );
 }

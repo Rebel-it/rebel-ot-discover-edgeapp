@@ -32,8 +32,9 @@ h4,
 h5,
 h6 {
   color: #FDFEFF;
-  overflow-wrap: break-word;
   font-family: Lato, serif;
+  word-break: normal;
+  overflow-wrap: anywhere;
 }
 
 h1 {
