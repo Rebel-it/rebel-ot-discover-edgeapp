@@ -50,6 +50,7 @@ Once complete, the script prints:
 Please visit the application on your Secure Edge Pro: http://<device-ip>:3000
 ----
 
+[[insecure-registry]]
 [NOTE]
 ====
 The SecureEdge Pro registry (`<device-ip>:5000`) must be configured as an *insecure registry* in Docker Desktop before running the script. +
@@ -61,16 +62,52 @@ Add it via *Docker Desktop → Settings → Docker Engine*:
 Then restart Docker and re-run the script.
 ====
 
-== End-User Deployment (Release Zip)
+== End-User Deployment (Installation Wizard)
 
-If you received a release zip instead of the source code, extract it and run:
+The recommended way to install or uninstall the Edge App is through the *Installation Wizard* — a cross-platform console application that automatically downloads the latest release from GitHub and runs the appropriate deployment scripts for your operating system.
+
+=== Prerequisites
+
+* link:https://dotnet.microsoft.com/en-us/download/dotnet/10.0[.NET 10 Runtime] installed on your machine.
+* A GitHub personal access token with read access to the repository (required until the repository is made public).
+* The same <<insecure-registry,insecure registry>> prerequisite as described above.
+
+=== Running the Wizard
+
+Run the wizard executable from a terminal:
 
 [source,bash]
 ----
-./deploy_discover_edgeapp.sh
+# Linux / macOS
+./Rebelit.OT.InstallationWizard
+
+# Windows (PowerShell)
+.\Rebelit.OT.InstallationWizard.exe
 ----
 
-This script loads the pre-built Docker images from the zip, pushes them to the device, and starts the containers. The same insecure registry prerequisite applies.
+The wizard will guide you through the following prompts:
+
+[cols="1,3", options="header"]
+|===
+| Prompt | Description
+
+| *Action*
+| Choose `[1] Install` to deploy the Edge App or `[2] Uninstall` to remove it.
+
+| *SecureEdge Pro IP address*
+| The LAN IP of your SecureEdge Pro (e.g. `192.168.140.1`).
+
+| *SecureEdge Pro admin username*
+| Admin username for the SecureEdge Pro web interface (default: `admin`).
+
+| *SecureEdge Pro admin password*
+| Admin password for the SecureEdge Pro web interface.
+
+| *GitHub access token*
+| Personal access token used to download the latest release from GitHub.
+|===
+
+The wizard then downloads and extracts the latest release automatically, and runs the deployment. Once complete, it opens your browser at `http://<device-ip>:3000`.
 
 == Using the Wizard
 

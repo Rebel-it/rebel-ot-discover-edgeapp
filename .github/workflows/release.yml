@@ -50,19 +50,14 @@ jobs:
           mkdir -p release
           cp rebel-ot-discover-edgeapp.tar              release/
           cp rebel-ot-discover-edgeapp-react.tar        release/
-          cp docker/deploy_discover_edgeapp.sh          release/
           cp docker/deploy_discover_edgeapp_args.sh     release/
           cp docker/deploy_discover_edgeapp_args.ps1     release/
-          cp docker/auth_secure_edge_pro.sh             release/
           cp docker/auth_secure_edge_pro_args.sh        release/
           cp docker/auth_secure_edge_pro_args.ps1        release/
           cp docker/create_and_start_containers.sh      release/
           cp docker/create_and_start_containers.ps1      release/
-          cp docker/remove_discover_edgeapp.sh      release/
           cp docker/remove_discover_edgeapp_args.sh      release/
           cp docker/remove_discover_edgeapp_args.ps1      release/
-          chmod +x release/deploy_discover_edgeapp.sh
-          chmod +x release/auth_secure_edge_pro.sh
           cd release
           zip -r ../rebel-ot-discover-edgeapp-${{ github.ref_name }}.zip .
 

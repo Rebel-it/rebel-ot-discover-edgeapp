@@ -2,7 +2,6 @@
 
 <#
 .SYNOPSIS
-    Non-interactive variant of deploy_discover_edgeapp.sh.
     Deploys pre-built images from the release zip to a SecureEdge Pro device.
 .DESCRIPTION
     Run this script from the directory where you extracted the release zip.
@@ -119,4 +118,4 @@ docker rmi $FRONTEND_IMAGE "$($SECURE_EDGE_IP):5000/${FRONTEND_CONTAINER}:latest
 Remove-Item -Path "$COOKIE_JAR" -ErrorAction SilentlyContinue
 
 Write-Output "`n=== Deployment complete ==="
-Write-Output "Please visit the application on your Secure Edge Pro: http://$SECURE_EDGE_IP:3000"
+Start-Process "http://$SECURE_EDGE_IP:3000"
