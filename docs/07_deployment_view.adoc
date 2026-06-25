@@ -147,16 +147,46 @@ Key points:
 * No credentials or secrets are baked into the images. The frontend nginx config only stores the backend container hostname (`BACKEND_URL`). All IXON and OPC UA credentials are supplied by the browser at runtime.
 * Containers are created and started via the SecureEdge Pro local Docker API using a session cookie obtained at login -- no SSH access to the device is needed.
 
-=== 7.3 End-User Deployment -- `deploy_discover_edgeapp.sh`
+=== 7.3 End-User Deployment -- Installation Wizard
 
-For end-user installations, Rebelit ships a release zip containing pre-built Docker image tarballs. The user runs a single script that loads, tags, and pushes the images and then creates and starts the containers -- identical result to the developer scenario but without a build step.
+For end-user installations, Rebelit provides a cross-platform *Installation Wizard* — a .NET 10 console application that automatically downloads the latest release from GitHub, loads the pre-built Docker image tarballs, and deploys them to the device. The end result is identical to the developer scenario but without a build step.
+
+[mermaid]
+....
+sequenceDiagram
+    participant User as End User
+    participant Wizard as Installation Wizard\n(console app)
+    participant GH as GitHub Releases
+    participant SEP as SecureEdge Pro\n(Docker + local API)
+
+    User->>Wizard: Run Rebelit.OT.InstallationWizard(.exe)
+    Wizard->>User: Prompt: action (Install / Uninstall)
+    User-->>Wizard: Install
+    Wizard->>User: Prompt: SecureEdge IP, admin username,\nadmin password, GitHub access token
+    User-->>Wizard: credentials
+
+    Wizard->>GH: Fetch latest release assets
+    GH-->>Wizard: rebel-ot-discover-edgeapp.tar\nrebel-ot-discover-edgeapp-react.tar\ndeploy_discover_edgeapp_args.sh/.ps1
+
+    Wizard->>SEP: docker load + push images to {IP}:5000
+    Wizard->>SEP: POST /api/v1/docker/containers (backend + frontend)
+    Wizard->>SEP: POST …/start (backend + frontend)
+
+    Wizard->>User: Opens browser at http://{IP}:3000
+....
 
 [options="header", cols="2,4"]
 |===
 | Step | Action
 
 | Prerequisites
-| Extract the release zip. Ensure `{device-ip}:5000` is listed as an insecure registry in Docker Desktop settings.
+| Ensure .NET 10 Runtime is installed and `{device-ip}:5000` is listed as an insecure registry in Docker Desktop settings.
+
+| Run wizard
+| Execute `./Rebelit.OT.InstallationWizard` (Linux/macOS) or `.\Rebelit.OT.InstallationWizard.exe` (Windows). Select *Install* and supply the prompted credentials.
+
+| Download release
+| The wizard fetches the latest release assets from GitHub automatically -- no manual zip extraction required.
 
 | Load & push images
 | `docker load` reads `rebel-ot-discover-edgeapp.tar` and `rebel-ot-discover-edgeapp-react.tar`, tags each image for the device registry, and pushes them to `{device-ip}:5000`.
@@ -165,7 +195,7 @@ For end-user installations, Rebelit ships a release zip containing pre-built Doc
 | Identical to the developer scenario: containers are created via the SecureEdge Pro Docker API on the `machine-builder` bridge network, then started.
 
 | Access
-| Browser navigates to `http://{device-ip}:3000`.
+| The wizard opens the browser at `http://{device-ip}:3000` automatically.
 |===
 
 === 7.4 Development Environment

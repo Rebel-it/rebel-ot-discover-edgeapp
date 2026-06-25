@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Non-interactive variant of deploy_discover_edgeapp.sh.
 # Deploys pre-built images from the release zip to a SecureEdge Pro device.
 # Run this from the directory where you extracted the release zip.
 #
@@ -83,4 +82,11 @@ rm -f "${COOKIE_JAR}"
 
 echo
 echo "=== Deployment complete ==="
-echo "Please visit the application on your Secure Edge Pro: http://${SECURE_EDGE_IP}:3000"
+URL="http://${SECURE_EDGE_IP}:3000"
+if command -v xdg-open &>/dev/null; then
+    xdg-open "$URL"
+elif command -v open &>/dev/null; then
+    open "$URL"
+else
+    echo "Please visit the application on your Secure Edge Pro: $URL"
+fi
