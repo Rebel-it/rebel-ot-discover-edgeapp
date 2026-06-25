@@ -103,7 +103,7 @@ function LoginPage() {
       onContinue={handleLogin}
       continueDisabled={isSubmitting || !serviceAccount.apiApplicationID || !serviceAccount.accessToken}>
 
-      <form className={styles.loginForm} noValidate onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+      <form className={styles.loginForm} noValidate onSubmit={e => { e.preventDefault(); handleLogin(); }}>
         <div className={styles.formFieldWrapper}>
           <FormField
             id="applicationid"
@@ -126,7 +126,7 @@ function LoginPage() {
           />
           {errorMessage && <WarningTag invalidText={errorMessage} />}
         </div>
-        <button type="submit" style={{ display: 'none' }} aria-hidden="true" />
+        <button type="submit" style={{ display: 'none' }} />
       </form>
 
       {!videoOpen && <VideoPreview onClick={openVideo} />}

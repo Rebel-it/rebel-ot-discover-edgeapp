@@ -1,7 +1,5 @@
 import styles from "./FinalPage.module.css";
-import { useNavigate } from "react-router-dom";
 import WizardPage from "../wizardPage/WizardPage";
-import { Pages } from "../../models/Pages";
 import ContactLabel from "../../components/atoms/contactLabel/ContactLabel";
 import mailIcon from "../../assets/mailicon.svg";
 import phoneIcon from "../../assets/phoneicon.svg";
@@ -9,7 +7,6 @@ import RichTextRenderer from "../../components/atoms/richTextRenderer/RichTextRe
 import { loadIxonAuthenticationHeaders } from "../../services/sessionStorageService";
 
 function FinalPage() {
-  const navigate = useNavigate();
   const auth = loadIxonAuthenticationHeaders();
 
   const variablesLink = auth?.AgentId && auth?.SourceId

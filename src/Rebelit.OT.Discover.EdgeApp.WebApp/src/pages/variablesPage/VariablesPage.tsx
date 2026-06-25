@@ -14,6 +14,7 @@ function VariablesPage() {
   const { markStepCompleted } = useWizard();
   const [isSubmitting, setIsSubmitting] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const msDelayNavigateToNextStep = 3000;
 
   useEffect(() => {
     let isActive = true
@@ -25,7 +26,7 @@ function VariablesPage() {
         await synchronizeVariablesRequest();
         markStepCompleted("variables");
         setIsSubmitting(false);
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, msDelayNavigateToNextStep));
         navigate(Pages.tags);
       } catch (error) {
         if (!isActive) {
