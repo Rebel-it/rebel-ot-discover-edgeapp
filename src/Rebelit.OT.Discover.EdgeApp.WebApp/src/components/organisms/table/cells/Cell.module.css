@@ -11,8 +11,9 @@
     font-weight: 400;
     font-size: 1.8rem;
     color: var(--black);
-    word-break: break-word;
     text-transform: capitalize;
+    word-break: normal;
+    overflow-wrap: anywhere;
   }
 
   &.selected {
