@@ -122,7 +122,7 @@ function LoginPage() {
             onChange={(value) => setAuthProperty("accessToken", value)}
             required
             invalidText={accessTokenMissing ? "Access Token is required" : ""}
-            tooltip="Access token assigned to application id"
+            tooltip="Access token assigned to application id."
           />
           {errorMessage && <WarningTag invalidText={errorMessage} />}
         </div>
