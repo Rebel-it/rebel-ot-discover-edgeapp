@@ -17,22 +17,22 @@ public static class WizardConsole
         while (true)
         {
             var key = Console.ReadKey(intercept: true);
-            if (key.Key == ConsoleKey.Enter)
+            switch (key.Key)
             {
-                Console.WriteLine();
-                break;
-            }
-            if (key.Key == ConsoleKey.Backspace)
-            {
-                if (input.Length > 0)
-                    input.Remove(input.Length - 1, 1);
-            }
-            else
-            {
-                input.Append(key.KeyChar);
+                case ConsoleKey.Enter:
+                    Console.WriteLine();
+                    return input.ToString().Trim();
+                case ConsoleKey.Backspace:
+                    if (input.Length > 0)
+                    {
+                        input.Remove(input.Length - 1, 1);
+                    }
+                    break;
+                default:
+                    input.Append(key.KeyChar);
+                    break;
             }
         }
-        return input.ToString().Trim();
     }
 
     public static WizardAction PromptAction()
