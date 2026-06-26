@@ -32,16 +32,13 @@ var action = WizardConsole.PromptAction();
 // 3. Gather credentials
 var edgeIp        = WizardConsole.PromptLine("Please enter your SecureEdge Pro IP address (e.g. 192.168.140.1)");
 var adminUser     = WizardConsole.PromptLine("Please enter your SecureEdge Pro admin username");
-var adminPassword = WizardConsole.PromptLine("Please enter your SecureEdge Pro admin password");
-
-// TODO remove this once the repository is made public.
-var accessToken   = WizardConsole.PromptLine("Please enter your GitHub access token");
+var adminPassword = WizardConsole.PromptSecret("Please enter your SecureEdge Pro admin password");
 
 // 4. Download & extract latest GitHub release
 Console.WriteLine("\nFetching latest release from GitHub...");
 try
 {
-    var downloader = new GitHubReleaseDownloader(githubRepo, accessToken);
+    var downloader = new GitHubReleaseDownloader(githubRepo);
     await downloader.DownloadAndExtractLatestReleaseAsync(extractDir);
 
     string targetScript;

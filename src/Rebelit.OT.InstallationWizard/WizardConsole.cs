@@ -10,6 +10,31 @@ public static class WizardConsole
         return (Console.ReadLine() ?? string.Empty).Trim();
     }
 
+    public static string PromptSecret(string message)
+    {
+        Console.WriteLine(message);
+        var input = new System.Text.StringBuilder();
+        while (true)
+        {
+            var key = Console.ReadKey(intercept: true);
+            switch (key.Key)
+            {
+                case ConsoleKey.Enter:
+                    Console.WriteLine();
+                    return input.ToString().Trim();
+                case ConsoleKey.Backspace:
+                    if (input.Length > 0)
+                    {
+                        input.Remove(input.Length - 1, 1);
+                    }
+                    break;
+                default:
+                    input.Append(key.KeyChar);
+                    break;
+            }
+        }
+    }
+
     public static WizardAction PromptAction()
     {
         while (true)

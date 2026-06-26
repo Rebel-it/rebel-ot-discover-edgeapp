@@ -1,17 +1,15 @@
 using System.IO.Compression;
-using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace Rebelit.OT.InstallationWizard;
 
-public class GitHubReleaseDownloader(string repo, string accessToken)
+public class GitHubReleaseDownloader(string repo)
 {
     private const string GitHubApiBase = "https://api.github.com";
 
-    private HttpClient CreateHttpClient()
+    private static HttpClient CreateHttpClient()
     {
         var http = new HttpClient();
-        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         http.DefaultRequestHeaders.UserAgent.ParseAdd("OT-InstallationWizard/1.0");
         return http;
     }
