@@ -1,7 +1,4 @@
-# rebel-ot-discover-edgeapp
-
-[![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-light.svg)](https://sonarcloud.io/summary/new_code?id=rebel-it_rebel-ot-discover-edgeapp)
-
+# OPC UA Edge Sync
 A web-based tool that discovers OPC UA data nodes and provisions them as Variables and Tags in the IXON Cloud platform. It runs as two Docker containers on an IXON SecureEdge Pro device and is operated through a wizard UI in your browser.
 
 ## What it does
