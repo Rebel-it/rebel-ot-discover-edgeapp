@@ -1,7 +1,8 @@
 ﻿namespace Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 
 /// <summary>
-/// Opc Ua credentials used for IXON connection. This class contains the necessary information to connect to an OPC UA server, including the server address and optional authentication credentials (username and password).
+/// Opc Ua credentials used for IXON connection. This class contains the necessary information to connect to an OPC UA server, 
+/// including the server address and optional authentication credentials (username and password).
 /// </summary>
 public class OpcCredentials
 {

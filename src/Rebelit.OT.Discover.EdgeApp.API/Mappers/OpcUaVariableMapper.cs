@@ -55,14 +55,11 @@ internal sealed class OpcUaVariableMapper(ILogger<OpcUaVariableMapper> logger)
 
         var (type, width, MaxStringLength) = mapping;
 
-        if (width is null)
+        if (width is null && logger.IsEnabled(LogLevel.Warning))
         {
-            if(logger.IsEnabled(LogLevel.Warning))
-            {
                 logger.LogWarning(
                     "The built-in type '{BuiltInType}' does not have a defined width.",
                     builtInType);
-            }
         }
 
         var address = referenceDescription.NodeId.ToString();

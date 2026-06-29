@@ -22,7 +22,13 @@ internal class ApiClient(
 
     public async Task<Response<Tag[]>> GetTagsAsync()
     {
-        var uri = new Uri($"/api/agents/{AgentId}/data-tags?fields=aggregators,edgeAggregator,logEvent,loggingInterval,logTrigger.publicId,name,onChangeExpiry,publicId,retentionPolicy,slug,source.publicId,source.reference.name,tagId,variable.publicId,backendComponent.publicId&page-size=4000", UriKind.Relative);
+        var uri = new Uri(
+            $"/api/agents/{AgentId}/data-tags?fields=" +
+            "aggregators,edgeAggregator,logEvent,loggingInterval,logTrigger.publicId,name," +
+            "onChangeExpiry,publicId,retentionPolicy,slug,source.publicId,source.reference.name," +
+            "tagId,variable.publicId,backendComponent.publicId&page-size=4000",
+            UriKind.Relative
+        );
         return await GetAsync<Response<Tag[]>>(uri);
     }
 

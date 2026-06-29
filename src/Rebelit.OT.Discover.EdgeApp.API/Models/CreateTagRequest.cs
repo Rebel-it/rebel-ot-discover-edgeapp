@@ -34,7 +34,10 @@ public class CreateTagRequest
     public required string RetentionPolicy { get; init; }
 
     /// <summary>
-    /// Slug is the unique identifier for the tag, it is used to reference the tag in the IXON platform. It must be unique across all tags of the agent and can only contain lowercase letters, numbers, underscores and hyphens. It must start with a letter and be between 1 and 64 characters long.
+    /// Slug is the unique identifier for the tag. It is used to reference the tag in the IXON platform.
+    /// It must be unique across all tags of the agent and can only contain lowercase letters,
+    /// numbers, underscores, and hyphens.
+    /// It must start with a letter and be between 1 and 64 characters long.
     /// </summary>
     [JsonPropertyName("slug")]
     public required string Slug { get; init; }

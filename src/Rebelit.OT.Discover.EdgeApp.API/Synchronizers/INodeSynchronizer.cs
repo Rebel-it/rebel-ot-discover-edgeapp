@@ -14,7 +14,9 @@ public interface INodeSynchronizer
     Task InitializeAsync(string dataSourceId);
 
     /// <summary>
-    ///  Synchronizes the provided variables with the existing variables in the system for the specified agent. This method compares the provided variables with the existing ones and performs necessary create, update, or delete operations to ensure that the system's state reflects the provided variables accurately.
+    ///  Synchronizes the provided variables with the existing variables in the system for the specified agent. This method compares the 
+    ///  provided variables with the existing ones and performs necessary create, update, 
+    ///  or delete operations to ensure that the system's state reflects the provided variables accurately.
     /// </summary>
     /// <param name="agentId">The identifier of the agent for which the variables are being synchronized.</param>
     /// <param name="variables">The collection of variables to synchronize.</param>

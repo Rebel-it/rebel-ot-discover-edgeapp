@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Opc.Ua;
 using Rebelit.OT.Discover.EdgeApp.API.Synchronizers;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
@@ -38,10 +39,13 @@ public class Scraper(
         var filteredNodes = FilterValidNodes(nodes);
         var createdVariables = await MapVariablesBatchAsync(client, filteredNodes, dataSourceId);
 
-        logger.LogInformationIfEnabled(
-            "Mapped {VariableCount} variables from OPC UA nodes.",
-            createdVariables.Count
-        );
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Mapped {VariableCount} variables from OPC UA nodes.",
+                createdVariables.Count
+            );
+        }
 
         await nodeSynchronizer.SynchronizeVariablesAsync(ixonAuthenticationContext.IxonHeaders.GetRequiredAgentId(), createdVariables);
 
@@ -52,7 +56,7 @@ public class Scraper(
     {
         if (dataSourceId == null)
         {
-            logger.LogErrorIfEnabled("Data source ID is missing. Aborting execution.");
+            logger.LogError("Data source ID is missing. Aborting execution.");
             return false;
         }
         return true;
@@ -60,7 +64,10 @@ public class Scraper(
 
     private void LogFoundNodes(ReferenceDescriptionCollection nodes)
     {
-        logger.LogInformationIfEnabled("Found {NodeCount} nodes in the OPC UA address space.", nodes.Count);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Found {NodeCount} nodes in the OPC UA address space.", nodes.Count);
+        }
 
         if (logger.IsEnabled(LogLevel.Trace))
         {
@@ -80,7 +87,10 @@ public class Scraper(
     {
         if (rd.NodeId.NamespaceIndex == 0 || rd.NodeId.NamespaceIndex == 1)
         {
-            logger.LogDebugIfEnabled("Skipping node {NodeId} in namespace {NamespaceIndex}.", rd.NodeId, rd.NodeId.NamespaceIndex);
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                logger.LogDebug("Skipping node {NodeId} in namespace {NamespaceIndex}.", rd.NodeId, rd.NodeId.NamespaceIndex);
+            }
             return false;
         }
         return true;
@@ -108,7 +118,7 @@ public class Scraper(
 
         if (!HasCompleteCredentials())
         {
-            logger.LogErrorIfEnabled("PLC credentials are incomplete. Provide both username and password.");
+            logger.LogError("PLC credentials are incomplete. Provide both username and password.");
             return null;
         }
 
@@ -122,7 +132,7 @@ public class Scraper(
     {
         if (string.IsNullOrWhiteSpace(ixonAuthenticationContext.IxonHeaders.PlcUrl))
         {
-            logger.LogErrorIfEnabled("PLC URL is missing. Aborting execution.");
+            logger.LogError("PLC URL is missing. Aborting execution.");
             return false;
         }
         return true;

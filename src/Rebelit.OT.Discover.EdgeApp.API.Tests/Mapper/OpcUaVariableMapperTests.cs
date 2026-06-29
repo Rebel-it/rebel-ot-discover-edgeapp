@@ -29,7 +29,7 @@ public class OpcUaVariableMapperTests
             Assert.That(result.Type, Is.EqualTo("int"));
             Assert.That(result.Width, Is.EqualTo("32"));
             Assert.That(result.MaxStringLength, Is.Null);
-            Assert.That(result.Source.PublicId, Is.EqualTo("source-1"));
+            Assert.That(result!.Source!.PublicId, Is.EqualTo("source-1"));
             Assert.That(result.Slug, Is.EqualTo("temperature_stemp"));
             Assert.That(result.Signed, Is.True);
             Assert.That(logger.Entries.Any(e => e.LogLevel == LogLevel.Warning), Is.False);

@@ -14,7 +14,8 @@ public class Tag
     /// Supported values:
     /// <list type="bullet">
     ///   <item><description><c>interval</c> — logs data at a fixed time interval defined by <see cref="LoggingInterval"/>.</description></item>
-    ///   <item><description><c>change</c> — logs data only when the value changes. Use <see cref="OnChangeExpiry"/> to also log at a fixed interval when the value remains unchanged.</description></item>
+    ///   <item><description><c>change</c> — logs data only when the value changes. Use <see cref="OnChangeExpiry"/> 
+    ///   to also log at a fixed interval when the value remains unchanged.</description></item>
     /// </list>
     /// </remarks>
     [JsonPropertyName("logEvent")]

@@ -8,6 +8,8 @@ namespace Rebelit.OT.Discover.EdgeApp.Tests.Services;
 [TestFixture]
 public class VariableServiceTests
 {
+    private static readonly string[] expectedArray = new[] { "v-1", "v-2" };
+
     [Test]
     public async Task GetVariablesAsync_WhenApiReturnsVariables_ReturnsVariables()
     {
@@ -18,8 +20,7 @@ public class VariableServiceTests
         ];
 
         var apiClient = new ApiClientSpy { DataVariables = expected };
-        var unitTestHelper = new UnitTestHelpers();
-        var authContext = unitTestHelper.CreateAuthenticationContext("agent-123");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-123");
         var logger = new TestLogger<VariableService>(isInfoEnabled: true);
         var sut = new VariableService(apiClient, authContext, logger);
 
@@ -27,8 +28,8 @@ public class VariableServiceTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.Count, Is.EqualTo(2));
-            Assert.That(result.Select(v => v.PublicId), Is.EqualTo(new[] { "v-1", "v-2" }));
+            Assert.That(result, Has.Count.EqualTo(2));
+            Assert.That(result.Select(v => v.PublicId), Is.EqualTo(expectedArray));
         });
     }
 
@@ -36,8 +37,7 @@ public class VariableServiceTests
     public async Task GetVariablesAsync_WhenApiReturnsNullData_ReturnsEmptyList()
     {
         var apiClient = new ApiClientSpy { DataVariables = null };
-        var unitTestHelper = new UnitTestHelpers();
-        var authContext = unitTestHelper.CreateAuthenticationContext("agent-123");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-123");
         var logger = new TestLogger<VariableService>(isInfoEnabled: true);
         var sut = new VariableService(apiClient, authContext, logger);
 
@@ -56,8 +56,7 @@ public class VariableServiceTests
         ];
 
         var apiClient = new ApiClientSpy { DataVariables = variables };
-        var unitTestHelper = new UnitTestHelpers();
-        var authContext = unitTestHelper.CreateAuthenticationContext("agent-42");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-42");
         var logger = new TestLogger<VariableService>(isInfoEnabled: true);
         var sut = new VariableService(apiClient, authContext, logger);
 

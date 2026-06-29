@@ -25,7 +25,7 @@ public class IxonCompanyConfigurationServiceTests
                 Data = new SecureEdgeSystemInfo { SerialNumber = "SN-123456" },
             },
         };
-        var authContext = new UnitTestHelpers().CreateAuthenticationContext("agent-any");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-any");
         var sut = new IxonCompanyConfigurationService(apiClient, authContext, secureEdgeApiClient);
 
         // Act
@@ -53,7 +53,7 @@ public class IxonCompanyConfigurationServiceTests
         // Arrange
         var apiClient = new ApiClientSpy { AssociatedCompanies = [] };
         var secureEdgeApiClient = new SecureEdgeApiClientSpy();
-        var authContext = new UnitTestHelpers().CreateAuthenticationContext("agent-any");
+        var authContext =  UnitTestHelpers.CreateAuthenticationContext("agent-any");
         var sut = new IxonCompanyConfigurationService(apiClient, authContext, secureEdgeApiClient);
 
         // Act
@@ -86,7 +86,7 @@ public class IxonCompanyConfigurationServiceTests
                 ErrorMessage = "Secure Edge unavailable",
             },
         };
-        var authContext = new UnitTestHelpers().CreateAuthenticationContext("agent-any");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-any");
         var sut = new IxonCompanyConfigurationService(apiClient, authContext, secureEdgeApiClient);
 
         // Act
@@ -124,7 +124,7 @@ public class IxonCompanyConfigurationServiceTests
                 Data = new SecureEdgeSystemInfo { SerialNumber = "SN-123456" },
             },
         };
-        var authContext = new UnitTestHelpers().CreateAuthenticationContext("agent-any");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-any");
         var sut = new IxonCompanyConfigurationService(apiClient, authContext, secureEdgeApiClient);
 
         // Act
