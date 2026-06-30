@@ -8,7 +8,7 @@ namespace Rebelit.OT.Discover.EdgeApp.Tests.Services.Helpers;
 
 public class UnitTestHelpers
 {
-    public  IxonAuthenticationContext CreateAuthenticationContext(string agentId) =>
+    public  IxonAuthenticationContext CreateAuthenticationContext(string agentId, string? sourceId = null) =>
         new()
         {
             IxonHeaders = new IxonHeaders
@@ -19,6 +19,7 @@ public class UnitTestHelpers
                     ApiApplicationId = "app-id",
                 },
                 AgentId = agentId,
+                SourceId = sourceId
             },
         };
 }
