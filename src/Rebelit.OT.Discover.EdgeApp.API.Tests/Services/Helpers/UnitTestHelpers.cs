@@ -6,9 +6,9 @@ using System.Text;
 
 namespace Rebelit.OT.Discover.EdgeApp.Tests.Services.Helpers;
 
-public class UnitTestHelpers
+public static class UnitTestHelpers
 {
-    public  IxonAuthenticationContext CreateAuthenticationContext(string agentId, string? sourceId = null) =>
+    public static IxonAuthenticationContext CreateAuthenticationContext(string agentId, string? sourceId = null) =>
         new()
         {
             IxonHeaders = new IxonHeaders

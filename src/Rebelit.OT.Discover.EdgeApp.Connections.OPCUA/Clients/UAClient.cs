@@ -183,10 +183,7 @@ public class UAClient : IDisposable
         {
             if (Session?.Connected == true)
             {
-                if (_logger.IsEnabled(LogLevel.Information))
-                {
-                    _logger.LogInformation("Session already connected!");
-                }
+                _logger.LogInformation("Session already connected!");
                 return true;
             }
 
@@ -224,10 +221,7 @@ public class UAClient : IDisposable
 
             if (session?.Connected != true)
             {
-                if (_logger.IsEnabled(LogLevel.Warning))
-                {
-                    _logger.LogWarning("Session created but not in Connected state.");
-                }
+                _logger.LogWarning("Session created but not in Connected state.");
                 session?.Dispose();
                 return false;
             }
@@ -235,18 +229,16 @@ public class UAClient : IDisposable
             ConfigureSession(session);
             if (_logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation(
-                "New Session Created with SessionName = {SessionName}",
-                session.SessionName);
+               _logger.LogInformation(
+               "New Session Created with SessionName = {SessionName}",
+               session.SessionName);
             }
+            
             return true;
         }
         catch (Exception ex)
         {
-            if (_logger.IsEnabled(LogLevel.Error))
-            {
-                _logger.LogError(ex, "Create Session Error");
-            }
+            _logger.LogError(ex, "Create Session Error");
             return false;
         }
     }
@@ -339,11 +331,7 @@ public class UAClient : IDisposable
         {
             if (Session != null)
             {
-                if (_logger.IsEnabled(LogLevel.Information))
-                {
-                    _logger.LogInformation("Disconnecting...");
-                }
-
+                _logger.LogInformation("Disconnecting...");
                 lock (_lock)
                 {
                     Session.KeepAlive -= Session_KeepAlive;
@@ -358,10 +346,9 @@ public class UAClient : IDisposable
                 }
                 Session.Dispose();
                 Session = null;
-                if (_logger.IsEnabled(LogLevel.Information))
-                {
-                    _logger.LogInformation("Session Disconnected.");
-                }
+
+                _logger.LogInformation("Session Disconnected.");
+
                 OnSessionStateChanged(new SessionStateChangedEventArgs(UAClientState.Disconnected));
             }
             else
@@ -414,49 +401,51 @@ public class UAClient : IDisposable
             }
 
             // start reconnect sequence on communication error.
-            if (ServiceResult.IsBad(e.Status))
+            if (!ServiceResult.IsBad(e.Status))
             {
-                if (ReconnectPeriod <= 0)
-                {
-                    if (_logger.IsEnabled(LogLevel.Warning))
-                    {
-                        _logger.LogWarning(
-                        "KeepAlive status {StatusCode}, but reconnect is disabled.",
-                        e.Status);
-                    }
-                    return;
-                }
-
-                SessionReconnectHandler.ReconnectState state = _reconnectHandler.BeginReconnect(
-                    Session,
-                    _reverseConnectManager,
-                    ReconnectPeriod,
-                    Client_ReconnectComplete
-                );
-                if (state == SessionReconnectHandler.ReconnectState.Triggered)
-                {
-                    _logger.LogInformation(
-                        "KeepAlive status {StatusCode}, reconnect status {State}, reconnect period {ReconnectPeriod}ms.",
-                        e.Status,
-                        state,
-                        ReconnectPeriod
-                    );
-                    OnSessionStateChanged(
-                        new SessionStateChangedEventArgs(UAClientState.Reconnecting, Session)
-                    );
-                }
-                else
-                {
-                    _logger.LogInformation(
-                        "KeepAlive status {StatusCode}, reconnect status {State}.",
-                        e.Status,
-                        state
-                    );
-                }
-
-                // cancel sending a new keep alive request, because reconnect is triggered.
-                e.CancelKeepAlive = true;
+                return;
             }
+
+            if (ReconnectPeriod <= 0)
+            {
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning(
+                    "KeepAlive status {StatusCode}, but reconnect is disabled.",
+                    e.Status);
+                }
+                return;
+            }
+
+            SessionReconnectHandler.ReconnectState state = _reconnectHandler.BeginReconnect(
+                Session,
+                _reverseConnectManager,
+                ReconnectPeriod,
+                Client_ReconnectComplete
+            );
+            if (state == SessionReconnectHandler.ReconnectState.Triggered)
+            {
+                _logger.LogInformation(
+                    "KeepAlive status {StatusCode}, reconnect status {State}, reconnect period {ReconnectPeriod}ms.",
+                    e.Status,
+                    state,
+                    ReconnectPeriod
+                );
+                OnSessionStateChanged(
+                    new SessionStateChangedEventArgs(UAClientState.Reconnecting, Session)
+                );
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "KeepAlive status {StatusCode}, reconnect status {State}.",
+                    e.Status,
+                    state
+                );
+            }
+
+            // cancel sending a new keep alive request, because reconnect is triggered.
+            e.CancelKeepAlive = true;
         }
         catch (Exception exception)
         {

@@ -13,27 +13,23 @@ internal sealed class DataSourceResolver(
 ) : IDataSourceResolver
 {
     private const int OpcUaDefaultPort = 4840;
-  
-    public async Task<Result<string>> ResolveAsync( string sourceName)
+
+    public async Task<Result<string>> ResolveAsync(string sourceName)
     {
         if (string.IsNullOrWhiteSpace(sourceName))
         {
             sourceName = "OPC UA";
         }
-
-        var devicesResponse = await apiClient.GetDevicesAsync();
-        var devices = devicesResponse.Data ?? [];
-        var device = FindDeviceByHost(devices);
-
-        if (device?.PublicId is null)
+        Device device;
+        try
         {
-            return new Result<string>
-            {
-                ErrorMessage =
-                    $"Could not resolve device publicId for agent '{authenticationContext.IxonHeaders.AgentId}'."
-            };
+            device = await GetDeviceAsync();
         }
-        
+        catch (InvalidOperationException ex)
+        {
+            return new Result<string> { ErrorMessage = ex.Message };
+        }
+
         if (logger.IsEnabled(LogLevel.Information))
         {
             logger.LogInformation(
@@ -44,20 +40,21 @@ internal sealed class DataSourceResolver(
             );
         }
 
-        var existingDataSource = await FindExistingDataSourceAsync(device.PublicId, sourceName);
-        if (existingDataSource is not null)
+        var existingDataSourceId = await TryGetExistingDataSourceIdAsync(device.PublicId, sourceName);
+        if (existingDataSourceId is not null)
         {
             if (logger.IsEnabled(LogLevel.Information))
             {
                 logger.LogInformation(
-                    "Found existing data source '{Name}' ({PublicId}) for device '{DeviceName}'. Reusing it.",
-                    existingDataSource.Name,
-                    existingDataSource.PublicId,
+                    "Found existing data source '{PublicId}' for device '{DeviceName}'. Reusing it.",
+                    existingDataSourceId,
                     device.Name
                 );
             }
-            return new Result<string> { Data = existingDataSource.PublicId };
+
+            return new Result<string> { Data = existingDataSourceId };
         }
+
 
         var newDataSource = BuildDataSource(device.PublicId, sourceName);
         var result = await apiClient.PostDataSourceAsync(newDataSource);
@@ -66,8 +63,8 @@ internal sealed class DataSourceResolver(
         {
             return new Result<string>
             {
-                ErrorMessage = result?.ErrorMessage != null ? 
-                    $"Failed to create a new data source in IXON. {result.ErrorMessage}" 
+                ErrorMessage = result?.ErrorMessage != null ?
+                    $"Failed to create a new data source in IXON. {result.ErrorMessage}"
                     : "Failed to create a new data source in IXON."
             };
         }
@@ -82,17 +79,36 @@ internal sealed class DataSourceResolver(
         return new Result<string> { Data = createdId };
     }
 
-    private async Task<DataSource?> FindExistingDataSourceAsync(
+
+    private async Task<Device> GetDeviceAsync()
+    {
+        var devicesResponse = await apiClient.GetDevicesAsync();
+        var devices = devicesResponse.Data ?? [];
+        var device = FindDeviceByHost(devices);
+
+        if (device?.PublicId is null)
+        {
+            throw new InvalidOperationException(
+                $"Could not resolve device publicId for agent '{authenticationContext.IxonHeaders.AgentId}'."
+            );
+        }
+
+        return device;
+    }
+
+    private async Task<string?> TryGetExistingDataSourceIdAsync(
         string devicePublicId,
         string sourceName
     )
     {
         var dataSourcesResponse = await apiClient.GetDataSourcesAsync();
         var dataSources = dataSourcesResponse.Data ?? [];
-        return dataSources.FirstOrDefault(ds =>
+        var existingDataSource = dataSources.FirstOrDefault(ds =>
             ds.Device?.PublicId == devicePublicId
             && ds.Name == sourceName
         );
+
+        return existingDataSource?.PublicId;
     }
 
     private DataSource BuildDataSource(string devicePublicId, string sourceName)
@@ -131,10 +147,10 @@ internal sealed class DataSourceResolver(
 
         if (matched is null && logger.IsEnabled(LogLevel.Warning))
         {
-                logger.LogWarning(
-                    "No device found with IP address '{Host}'. Falling back to first device.",
-                    host
-                );
+            logger.LogWarning(
+                "No device found with IP address '{Host}'. Falling back to first device.",
+                host
+            );
         }
 
         return matched ?? devices.FirstOrDefault();

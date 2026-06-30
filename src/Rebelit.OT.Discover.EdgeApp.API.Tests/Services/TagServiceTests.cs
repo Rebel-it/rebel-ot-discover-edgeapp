@@ -24,10 +24,9 @@ public class TagServiceTests
             ];
 
         var apiClient = new ApiClientSpy { Tags = expected };
-        var unitTestHelper = new UnitTestHelpers();
         var loggerVariable = new TestLogger<VariableService>(true);
         var logger = new TestLogger<TagService>(true);
-        var authContext = unitTestHelper.CreateAuthenticationContext("agent-42");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-42");
 
         var variableService = new VariableService(apiClient, authContext, loggerVariable);
         var sut = new TagService(apiClient, authContext, variableService,logger);
@@ -39,7 +38,7 @@ public class TagServiceTests
         Assert.Multiple(() =>
         {
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(2));
+            Assert.That(result, Has.Count.EqualTo(2));
             for (int i = 0; i < expected.Length; i++)
             {
                 Assert.That(result[i].Name, Is.EqualTo(expected[i].Name));
@@ -65,10 +64,9 @@ public class TagServiceTests
         ];
 
         var apiClient = new ApiClientSpy { DataVariables = expected };
-        var unitTestHelper = new UnitTestHelpers();
         var loggerVariable = new TestLogger<VariableService>(true);
         var logger = new TestLogger<TagService>(true);
-        var authContext = unitTestHelper.CreateAuthenticationContext("agent-42", sourceId: "src-1");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-42", sourceId: "src-1");
 
         var variableService = new VariableService(apiClient, authContext, loggerVariable);
         var sut = new TagService(apiClient, authContext, variableService, logger);
@@ -80,7 +78,7 @@ public class TagServiceTests
         Assert.Multiple(() =>
         {
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(2));
+            Assert.That(result, Has.Count.EqualTo(2));
 
             Assert.That(result[0].Name, Is.EqualTo("Temperature"));
             Assert.That(result[0].Slug, Is.EqualTo("temperature_stemp"));
@@ -103,6 +101,8 @@ public class TagServiceTests
         });
     }
 
+    private static readonly string[] expected = new[] { "Tag1", "Tag2" };
+
     [Test]
     public async Task CreateTagsAsync_WhenApiReturnsPostedTags_PostsRequestedTags()
     {
@@ -113,10 +113,9 @@ public class TagServiceTests
             new() { LogEvent = "interval", LoggingInterval = "500ms", Name = "Tag2", RetentionPolicy = "260w", Slug = "tag2", Variable = new TagVariable { PublicId = "v-2" }, EdgeAggregator = "last" },
         ];
         var apiClient = new ApiClientSpy { PostedTagsResponse = requests };
-        var unitTestHelper = new UnitTestHelpers();
         var loggerVariable = new TestLogger<VariableService>(true);
         var logger = new TestLogger<TagService>(true);
-        var authContext = unitTestHelper.CreateAuthenticationContext("agent-42");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-42");
 
         var variableService = new VariableService(apiClient, authContext, loggerVariable);
         var sut = new TagService(apiClient, authContext, variableService, logger);
@@ -129,8 +128,8 @@ public class TagServiceTests
         {
             Assert.That(apiClient.PostTagsCallCount, Is.EqualTo(1));
             Assert.That(apiClient.PostedTags, Is.Not.Null);
-            Assert.That(apiClient.PostedTags!.Count, Is.EqualTo(2));
-            Assert.That(apiClient.PostedTags.Select(t => t.Name), Is.EqualTo(new[] { "Tag1", "Tag2" }));
+            Assert.That(apiClient.PostedTags!, Has.Count.EqualTo(2));
+            Assert.That(apiClient.PostedTags.Select(t => t.Name), Is.EqualTo(expected));
 
             var postInfoLog = logger.Entries.Single(e => e.LogLevel == Microsoft.Extensions.Logging.LogLevel.Information && e.Message.Contains("Posting 2 tags"));
             var successInfoLog = logger.Entries.Single(e => e.LogLevel == Microsoft.Extensions.Logging.LogLevel.Information && e.Message.Contains("Successfully posted 2 tags"));
@@ -148,10 +147,9 @@ public class TagServiceTests
             new() { LogEvent = "interval", LoggingInterval = "500ms", Name = "Tag1", RetentionPolicy = "260w", Slug = "tag1", Variable = new TagVariable { PublicId = "v-1" }, EdgeAggregator = "last" },
         ];
         var apiClient = new ApiClientSpy { ReturnNullFromPostTags = true };
-        var unitTestHelper = new UnitTestHelpers();
         var loggerVariable = new TestLogger<VariableService>(true);
         var logger = new TestLogger<TagService>(true);
-        var authContext = unitTestHelper.CreateAuthenticationContext("agent-42");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-42");
 
         var variableService = new VariableService(apiClient, authContext, loggerVariable);
         var sut = new TagService(apiClient, authContext, variableService, logger);
@@ -194,10 +192,9 @@ public class TagServiceTests
         };
 
         var apiClient = new ApiClientSpy { PostedTagResponse = created };
-        var unitTestHelper = new UnitTestHelpers();
         var loggerVariable = new TestLogger<VariableService>(true);
         var logger = new TestLogger<TagService>(true);
-        var authContext = unitTestHelper.CreateAuthenticationContext("agent-42");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-42");
 
         var variableService = new VariableService(apiClient, authContext, loggerVariable);
         var sut = new TagService(apiClient, authContext, variableService, logger);
@@ -249,10 +246,9 @@ public class TagServiceTests
         };
 
         var apiClient = new ApiClientSpy { UpdatedTagResponse = updated };
-        var unitTestHelper = new UnitTestHelpers();
         var loggerVariable = new TestLogger<VariableService>(true);
         var logger = new TestLogger<TagService>(true);
-        var authContext = unitTestHelper.CreateAuthenticationContext("agent-42");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-42");
 
         var variableService = new VariableService(apiClient, authContext, loggerVariable);
         var sut = new TagService(apiClient, authContext, variableService, logger);
@@ -301,10 +297,9 @@ public class TagServiceTests
         };
 
         var apiClient = new ApiClientSpy { ReturnNullFromUpdateTag = true };
-        var unitTestHelper = new UnitTestHelpers();
         var loggerVariable = new TestLogger<VariableService>(true);
         var logger = new TestLogger<TagService>(true);
-        var authContext = unitTestHelper.CreateAuthenticationContext("agent-42");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-42");
 
         var variableService = new VariableService(apiClient, authContext, loggerVariable);
         var sut = new TagService(apiClient, authContext, variableService, logger);

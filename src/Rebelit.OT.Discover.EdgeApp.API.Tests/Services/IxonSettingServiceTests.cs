@@ -11,7 +11,7 @@ public class IxonSettingServiceTests
     {
         // Arrange
         var apiClient = new ApiClientSpy { PushConfigurationStatus = "success" };
-        var authContext = new UnitTestHelpers().CreateAuthenticationContext("agent-42");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-42");
         var sut = new IxonSettingService(apiClient, authContext);
 
         // Act
@@ -31,7 +31,7 @@ public class IxonSettingServiceTests
     {
         // Arrange
         var apiClient = new ApiClientSpy { ReturnNullFromPushConfiguration = true };
-        var authContext = new UnitTestHelpers().CreateAuthenticationContext("agent-42");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-42");
         var sut = new IxonSettingService(apiClient, authContext);
 
         // Act
@@ -51,12 +51,17 @@ public class IxonSettingServiceTests
     {
         // Arrange
         var apiClient = new ApiClientSpy();
-        var authContext = new UnitTestHelpers().CreateAuthenticationContext(agentId: string.Empty);
+        var authContext = UnitTestHelpers.CreateAuthenticationContext(agentId: string.Empty);
         var sut = new IxonSettingService(apiClient, authContext);
 
         // Act / Assert
         var ex = Assert.ThrowsAsync<InvalidOperationException>(async () => await sut.PushDeviceConfigAsync());
-        Assert.That(ex!.Message, Is.EqualTo("AgentId is required but was not set."));
-        Assert.That(apiClient.PushConfigurationCallCount, Is.EqualTo(0));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(ex!.Message, Is.EqualTo("AgentId is required but was not set."));
+            Assert.That(apiClient.PushConfigurationCallCount, Is.EqualTo(0));
+        });
+
     }
 }
