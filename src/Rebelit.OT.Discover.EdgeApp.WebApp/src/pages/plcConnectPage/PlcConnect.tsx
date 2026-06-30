@@ -102,7 +102,7 @@ function PlcConnect() {
       title="PLC connection"
       continueButtonText="Connect"
       onContinue={handlePlcConnect}
-      continueDisabled={isSubmitting}
+      continueDisabled={isSubmitting || !plcObject.OpcUaServerAddress || (useCredentials && (!plcObject.OpcUaUsername || !plcObject.OpcUaPassword))}
     >
       <form className={styles.plcConnectForm} noValidate onSubmit={e => { e.preventDefault(); handlePlcConnect(); }}>
         <div className={styles.formFieldWrapper}>
