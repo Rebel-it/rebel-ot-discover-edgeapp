@@ -1,10 +1,14 @@
-.tableBody {
+.tableBodyWrapper {
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   border: 2px solid var(--purple-500);
   border-top: none;
   border-radius: 0 0 20px 20px;
-  overflow: auto;
+
+  .tableBody {
+    overflow-y: scroll;
+  }
 }
 
 .row {

@@ -11,16 +11,18 @@ export interface TableBodyProps {
 
 export default function TableBody({ rows, columns, selectedIds, onRowSelect }: Readonly<TableBodyProps>) {
   return (
-    <div className={style.tableBody}>
-      {rows.map((row) => (
-        <TableRow
-          key={row.id}
-          row={row}
-          columns={columns}
-          selected={selectedIds?.includes(row.id)}
-          onSelect={onRowSelect}
-        />
-      ))}
+    <div className={style.tableBodyWrapper}>
+      <div className={style.tableBody}>
+        {rows.map((row) => (
+          <TableRow
+            key={row.id}
+            row={row}
+            columns={columns}
+            selected={selectedIds?.includes(row.id)}
+            onSelect={onRowSelect}
+          />
+        ))}
+      </div>
     </div>
   );
 }
