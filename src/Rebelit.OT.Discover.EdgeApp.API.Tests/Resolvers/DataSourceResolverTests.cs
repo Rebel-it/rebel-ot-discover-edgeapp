@@ -25,7 +25,7 @@ public class DataSourceResolverTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result, Is.EqualTo("ds-1"));
+            Assert.That(result.Data, Is.EqualTo("ds-1"));
             Assert.That(apiClient.PostDataSourceCallCount, Is.EqualTo(0));
         });
     }
@@ -47,7 +47,7 @@ public class DataSourceResolverTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result, Is.EqualTo("new-ds-1"));
+            Assert.That(result.Data, Is.EqualTo("new-ds-1"));
             Assert.That(apiClient.PostedDataSource, Is.Not.Null);
             Assert.That(apiClient.PostedDataSource!.Name, Is.EqualTo("OPC UA"));
             Assert.That(apiClient.PostedDataSource.Slug, Is.EqualTo("opc-ua"));
@@ -85,16 +85,16 @@ public class DataSourceResolverTests
     }
 
     [Test]
-    public void ResolveAsync_WhenNoDeviceIsResolved_ThrowsInvalidOperationException()
+    public async Task ResolveAsync_WhenNoDeviceIsResolved_ReturnsCorrectErrorMessage()
     {
         var apiClient = new ApiClientSpy { Devices = [] };
         var authContext = CreateAuthenticationContext("opc.tcp://10.0.0.10:4840", "user", "pass", "agent-42");
         var logger = new TestLogger<DataSourceResolver>(true);
         var sut = new DataSourceResolver(apiClient, authContext, logger);
-
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(async () => await sut.ResolveAsync("OPC UA"));
-
-        Assert.That(ex!.Message, Is.EqualTo("Could not resolve device publicId for agent 'agent-42'."));
+        
+        var result = await sut.ResolveAsync("OPC UA");
+        
+        Assert.That(result.ErrorMessage, Is.EqualTo("Could not resolve device publicId for agent 'agent-42'."));
     }
 
     [Test]
@@ -124,7 +124,7 @@ public class DataSourceResolverTests
     }
 
     [Test]
-    public void ResolveAsync_WhenCreateReturnsNoPublicId_ThrowsInvalidOperationException()
+    public async Task ResolveAsync_WhenCreateReturnsNoPublicId_ReturnsCorrectErrorMessage()
     {
         var apiClient = new ApiClientSpy
         {
@@ -135,10 +135,10 @@ public class DataSourceResolverTests
         var authContext = CreateAuthenticationContext("opc.tcp://10.0.0.10:4840", "user", "pass");
         var logger = new TestLogger<DataSourceResolver>(true);
         var sut = new DataSourceResolver(apiClient, authContext, logger);
-
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(async () => await sut.ResolveAsync("OPC UA"));
-
-        Assert.That(ex!.Message, Is.EqualTo("Failed to create a new data source in IXON."));
+        
+        var result = await sut.ResolveAsync("OPC UA");
+        
+        Assert.That(result.ErrorMessage, Is.EqualTo("Failed to create a new data source in IXON."));
     }
 
     private static IxonAuthenticationContext CreateAuthenticationContext(

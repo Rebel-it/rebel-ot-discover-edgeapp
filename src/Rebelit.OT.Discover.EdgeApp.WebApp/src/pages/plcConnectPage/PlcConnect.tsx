@@ -99,10 +99,10 @@ function PlcConnect() {
   return (
     <WizardPage
       wizardStep="plcConnect"
-      title="PLC connection"
+      title="OPC UA connection"
       continueButtonText="Connect"
       onContinue={handlePlcConnect}
-      continueDisabled={isSubmitting}
+      continueDisabled={isSubmitting || !plcObject.OpcUaServerAddress || (useCredentials && (!plcObject.OpcUaUsername || !plcObject.OpcUaPassword))}
     >
       <form className={styles.plcConnectForm} noValidate onSubmit={e => { e.preventDefault(); handlePlcConnect(); }}>
         <div className={styles.formFieldWrapper}>

@@ -1,6 +1,7 @@
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Agents;
 using Rebelit.OT.Discover.EdgeApp.Connections.IXON.Models;
 using Rebelit.OT.Discover.EdgeApp.API.Utilities;
+using Rebelit.OT.Discover.EdgeApp.SharedKernel;
 using Rebelit.OT.Discover.EdgeApp.SharedKernel.IxonAuthentication;
 
 namespace Rebelit.OT.Discover.EdgeApp.API.Resolvers;
@@ -12,8 +13,8 @@ internal sealed class DataSourceResolver(
 ) : IDataSourceResolver
 {
     private const int OpcUaDefaultPort = 4840;
-  
-    public async Task<string> ResolveAsync( string sourceName)
+
+    public async Task<Result<string>> ResolveAsync(string sourceName)
     {
         if (string.IsNullOrWhiteSpace(sourceName))
         {
@@ -44,20 +45,29 @@ internal sealed class DataSourceResolver(
             }
             return existingDataSourceId;
         }
-        
+
 
         var newDataSource = BuildDataSource(device.PublicId, sourceName);
         var result = await apiClient.PostDataSourceAsync(newDataSource);
 
-        var createdId =
-            result?.Data?.PublicId
-            ?? throw new InvalidOperationException("Failed to create a new data source in IXON.");
+        if (result?.Data?.PublicId == null || result.HasError)
+        {
+            return new Result<string>
+            {
+                ErrorMessage = result?.ErrorMessage != null ?
+                    $"Failed to create a new data source in IXON. {result.ErrorMessage}"
+                    : "Failed to create a new data source in IXON."
+            };
+        }
+
+        var createdId = result.Data.PublicId;
 
         if (logger.IsEnabled(LogLevel.Information))
         {
             logger.LogInformation("Created data source with ID '{DataSourceId}'.", createdId);
         }
-        return createdId;
+
+        return new Result<string> { Data = createdId };
     }
 
 
@@ -128,10 +138,10 @@ internal sealed class DataSourceResolver(
 
         if (matched is null && logger.IsEnabled(LogLevel.Warning))
         {
-                logger.LogWarning(
-                    "No device found with IP address '{Host}'. Falling back to first device.",
-                    host
-                );
+            logger.LogWarning(
+                "No device found with IP address '{Host}'. Falling back to first device.",
+                host
+            );
         }
 
         return matched ?? devices.FirstOrDefault();

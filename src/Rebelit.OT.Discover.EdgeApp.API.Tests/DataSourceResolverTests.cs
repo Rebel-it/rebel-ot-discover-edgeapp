@@ -39,7 +39,7 @@ public class DataSourceResolverTests
         };
 
     [Test]
-    public void ResolveAsync_WhenDataSourceIdIsConfigured_ReturnsItWithoutCallingApi()
+    public async Task ResolveAsync_WhenDataSourceIdIsConfigured_ReturnsItWithoutCallingApi()
     {
         var apiClient = new SpyApiClient([]);
         var resolver = new DataSourceResolver(
@@ -47,13 +47,18 @@ public class DataSourceResolverTests
             CreateAuthenticationContext(),
             NullLogger<DataSourceResolver>.Instance
         );
+        
+        var result = await resolver.ResolveAsync("");
 
-        Assert.ThrowsAsync<InvalidOperationException>(() => resolver.ResolveAsync(""));
-        Assert.That(apiClient.GetDevicesCallCount, Is.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ErrorMessage, Is.EqualTo("Could not resolve device publicId for agent 'test-agent'."));
+            Assert.That(apiClient.GetDevicesCallCount, Is.EqualTo(1));
+        });
     }
 
     [Test]
-    public void ResolveAsync_WhenDataSourceIdIsConfigured_ThrowsInvalidOperationException_WhenNoDeviceIsResolved()
+    public async Task ResolveAsync_WhenDataSourceIdIsConfigured_ReturnsCorrectErrorMessage_WhenNoDeviceIsResolved()
     {
         var apiClient = new SpyApiClient([]);
         var resolver = new DataSourceResolver(
@@ -61,9 +66,14 @@ public class DataSourceResolverTests
             CreateAuthenticationContext(),
             NullLogger<DataSourceResolver>.Instance
         );
+        
+        var result = await resolver.ResolveAsync("");
 
-        Assert.ThrowsAsync<InvalidOperationException>(() => resolver.ResolveAsync(""));
-        Assert.That(apiClient.GetDevicesCallCount, Is.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ErrorMessage, Is.EqualTo("Could not resolve device publicId for agent 'test-agent'."));
+            Assert.That(apiClient.GetDevicesCallCount, Is.EqualTo(1));
+        });
     }
 
     [Test]
@@ -79,11 +89,11 @@ public class DataSourceResolverTests
 
         var result = await resolver.ResolveAsync( "");
 
-        Assert.That(result, Is.EqualTo("new-ds-id"));
+        Assert.That(result.Data, Is.EqualTo("new-ds-id"));
     }
 
     [Test]
-    public void ResolveAsync_WhenNoDeviceIsResolved_ThrowsInvalidOperationException()
+    public async Task ResolveAsync_WhenNoDeviceIsResolved_ReturnsCorrectErrorMessage()
     {
         var apiClient = new SpyApiClient([]);
         var resolver = new DataSourceResolver(
@@ -92,8 +102,13 @@ public class DataSourceResolverTests
             NullLogger<DataSourceResolver>.Instance
         );
 
-        Assert.ThrowsAsync<InvalidOperationException>(() => resolver.ResolveAsync(""));
-        Assert.That(apiClient.GetDevicesCallCount, Is.EqualTo(1));
+        var result = await resolver.ResolveAsync("");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ErrorMessage, Is.EqualTo("Could not resolve device publicId for agent 'test-agent'."));
+            Assert.That(apiClient.GetDevicesCallCount, Is.EqualTo(1));
+        });
     }
 
     [Test]
@@ -122,7 +137,7 @@ public class DataSourceResolverTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result, Is.EqualTo("existing-ds-id"));
+            Assert.That(result.Data, Is.EqualTo("existing-ds-id"));
             Assert.That(apiClient.PostedDataSource, Is.Null);
         });
     }
@@ -151,7 +166,7 @@ public class DataSourceResolverTests
 
         var result = await resolver.ResolveAsync( "");
 
-        Assert.That(result, Is.EqualTo("new-ds-id"));
+        Assert.That(result.Data, Is.EqualTo("new-ds-id"));
     }
 
     [Test]

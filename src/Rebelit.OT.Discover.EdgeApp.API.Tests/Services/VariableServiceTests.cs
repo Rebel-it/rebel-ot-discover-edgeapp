@@ -20,7 +20,9 @@ public class VariableServiceTests
         ];
 
         var apiClient = new ApiClientSpy { DataVariables = expected };
-        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-123");
+
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-123", "src-1");
+
         var logger = new TestLogger<VariableService>(isInfoEnabled: true);
         var sut = new VariableService(apiClient, authContext, logger);
 
@@ -56,7 +58,7 @@ public class VariableServiceTests
         ];
 
         var apiClient = new ApiClientSpy { DataVariables = variables };
-        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-42");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-42", "src-1");
         var logger = new TestLogger<VariableService>(isInfoEnabled: true);
         var sut = new VariableService(apiClient, authContext, logger);
 
