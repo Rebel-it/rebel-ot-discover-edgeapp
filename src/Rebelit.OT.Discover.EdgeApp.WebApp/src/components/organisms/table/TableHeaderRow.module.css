@@ -6,6 +6,8 @@
   border: 2px solid var(--purple-500);
   border-radius: 20px 20px 0 0;
   min-height: 48px;
+  scrollbar-gutter: stable;
+  overflow: hidden;
 
   button:first-child {
     border-left: none;
