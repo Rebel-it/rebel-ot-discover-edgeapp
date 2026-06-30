@@ -24,7 +24,7 @@ function FormField({ id, label, value, onChange,
         <label htmlFor={id}>{label}</label>
         {tooltip && <Tooltip text={tooltip} />}
       </div>
-      <div className={styles.inputWrapper}>
+      <div className={prefix ? `${styles.inputWrapper} ${styles.withPrefix}` : styles.inputWrapper}>
         {prefix && <span className={styles.prefix}>{prefix}</span>}
         <input
           id={id}
