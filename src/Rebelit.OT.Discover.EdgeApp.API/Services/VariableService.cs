@@ -12,11 +12,12 @@ internal sealed class VariableService(
 
     public async Task<IReadOnlyList<Variable>> GetVariablesAsync()
     {
+        var sourceId = ixonAuthenticationContext.IxonHeaders.SourceId;
         var response = await apiClient.GetDataVariablesAsync();
-        var variables = response.Data ?? [];
+        var variables = (response.Data ?? []).Where(x => x.Source?.PublicId == sourceId).ToList();
         if(logger.IsEnabled(LogLevel.Information))
         {
-            logger.LogInformation("Retrieved {Count} variables for agent {AgentId}.", variables.Length, ixonAuthenticationContext.IxonHeaders.AgentId);
+            logger.LogInformation("Retrieved {Count} variables for agent {AgentId}.", variables.Count, ixonAuthenticationContext.IxonHeaders.AgentId);
         }
         return variables;
     }
