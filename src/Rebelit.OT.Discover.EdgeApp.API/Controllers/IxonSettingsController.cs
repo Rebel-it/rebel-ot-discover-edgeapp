@@ -17,9 +17,9 @@ public class IxonSettingsController(
     {
         var result = await dataSourceResolver.ResolveAsync(saveDataSourceRequest.DataSourceName);
 
-        if (string.IsNullOrEmpty(result))
+        if (!result.Success)
         {
-            return BadRequest("Failed to resolve data source ID.");
+            return BadRequest(result.ErrorMessage);
         }
 
         return Ok(result);
