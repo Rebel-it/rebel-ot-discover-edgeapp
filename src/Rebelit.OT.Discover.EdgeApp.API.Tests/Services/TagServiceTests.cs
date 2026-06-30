@@ -68,7 +68,7 @@ public class TagServiceTests
         var unitTestHelper = new UnitTestHelpers();
         var loggerVariable = new TestLogger<VariableService>(true);
         var logger = new TestLogger<TagService>(true);
-        var authContext = unitTestHelper.CreateAuthenticationContext("agent-42");
+        var authContext = unitTestHelper.CreateAuthenticationContext("agent-42", sourceId: "src-1");
 
         var variableService = new VariableService(apiClient, authContext, loggerVariable);
         var sut = new TagService(apiClient, authContext, variableService, logger);
