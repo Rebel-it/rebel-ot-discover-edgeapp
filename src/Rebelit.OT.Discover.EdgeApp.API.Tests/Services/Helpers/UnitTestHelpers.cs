@@ -8,7 +8,7 @@ namespace Rebelit.OT.Discover.EdgeApp.Tests.Services.Helpers;
 
 public static class UnitTestHelpers
 {
-    public  static IxonAuthenticationContext CreateAuthenticationContext(string agentId) =>
+    public static IxonAuthenticationContext CreateAuthenticationContext(string agentId) =>
         new()
         {
             IxonHeaders = new IxonHeaders

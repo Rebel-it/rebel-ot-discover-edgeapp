@@ -53,7 +53,7 @@ public class IxonCompanyConfigurationServiceTests
         // Arrange
         var apiClient = new ApiClientSpy { AssociatedCompanies = [] };
         var secureEdgeApiClient = new SecureEdgeApiClientSpy();
-        var authContext =  UnitTestHelpers.CreateAuthenticationContext("agent-any");
+        var authContext = UnitTestHelpers.CreateAuthenticationContext("agent-any");
         var sut = new IxonCompanyConfigurationService(apiClient, authContext, secureEdgeApiClient);
 
         // Act

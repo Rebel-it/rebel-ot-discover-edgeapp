@@ -101,7 +101,10 @@ public class Scraper(
         var createdVariables = new List<Variable>();
         foreach (var batch in nodes.Chunk(BatchSize))
         {
-            createdVariables.AddRange(batchVariables.OfType<Variable>());
+            var batchVariables = await Task.WhenAll(
+                batch.Select(rd => nodeSynchronizer.MapVariableAsync(client, rd, dataSourceId)));
+            createdVariables.AddRange(batchVariables.Where(v => v is not null)!);
+        }
         return createdVariables;
     }
 

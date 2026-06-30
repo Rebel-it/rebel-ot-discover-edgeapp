@@ -227,12 +227,12 @@ public class UAClient : IDisposable
             }
 
             ConfigureSession(session);
-                if (_logger.IsEnabled(LogLevel.Information))
-                {
-                    _logger.LogInformation(
-                    "New Session Created with SessionName = {SessionName}",
-                    session.SessionName);
-                }
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+               _logger.LogInformation(
+               "New Session Created with SessionName = {SessionName}",
+               session.SessionName);
+            }
             
             return true;
         }
@@ -346,7 +346,9 @@ public class UAClient : IDisposable
                 }
                 Session.Dispose();
                 Session = null;
-                    _logger.LogInformation("Session Disconnected.");
+
+                _logger.LogInformation("Session Disconnected.");
+
                 OnSessionStateChanged(new SessionStateChangedEventArgs(UAClientState.Disconnected));
             }
             else
