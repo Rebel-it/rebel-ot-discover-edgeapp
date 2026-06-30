@@ -22,7 +22,7 @@ public class IxonSettingsController(
             return BadRequest(result.ErrorMessage);
         }
 
-        return Ok(result);
+        return Ok(result.Data);
     }
 
     [HttpPost("PushConfiguration")]
