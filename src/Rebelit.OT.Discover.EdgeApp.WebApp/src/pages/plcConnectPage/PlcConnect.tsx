@@ -99,7 +99,7 @@ function PlcConnect() {
   return (
     <WizardPage
       wizardStep="plcConnect"
-      title="PLC connection"
+      title="OPC UA connection"
       continueButtonText="Connect"
       onContinue={handlePlcConnect}
       continueDisabled={isSubmitting || !plcObject.OpcUaServerAddress || (useCredentials && (!plcObject.OpcUaUsername || !plcObject.OpcUaPassword))}
