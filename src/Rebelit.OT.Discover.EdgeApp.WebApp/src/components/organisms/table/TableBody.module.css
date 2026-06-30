@@ -5,12 +5,6 @@
   border-top: none;
   border-radius: 0 0 20px 20px;
   overflow: auto;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-
-  &:webkit-scrollbar {
-    display: none;
-  }
 }
 
 .row {
