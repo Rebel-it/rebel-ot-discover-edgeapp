@@ -20,7 +20,15 @@ internal sealed class DataSourceResolver(
         {
             sourceName = "OPC UA";
         }
-        var device = await GetDeviceAsync();
+        Device device;
+        try
+        {
+            device = await GetDeviceAsync();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return new Result<string> { ErrorMessage = ex.Message };
+        }
 
         if (logger.IsEnabled(LogLevel.Information))
         {
@@ -43,7 +51,8 @@ internal sealed class DataSourceResolver(
                     device.Name
                 );
             }
-            return existingDataSourceId;
+
+            return new Result<string> { Data = existingDataSourceId };
         }
 
 
