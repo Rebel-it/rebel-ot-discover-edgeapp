@@ -121,14 +121,19 @@ public class UAClientTests
     }
 
     [Test]
-    public async Task DisconnectAsync_WhenLeaveChannelOpen_DoesNotThrow()
+    public async Task DisconnectAsync_WhenLeaveChannelOpen_DetachesChannel()
     {
-        var sessionMock = new Mock<ISession>();
+        var sessionMock = new Mock<ISession>(MockBehavior.Strict);
+        sessionMock.SetupRemove(x => x.KeepAlive -= It.IsAny<KeepAliveEventHandler>());
+        sessionMock.Setup(x => x.CloseAsync(false, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        sessionMock.Setup(x => x.DetachChannel());
+        sessionMock.Setup(x => x.Dispose());
         SetSession(_sut, sessionMock.Object);
 
-        Assert.DoesNotThrowAsync(() => _sut.DisconnectAsync(leaveChannelOpen: true));
+        await _sut.DisconnectAsync(leaveChannelOpen: true);
 
-        await Task.CompletedTask;
+        sessionMock.Verify(x => x.CloseAsync(false, It.IsAny<CancellationToken>()), Times.Once);
+        sessionMock.Verify(x => x.DetachChannel(), Times.Once);
     }
 
     [Test]
