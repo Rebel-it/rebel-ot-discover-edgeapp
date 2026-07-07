@@ -56,22 +56,6 @@ internal abstract class BaseAgent(
         );
     }
 
-    protected async Task<T?> PatchAsync<T>(
-        Uri uri,
-        object body,
-        System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>? jsonTypeInfo = null
-    )
-    {
-        var response = await ExecuteRequestAsync(http =>
-           http.PatchAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", CreateJsonContent(body))
-        );
-        var content = await response.Content.ReadAsStringAsync();
-
-        return jsonTypeInfo is null
-            ? System.Text.Json.JsonSerializer.Deserialize<T>(content)
-            : System.Text.Json.JsonSerializer.Deserialize(content, jsonTypeInfo);
-    }
-
     protected async Task<T?> PutAsync<T>(
         Uri uri,
         object body,
@@ -86,23 +70,6 @@ internal abstract class BaseAgent(
         return jsonTypeInfo is null
             ? System.Text.Json.JsonSerializer.Deserialize<T>(content)
             : System.Text.Json.JsonSerializer.Deserialize(content, jsonTypeInfo);
-    }
-
-    protected async Task<T?> PostCsvAsync<T>(
-        Uri uri,
-        string csv,
-        System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>? jsonTypeInfo = null
-    )
-    {
-        var content = new StringContent(csv, System.Text.Encoding.UTF8, "text/csv");
-        var response = await ExecuteRequestAsync(http =>
-            http.PostAsync($"{_configuration.CurrentValue.BaseUrl}{uri}", content)
-        );
-        var responseContent = await response.Content.ReadAsStringAsync();
-
-        return jsonTypeInfo is null
-            ? System.Text.Json.JsonSerializer.Deserialize<T>(responseContent)
-            : System.Text.Json.JsonSerializer.Deserialize(responseContent, jsonTypeInfo);
     }
 
     private async Task<HttpResponseMessage> ExecuteRequestAsync(

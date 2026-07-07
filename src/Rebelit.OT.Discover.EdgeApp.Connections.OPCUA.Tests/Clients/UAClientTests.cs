@@ -1,4 +1,6 @@
+using Moq;
 using Opc.Ua;
+using Opc.Ua.Client;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Clients;
 using Rebelit.OT.Discover.EdgeApp.Connections.OPCUA.Telemetry;
 
@@ -93,6 +95,71 @@ public class UAClientTests
         _sut.SessionStateChanged += (_, _) => eventCount++;
 
         Assert.That(eventCount, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task ConnectAsync_WhenSessionAlreadyConnected_ReturnsTrue()
+    {
+        var sessionMock = new Mock<ISession>();
+        sessionMock.SetupGet(x => x.Connected).Returns(true);
+        SetSession(_sut, sessionMock.Object);
+
+        var result = await _sut.ConnectAsync("opc.tcp://localhost:4840");
+
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public async Task DisconnectAsync_WhenSessionExists_DoesNotThrowAndDisposesSession()
+    {
+        var sessionMock = new Mock<ISession>();
+        SetSession(_sut, sessionMock.Object);
+
+        await _sut.DisconnectAsync();
+
+        sessionMock.Verify(x => x.Dispose(), Times.AtLeastOnce);
+    }
+
+    [Test]
+    public async Task DisconnectAsync_WhenLeaveChannelOpen_DoesNotThrow()
+    {
+        var sessionMock = new Mock<ISession>();
+        SetSession(_sut, sessionMock.Object);
+
+        Assert.DoesNotThrowAsync(() => _sut.DisconnectAsync(leaveChannelOpen: true));
+
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public void KeepAliveInterval_Default_Is5000()
+    {
+        Assert.That(_sut.KeepAliveInterval, Is.EqualTo(5000));
+    }
+
+    [Test]
+    public void ReconnectPeriod_Default_Is1000()
+    {
+        Assert.That(_sut.ReconnectPeriod, Is.EqualTo(1000));
+    }
+
+    [Test]
+    public void ReconnectPeriodExponentialBackoff_Default_Is15000()
+    {
+        Assert.That(_sut.ReconnectPeriodExponentialBackoff, Is.EqualTo(15000));
+    }
+
+    [Test]
+    public void SessionLifeTime_Default_Is60000()
+    {
+        Assert.That(_sut.SessionLifeTime, Is.EqualTo(60_000u));
+    }
+
+    private static void SetSession(UAClient client, ISession session)
+    {
+        typeof(UAClient)
+            .GetProperty(nameof(UAClient.Session))!
+            .SetValue(client, session);
     }
 
     private static ApplicationConfiguration CreateMinimalApplicationConfiguration(
