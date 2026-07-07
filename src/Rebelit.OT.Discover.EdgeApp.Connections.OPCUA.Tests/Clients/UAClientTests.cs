@@ -152,7 +152,7 @@ public class UAClientTests
     [Test]
     public void SessionLifeTime_Default_Is60000()
     {
-        Assert.That(_sut.SessionLifeTime, Is.EqualTo(60_000));
+        Assert.That(_sut.SessionLifeTime, Is.EqualTo(60_000u));
     }
 
     private static void SetSession(UAClient client, ISession session)
